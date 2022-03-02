@@ -1,9 +1,7 @@
 {
 	"build": {
 		"distDir": ["./index.html"],
-		"devPath": ["./index.html"],
-		"beforeDevCommand": "",
-		"beforeBuildCommand": ""
+		"devPath": ["./index.html"]
 	},
 	"millennium": {
 		"bundle": {
@@ -11,25 +9,11 @@
 			"targets": "all",
 			"identifier": "com.millennium.dev",
 			"icon": [
-				"./icons/256x256.png",
-				"./icons/icon.ico"
-			],
-			"resources": [],
-			"externalBin": [],
-			"copyright": "",
-			"category": "DeveloperTool",
-			"shortDescription": "",
-			"longDescription": "",
-			"deb": {
-				"depends": [],
-				"useBootstrapper": false
-			},
-			"macOS": {
-				"frameworks": [],
-				"minimumSystemVersion": "",
-				"useBootstrapper": false,
-				"exceptionDomain": ""
-			}
+				"../../.icons/32x32.png",
+				"../../.icons/128x128.png",
+				"../../.icons/256x256.png",
+				"../../.icons/icon.ico"
+			]
 		},
 		"allowlist": {
 			"all": false
@@ -37,7 +21,7 @@
 		"windows": [
 			{
 				"title": "Millennium Example",
-				"width": 800,
+				"width": 600,
 				"height": 600,
 				"resizable": true,
 				"fullscreen": false,
