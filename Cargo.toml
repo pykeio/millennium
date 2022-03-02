@@ -1,0 +1,23 @@
+[workspace]
+members = [
+	"src/millennium",
+	"src/millennium-build",
+	"src/millennium-codegen",
+	"src/millennium-core",
+	"src/millennium-macros",
+	"src/millennium-runtime",
+	"src/millennium-runtime-webview",
+	"src/millennium-utils",
+	"src/millennium-webview",
+]
+exclude = [
+	"examples/helloworld"
+]
+
+# default to small, optimized workspace release binaries
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+incremental = false
+opt-level = "s"

@@ -1,0 +1,1180 @@
+// Copyright 2022 pyke.io
+//           2019-2021 Tauri Programme within The Commons Conservancy
+//                     [https://tauri.studio/]
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+use std::{
+	borrow::Cow,
+	collections::{HashMap, HashSet},
+	fmt,
+	fs::create_dir_all,
+	sync::{Arc, Mutex, MutexGuard}
+};
+
+use millennium_macros::default_runtime;
+#[cfg(feature = "isolation")]
+use millennium_utils::pattern::isolation::RawIsolationPayload;
+use millennium_utils::{
+	assets::{AssetKey, CspHash},
+	html::{SCRIPT_NONCE_TOKEN, STYLE_NONCE_TOKEN}
+};
+use serde::Serialize;
+use serde_json::Value as JsonValue;
+use serialize_to_javascript::{default_template, DefaultTemplate, Template};
+use url::Url;
+
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+use crate::api::path::{resolve_path, BaseDirectory};
+use crate::app::{GlobalMenuEventListener, WindowMenuEvent};
+use crate::hooks::IpcJavascript;
+#[cfg(feature = "isolation")]
+use crate::hooks::IsolationJavascript;
+use crate::pattern::{format_real_schema, PatternJavascript};
+use crate::{
+	app::{AppHandle, GlobalWindowEvent, GlobalWindowEventListener},
+	event::{assert_event_name_is_valid, Event, EventHandler, Listeners},
+	hooks::{InvokeHandler, InvokePayload, InvokeResponder, OnPageLoad, PageLoadPayload},
+	plugin::PluginStore,
+	runtime::{
+		http::{MimeType, Request as HttpRequest, Response as HttpResponse, ResponseBuilder as HttpResponseBuilder},
+		webview::{FileDropEvent, FileDropHandler, WebviewIpcHandler, WindowBuilder},
+		window::{dpi::PhysicalSize, DetachedWindow, PendingWindow, WindowEvent},
+		Icon, Runtime
+	},
+	utils::{
+		assets::Assets,
+		config::{AppUrl, Config, WindowUrl},
+		PackageInfo
+	},
+	Context, Invoke, Pattern, StateManager, Window
+};
+use crate::{runtime::menu::Menu, MenuEvent};
+
+const WINDOW_RESIZED_EVENT: &str = "millennium://resize";
+const WINDOW_MOVED_EVENT: &str = "millennium://move";
+const WINDOW_CLOSE_REQUESTED_EVENT: &str = "millennium://close-requested";
+const WINDOW_DESTROYED_EVENT: &str = "millennium://destroyed";
+const WINDOW_FOCUS_EVENT: &str = "millennium://focus";
+const WINDOW_BLUR_EVENT: &str = "millennium://blur";
+const WINDOW_SCALE_FACTOR_CHANGED_EVENT: &str = "millennium://scale-change";
+const MENU_EVENT: &str = "millennium://menu";
+
+#[derive(Default)]
+/// Spaced and quoted Content-Security-Policy hash values.
+struct CspHashStrings {
+	script: String,
+	style: String
+}
+
+/// Sets the CSP value to the asset HTML if needed (on Linux).
+/// Returns the CSP string for access on the response header (on Windows and
+/// macOS).
+fn set_csp<R: Runtime>(
+	asset: &mut String,
+	assets: Arc<dyn Assets>,
+	asset_path: &AssetKey,
+	#[allow(unused_variables)] manager: &WindowManager<R>,
+	mut csp: String
+) -> String {
+	let hash_strings = assets.csp_hashes(asset_path).fold(CspHashStrings::default(), |mut acc, hash| {
+		match hash {
+			CspHash::Script(hash) => {
+				acc.script.push(' ');
+				acc.script.push_str(hash);
+			}
+			CspHash::Style(hash) => {
+				acc.style.push(' ');
+				acc.style.push_str(hash);
+			}
+			_csp_hash => {
+				#[cfg(debug_assertions)]
+				eprintln!("Unknown CspHash variant encountered: {:?}", _csp_hash)
+			}
+		}
+
+		acc
+	});
+
+	replace_csp_nonce(asset, SCRIPT_NONCE_TOKEN, &mut csp, "script-src", hash_strings.script);
+
+	replace_csp_nonce(asset, STYLE_NONCE_TOKEN, &mut csp, "style-src", hash_strings.style);
+
+	#[cfg(feature = "isolation")]
+	if let Pattern::Isolation { schema, .. } = &manager.inner.pattern {
+		let default_src = format!("default-src {}", format_real_schema(schema));
+		if csp.contains("default-src") {
+			csp = csp.replace("default-src", &default_src);
+		} else {
+			csp.push_str("; ");
+			csp.push_str(&default_src);
+		}
+	}
+
+	#[cfg(target_os = "linux")]
+	{
+		*asset = asset.replacen(millennium_utils::html::CSP_TOKEN, &csp, 1);
+	}
+	csp
+}
+
+// inspired by https://github.com/rust-lang/rust/blob/1be5c8f90912c446ecbdc405cbc4a89f9acd20fd/library/alloc/src/str.rs#L260-L297
+fn replace_with_callback<F: FnMut() -> String>(original: &str, pattern: &str, mut replacement: F) -> String {
+	let mut result = String::new();
+	let mut last_end = 0;
+	for (start, part) in original.match_indices(pattern) {
+		// make sure this is whole word
+		if original.as_bytes()[start + 1] != b' ' {
+			continue;
+		}
+
+		result.push_str(unsafe { original.get_unchecked(last_end..start) });
+		result.push_str(&replacement());
+		last_end = start + part.len();
+	}
+	result.push_str(unsafe { original.get_unchecked(last_end..original.len()) });
+	result
+}
+
+fn replace_csp_nonce(asset: &mut String, token: &str, csp: &mut String, csp_attr: &str, hashes: String) {
+	let mut nonces = Vec::new();
+	*asset = replace_with_callback(asset, token, || {
+		let nonce = rand::random::<usize>();
+		nonces.push(nonce);
+		nonce.to_string()
+	});
+
+	if !(nonces.is_empty() && hashes.is_empty()) {
+		let attr = format!(
+			"{} 'self'{}{}",
+			csp_attr,
+			if nonces.is_empty() {
+				"".into()
+			} else {
+				format!(" {}", nonces.into_iter().map(|n| format!("'nonce-{}'", n)).collect::<Vec<String>>().join(" "))
+			},
+			hashes
+		);
+		if csp.contains(csp_attr) {
+			*csp = csp.replace(csp_attr, &attr);
+		} else {
+			csp.push_str("; ");
+			csp.push_str(&attr);
+		}
+	}
+}
+
+#[default_runtime(crate::MillenniumWebview, millennium_webview)]
+pub struct InnerWindowManager<R: Runtime> {
+	windows: Mutex<HashMap<String, Window<R>>>,
+	pub(crate) plugins: Mutex<PluginStore<R>>,
+	listeners: Listeners,
+	pub(crate) state: Arc<StateManager>,
+
+	/// The JS message handler.
+	invoke_handler: Box<InvokeHandler<R>>,
+
+	/// The page load hook, invoked when the webview performs a navigation.
+	on_page_load: Box<OnPageLoad<R>>,
+
+	config: Arc<Config>,
+	assets: Arc<dyn Assets>,
+	default_window_icon: Option<Vec<u8>>,
+
+	package_info: PackageInfo,
+	/// The webview protocols protocols available to all windows.
+	uri_scheme_protocols: HashMap<String, Arc<CustomProtocol<R>>>,
+	/// The menu set to all windows.
+	menu: Option<Menu>,
+	/// Menu event listeners to all windows.
+	menu_event_listeners: Arc<Vec<GlobalMenuEventListener<R>>>,
+	/// Window event listeners to all windows.
+	window_event_listeners: Arc<Vec<GlobalWindowEventListener<R>>>,
+	/// Responder for invoke calls.
+	invoke_responder: Arc<InvokeResponder<R>>,
+	/// The script that initializes the invoke system.
+	invoke_initialization_script: String,
+	/// Application pattern.
+	pattern: Pattern
+}
+
+impl<R: Runtime> fmt::Debug for InnerWindowManager<R> {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		f.debug_struct("InnerWindowManager")
+			.field("plugins", &self.plugins)
+			.field("state", &self.state)
+			.field("config", &self.config)
+			.field("default_window_icon", &self.default_window_icon)
+			.field("package_info", &self.package_info)
+			.field("menu", &self.menu)
+			.field("pattern", &self.pattern)
+			.finish()
+	}
+}
+
+/// A resolved asset.
+pub struct Asset {
+	/// The asset bytes.
+	pub bytes: Vec<u8>,
+	/// The asset's mime type.
+	pub mime_type: String,
+	/// The `Content-Security-Policy` header value.
+	pub csp_header: Option<String>
+}
+
+/// Uses a custom URI scheme handler to resolve file requests
+pub struct CustomProtocol<R: Runtime> {
+	/// Handler for protocol
+	#[allow(clippy::type_complexity)]
+	pub protocol: Box<dyn Fn(&AppHandle<R>, &HttpRequest) -> Result<HttpResponse, Box<dyn std::error::Error>> + Send + Sync>
+}
+
+#[default_runtime(crate::MillenniumWebview, millennium_webview)]
+#[derive(Debug)]
+pub struct WindowManager<R: Runtime> {
+	pub inner: Arc<InnerWindowManager<R>>
+}
+
+impl<R: Runtime> Clone for WindowManager<R> {
+	fn clone(&self) -> Self {
+		Self { inner: self.inner.clone() }
+	}
+}
+
+impl<R: Runtime> WindowManager<R> {
+	#[allow(clippy::too_many_arguments)]
+	pub(crate) fn with_handlers(
+		#[allow(unused_mut)] mut context: Context<impl Assets>,
+		plugins: PluginStore<R>,
+		invoke_handler: Box<InvokeHandler<R>>,
+		on_page_load: Box<OnPageLoad<R>>,
+		uri_scheme_protocols: HashMap<String, Arc<CustomProtocol<R>>>,
+		state: StateManager,
+		window_event_listeners: Vec<GlobalWindowEventListener<R>>,
+		(menu, menu_event_listeners): (Option<Menu>, Vec<GlobalMenuEventListener<R>>),
+		(invoke_responder, invoke_initialization_script): (Arc<InvokeResponder<R>>, String)
+	) -> Self {
+		// generate a random isolation key at runtime
+		#[cfg(feature = "isolation")]
+		if let Pattern::Isolation { ref mut key, .. } = &mut context.pattern {
+			*key = uuid::Uuid::new_v4().to_string();
+		}
+
+		Self {
+			inner: Arc::new(InnerWindowManager {
+				windows: Mutex::default(),
+				plugins: Mutex::new(plugins),
+				listeners: Listeners::default(),
+				state: Arc::new(state),
+				invoke_handler,
+				on_page_load,
+				config: Arc::new(context.config),
+				assets: context.assets,
+				default_window_icon: context.default_window_icon,
+				package_info: context.package_info,
+				pattern: context.pattern,
+				uri_scheme_protocols,
+				menu,
+				menu_event_listeners: Arc::new(menu_event_listeners),
+				window_event_listeners: Arc::new(window_event_listeners),
+				invoke_responder,
+				invoke_initialization_script
+			})
+		}
+	}
+
+	pub(crate) fn pattern(&self) -> &Pattern {
+		&self.inner.pattern
+	}
+
+	/// Get a locked handle to the windows.
+	pub(crate) fn windows_lock(&self) -> MutexGuard<'_, HashMap<String, Window<R>>> {
+		self.inner.windows.lock().expect("poisoned window manager")
+	}
+
+	/// State managed by the application.
+	pub(crate) fn state(&self) -> Arc<StateManager> {
+		self.inner.state.clone()
+	}
+
+	/// The invoke responder.
+	pub(crate) fn invoke_responder(&self) -> Arc<InvokeResponder<R>> {
+		self.inner.invoke_responder.clone()
+	}
+
+	/// Get the base path to serve data from.
+	///
+	/// * In dev mode, this will be based on the `devPath` configuration value.
+	/// * Otherwise, this will be based on the `distDir` configuration value.
+	#[cfg(custom_protocol)]
+	fn base_path(&self) -> &AppUrl {
+		&self.inner.config.build.dist_dir
+	}
+
+	#[cfg(dev)]
+	fn base_path(&self) -> &AppUrl {
+		&self.inner.config.build.dev_path
+	}
+
+	/// Get the base URL to use for webview requests.
+	///
+	/// In dev mode, this will be based on the `devPath` configuration value.
+	fn get_url(&self) -> Cow<'_, Url> {
+		match self.base_path() {
+			AppUrl::Url(WindowUrl::External(url)) => Cow::Borrowed(url),
+			_ => Cow::Owned(Url::parse("millennium://localhost").unwrap())
+		}
+	}
+
+	/// Get the origin as it will be seen in the webview.
+	fn get_browser_origin(&self) -> Cow<'_, str> {
+		match self.base_path() {
+			AppUrl::Url(WindowUrl::External(url)) => {
+				let mut url = url.to_string();
+				if url.ends_with('/') {
+					url.pop();
+				}
+				Cow::Owned(url)
+			}
+			_ => Cow::Owned(format_real_schema("millennium"))
+		}
+	}
+
+	fn csp(&self) -> Option<String> {
+		if cfg!(feature = "custom-protocol") {
+			self.inner.config.millennium.security.csp.clone()
+		} else {
+			self.inner
+				.config
+				.millennium
+				.security
+				.dev_csp
+				.clone()
+				.or_else(|| self.inner.config.millennium.security.csp.clone())
+		}
+	}
+
+	fn prepare_pending_window(
+		&self,
+		mut pending: PendingWindow<R>,
+		label: &str,
+		window_labels: &[String],
+		app_handle: AppHandle<R>
+	) -> crate::Result<PendingWindow<R>> {
+		let is_init_global = self.inner.config.build.with_global_millennium;
+		let plugin_init = self.inner.plugins.lock().expect("poisoned plugin store").initialization_script();
+
+		let pattern_init = PatternJavascript {
+			pattern: self.pattern().into()
+		}
+		.render_default(&Default::default())?;
+
+		let ipc_init = IpcJavascript {
+			isolation_origin: &match self.pattern() {
+				#[cfg(feature = "isolation")]
+				Pattern::Isolation { schema, .. } => crate::pattern::format_real_schema(schema),
+				_ => "".to_string()
+			}
+		}
+		.render_default(&Default::default())?;
+
+		let mut webview_attributes = pending.webview_attributes;
+
+		let mut window_labels = window_labels.to_vec();
+		let l = label.to_string();
+		if !window_labels.contains(&l) {
+			window_labels.push(l);
+		}
+		webview_attributes = webview_attributes
+			.initialization_script(&self.inner.invoke_initialization_script)
+			.initialization_script(&format!(
+				r#"
+          Object.defineProperty(window, '__MILLENNIUM_METADATA__', {{
+            value: {{
+              __windows: {window_labels_array}.map(function (label) {{ return {{ label: label }} }}),
+              __currentWindow: {{ label: {current_window_label} }}
+            }}
+          }})
+        "#,
+				window_labels_array = serde_json::to_string(&window_labels)?,
+				current_window_label = serde_json::to_string(&label)?,
+			))
+			.initialization_script(&self.initialization_script(&ipc_init.into_string(), &pattern_init.into_string(), &plugin_init, is_init_global)?);
+
+		#[cfg(feature = "isolation")]
+		if let Pattern::Isolation { schema, .. } = self.pattern() {
+			webview_attributes = webview_attributes.initialization_script(
+				&IsolationJavascript {
+					isolation_src: &crate::pattern::format_real_schema(schema),
+					style: millennium_utils::pattern::isolation::IFRAME_STYLE
+				}
+				.render_default(&Default::default())?
+				.into_string()
+			);
+		}
+
+		pending.webview_attributes = webview_attributes;
+
+		if !pending.window_builder.has_icon() {
+			if let Some(default_window_icon) = &self.inner.default_window_icon {
+				let icon = Icon::Raw(default_window_icon.clone());
+				pending.window_builder = pending.window_builder.icon(icon)?;
+			}
+		}
+
+		if pending.window_builder.get_menu().is_none() {
+			if let Some(menu) = &self.inner.menu {
+				pending = pending.set_menu(menu.clone());
+			}
+		}
+
+		let mut registered_scheme_protocols = Vec::new();
+
+		for (uri_scheme, protocol) in &self.inner.uri_scheme_protocols {
+			registered_scheme_protocols.push(uri_scheme.clone());
+			let protocol = protocol.clone();
+			let app_handle = Mutex::new(app_handle.clone());
+			pending.register_uri_scheme_protocol(uri_scheme.clone(), move |p| (protocol.protocol)(&app_handle.lock().unwrap(), p));
+		}
+
+		if !registered_scheme_protocols.contains(&"millennium".into()) {
+			pending.register_uri_scheme_protocol("millennium", self.prepare_uri_scheme_protocol());
+			registered_scheme_protocols.push("millennium".into());
+		}
+
+		#[cfg(protocol_asset)]
+		if !registered_scheme_protocols.contains(&"asset".into()) {
+			use tokio::io::{AsyncReadExt, AsyncSeekExt};
+			use url::Position;
+			let asset_scope = self.state().get::<crate::Scopes>().asset_protocol.clone();
+			let window_url = Url::parse(&pending.url).unwrap();
+			let window_origin = if cfg!(windows) && window_url.scheme() != "http" && window_url.scheme() != "https" {
+				format!("https://{}.localhost", window_url.scheme())
+			} else {
+				format!(
+					"{}://{}{}",
+					window_url.scheme(),
+					window_url.host().unwrap(),
+					if let Some(port) = window_url.port() {
+						format!(":{}", port)
+					} else {
+						"".into()
+					}
+				)
+			};
+			pending.register_uri_scheme_protocol("asset", move |request| {
+				let parsed_path = Url::parse(request.uri())?;
+				let filtered_path = &parsed_path[..Position::AfterPath];
+				#[cfg(target_os = "windows")]
+				let path = filtered_path.replace("asset://localhost/", "");
+				#[cfg(not(target_os = "windows"))]
+				let path = filtered_path.replace("asset://", "");
+				let path = percent_encoding::percent_decode(path.as_bytes()).decode_utf8_lossy().to_string();
+
+				if !asset_scope.is_allowed(&path) {
+					#[cfg(debug_assertions)]
+					eprintln!("asset protocol not configured to allow the path: {}", path);
+					return HttpResponseBuilder::new().status(403).body(Vec::new());
+				}
+
+				let path_ = path.clone();
+
+				let mut response = HttpResponseBuilder::new().header("Access-Control-Allow-Origin", &window_origin);
+
+				// handle 206 (partial range) http request
+				if let Some(range) = request.headers().get("range").and_then(|r| r.to_str().map(|r| r.to_string()).ok()) {
+					let (headers, status_code, data) = crate::async_runtime::safe_block_on(async move {
+						let mut headers = HashMap::new();
+						let mut buf = Vec::new();
+						// open the file
+						let mut file = match tokio::fs::File::open(path_.clone()).await {
+							Ok(file) => file,
+							Err(e) => {
+								#[cfg(debug_assertions)]
+								eprintln!("Failed to open asset: {}", e);
+								return (headers, 404, buf);
+							}
+						};
+						// Get the file size
+						let file_size = match file.metadata().await {
+							Ok(metadata) => metadata.len(),
+							Err(e) => {
+								#[cfg(debug_assertions)]
+								eprintln!("Failed to read asset metadata: {}", e);
+								return (headers, 404, buf);
+							}
+						};
+						// parse the range
+						let range = match crate::runtime::http::HttpRange::parse(
+							&if range.ends_with("-*") {
+								range.chars().take(range.len() - 1).collect::<String>()
+							} else {
+								range.clone()
+							},
+							file_size
+						) {
+							Ok(r) => r,
+							Err(e) => {
+								#[cfg(debug_assertions)]
+								eprintln!("Failed to parse range {}: {:?}", range, e);
+								return (headers, 400, buf);
+							}
+						};
+
+						// FIXME: Support multiple ranges
+						// let support only 1 range for now
+						let status_code = if let Some(range) = range.first() {
+							let mut real_length = range.length;
+							// prevent max_length;
+							// specially on webview2
+							if range.length > file_size / 3 {
+								// max size sent (400ko / request)
+								// as it's local file system we can afford to read more often
+								real_length = std::cmp::min(file_size - range.start, 1024 * 400);
+							}
+
+							// last byte we are reading, the length of the range include the last byte
+							// who should be skipped on the header
+							let last_byte = range.start + real_length - 1;
+
+							headers.insert("Connection", "Keep-Alive".into());
+							headers.insert("Accept-Ranges", "bytes".into());
+							headers.insert("Content-Length", real_length.to_string());
+							headers.insert("Content-Range", format!("bytes {}-{}/{}", range.start, last_byte, file_size));
+
+							if let Err(e) = file.seek(std::io::SeekFrom::Start(range.start)).await {
+								#[cfg(debug_assertions)]
+								eprintln!("Failed to seek file to {}: {}", range.start, e);
+								return (headers, 422, buf);
+							}
+
+							if let Err(e) = file.take(real_length).read_to_end(&mut buf).await {
+								#[cfg(debug_assertions)]
+								eprintln!("Failed read file: {}", e);
+								return (headers, 422, buf);
+							}
+							// partial content
+							206
+						} else {
+							200
+						};
+
+						(headers, status_code, buf)
+					});
+
+					for (k, v) in headers {
+						response = response.header(k, v);
+					}
+
+					let mime_type = MimeType::parse(&data, &path);
+					response.mimetype(&mime_type).status(status_code).body(data)
+				} else {
+					match crate::async_runtime::safe_block_on(async move { tokio::fs::read(path_).await }) {
+						Ok(data) => {
+							let mime_type = MimeType::parse(&data, &path);
+							response.mimetype(&mime_type).body(data)
+						}
+						Err(e) => {
+							#[cfg(debug_assertions)]
+							eprintln!("Failed to read file: {}", e);
+							response.status(404).body(Vec::new())
+						}
+					}
+				}
+			});
+		}
+
+		#[cfg(feature = "isolation")]
+		if let Pattern::Isolation {
+			assets,
+			schema,
+			key: _,
+			crypto_keys
+		} = &self.inner.pattern
+		{
+			let assets = assets.clone();
+			let schema_ = schema.clone();
+			let url_base = format!("{}://localhost", schema_);
+			let aes_gcm_key = *crypto_keys.aes_gcm().raw();
+
+			pending.register_uri_scheme_protocol(schema, move |request| match request_to_path(request, &url_base).as_str() {
+				"index.html" => match assets.get(&"index.html".into()) {
+					Some(asset) => {
+						let asset = String::from_utf8_lossy(asset.as_ref());
+						let template = millennium_utils::pattern::isolation::IsolationJavascriptRuntime {
+							runtime_aes_gcm_key: &aes_gcm_key
+						};
+						match template.render(asset.as_ref(), &Default::default()) {
+							Ok(asset) => HttpResponseBuilder::new().mimetype("text/html").body(asset.into_string().as_bytes().to_vec()),
+							Err(_) => HttpResponseBuilder::new().status(500).mimetype("text/plain").body(Vec::new())
+						}
+					}
+
+					None => HttpResponseBuilder::new().status(404).mimetype("text/plain").body(Vec::new())
+				},
+				_ => HttpResponseBuilder::new().status(404).mimetype("text/plain").body(Vec::new())
+			});
+		}
+
+		Ok(pending)
+	}
+
+	fn prepare_ipc_handler(&self, app_handle: AppHandle<R>) -> WebviewIpcHandler<R> {
+		let manager = self.clone();
+		Box::new(move |window, #[allow(unused_mut)] mut request| {
+			let window = Window::new(manager.clone(), window, app_handle.clone());
+
+			#[cfg(feature = "isolation")]
+			if let Pattern::Isolation { crypto_keys, .. } = manager.pattern() {
+				match RawIsolationPayload::try_from(request.as_str()).and_then(|raw| crypto_keys.decrypt(raw)) {
+					Ok(json) => request = json,
+					Err(e) => {
+						let error: crate::Error = e.into();
+						let _ = window.eval(&format!(r#"console.error({})"#, JsonValue::String(error.to_string())));
+						return;
+					}
+				}
+			}
+
+			match serde_json::from_str::<InvokePayload>(&request) {
+				Ok(message) => {
+					let _ = window.on_message(message);
+				}
+				Err(e) => {
+					let error: crate::Error = e.into();
+					let _ = window.eval(&format!(r#"console.error({})"#, JsonValue::String(error.to_string())));
+				}
+			}
+		})
+	}
+
+	pub fn get_asset(&self, mut path: String) -> Result<Asset, Box<dyn std::error::Error>> {
+		let assets = &self.inner.assets;
+		if path.ends_with('/') {
+			path.pop();
+		}
+		path = percent_encoding::percent_decode(path.as_bytes()).decode_utf8_lossy().to_string();
+		let path = if path.is_empty() {
+			// if the url is `millennium://localhost`, we should load `index.html`
+			"index.html".to_string()
+		} else {
+			// skip leading `/`
+			path.chars().skip(1).collect::<String>()
+		};
+		let is_html = path.ends_with(".html");
+
+		let mut asset_path = AssetKey::from(path.as_str());
+
+		let asset_response = assets
+			.get(&path.as_str().into())
+			.or_else(|| {
+				let fallback = format!("{}/index.html", path.as_str()).into();
+				let asset = assets.get(&fallback);
+				asset_path = fallback;
+				asset
+			})
+			.or_else(|| {
+				#[cfg(debug_assertions)]
+				eprintln!("Asset `{}` not found; fallback to index.html", path); // TODO log::error!
+				let fallback = AssetKey::from("index.html");
+				let asset = assets.get(&fallback);
+				asset_path = fallback;
+				asset
+			})
+			.ok_or_else(|| crate::Error::AssetNotFound(path.clone()))
+			.map(Cow::into_owned);
+
+		let mut csp_header = None;
+
+		match asset_response {
+			Ok(asset) => {
+				let final_data = if is_html {
+					let mut asset = String::from_utf8_lossy(&asset).into_owned();
+					if let Some(csp) = self.csp() {
+						csp_header.replace(set_csp(&mut asset, self.inner.assets.clone(), &asset_path, self, csp));
+					}
+
+					asset.as_bytes().to_vec()
+				} else {
+					asset
+				};
+				let mime_type = MimeType::parse(&final_data, &path);
+				Ok(Asset {
+					bytes: final_data.to_vec(),
+					mime_type,
+					csp_header
+				})
+			}
+			Err(e) => {
+				#[cfg(debug_assertions)]
+				eprintln!("{:?}", e); // TODO log::error!
+				Err(Box::new(e))
+			}
+		}
+	}
+
+	#[allow(clippy::type_complexity)]
+	fn prepare_uri_scheme_protocol(&self) -> Box<dyn Fn(&HttpRequest) -> Result<HttpResponse, Box<dyn std::error::Error>> + Send + Sync> {
+		let manager = self.clone();
+		Box::new(move |request| {
+			let path = request
+				.uri()
+				.split(&['?', '#'][..])
+				// ignore query string and fragment
+				.next()
+				.unwrap()
+				.to_string()
+				.replace("millennium://localhost", "");
+			let asset = manager.get_asset(path)?;
+			let mut response = HttpResponseBuilder::new().mimetype(&asset.mime_type);
+			if let Some(csp) = asset.csp_header {
+				response = response.header("Content-Security-Policy", csp);
+			}
+			response.body(asset.bytes)
+		})
+	}
+
+	fn prepare_file_drop(&self, app_handle: AppHandle<R>) -> FileDropHandler<R> {
+		let manager = self.clone();
+		Box::new(move |event, window| {
+			let window = Window::new(manager.clone(), window, app_handle.clone());
+			let _ = match event {
+				FileDropEvent::Hovered(paths) => window.emit_and_trigger("millennium://file-drop-hover", paths),
+				FileDropEvent::Dropped(paths) => window.emit_and_trigger("millennium://file-drop", paths),
+				FileDropEvent::Cancelled => window.emit_and_trigger("millennium://file-drop-cancelled", ()),
+				_ => unimplemented!()
+			};
+			true
+		})
+	}
+
+	fn initialization_script(
+		&self,
+		ipc_script: &str,
+		pattern_script: &str,
+		plugin_initialization_script: &str,
+		with_global_millennium: bool
+	) -> crate::Result<String> {
+		#[derive(Template)]
+		#[default_template("../scripts/init.js")]
+		struct InitJavascript<'a> {
+			origin: Cow<'a, str>,
+			#[raw]
+			pattern_script: &'a str,
+			#[raw]
+			ipc_script: &'a str,
+			#[raw]
+			bundle_script: &'a str,
+			// A function to immediately listen to an event.
+			#[raw]
+			listen_function: &'a str,
+			#[raw]
+			core_script: &'a str,
+			#[raw]
+			event_initialization_script: &'a str,
+			#[raw]
+			plugin_initialization_script: &'a str,
+			#[raw]
+			freeze_prototype: &'a str
+		}
+
+		let bundle_script = if with_global_millennium { include_str!("../scripts/bundle.js") } else { "" };
+
+		let freeze_prototype = if self.inner.config.millennium.security.freeze_prototype {
+			include_str!("../scripts/freeze_prototype.js")
+		} else {
+			""
+		};
+
+		InitJavascript {
+			origin: self.get_browser_origin(),
+			pattern_script,
+			ipc_script,
+			bundle_script,
+			listen_function: &format!(
+				"function listen(eventName, cb) {{ {} }}",
+				crate::event::listen_js(
+					self.event_listeners_object_name(),
+					"eventName".into(),
+					0,
+					None,
+					"window['_' + window.__MILLENNIUM__.transformCallback(cb) ]".into()
+				)
+			),
+			core_script: include_str!("../scripts/core.js"),
+			event_initialization_script: &self.event_initialization_script(),
+			plugin_initialization_script,
+			freeze_prototype
+		}
+		.render_default(&Default::default())
+		.map(|s| s.into_string())
+		.map_err(Into::into)
+	}
+
+	fn event_initialization_script(&self) -> String {
+		return format!(
+			"
+      Object.defineProperty(window, '{function}', {{
+        value: function (eventData) {{
+          const listeners = (window['{listeners}'] && window['{listeners}'][eventData.event]) || []
+
+          for (let i = listeners.length - 1; i >= 0; i--) {{
+            const listener = listeners[i]
+            if (listener.windowLabel === null || listener.windowLabel === eventData.windowLabel) {{
+              eventData.id = listener.id
+              listener.handler(eventData)
+            }}
+          }}
+        }}
+      }});
+    ",
+			function = self.event_emit_function_name(),
+			listeners = self.event_listeners_object_name()
+		);
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use super::WindowManager;
+	use crate::{generate_context, plugin::PluginStore, MillenniumWebview, StateManager};
+
+	#[test]
+	fn check_get_url() {
+		let context = generate_context!("test/fixture/.millenniumrc", crate);
+		let manager: WindowManager<MillenniumWebview> = WindowManager::with_handlers(
+			context,
+			PluginStore::default(),
+			Box::new(|_| ()),
+			Box::new(|_, _| ()),
+			Default::default(),
+			StateManager::new(),
+			Default::default(),
+			Default::default(),
+			(std::sync::Arc::new(|_, _, _, _| ()), "".into())
+		);
+
+		#[cfg(custom_protocol)]
+		assert_eq!(manager.get_url().to_string(), "millennium://localhost");
+
+		#[cfg(dev)]
+		assert_eq!(manager.get_url().to_string(), "http://localhost:4000/");
+	}
+}
+
+impl<R: Runtime> WindowManager<R> {
+	pub fn run_invoke_handler(&self, invoke: Invoke<R>) {
+		(self.inner.invoke_handler)(invoke);
+	}
+
+	pub fn run_on_page_load(&self, window: Window<R>, payload: PageLoadPayload) {
+		(self.inner.on_page_load)(window.clone(), payload.clone());
+		self.inner.plugins.lock().expect("poisoned plugin store").on_page_load(window, payload);
+	}
+
+	pub fn extend_api(&self, invoke: Invoke<R>) {
+		self.inner.plugins.lock().expect("poisoned plugin store").extend_api(invoke);
+	}
+
+	pub fn initialize_plugins(&self, app: &AppHandle<R>) -> crate::Result<()> {
+		self.inner
+			.plugins
+			.lock()
+			.expect("poisoned plugin store")
+			.initialize(app, &self.inner.config.plugins)
+	}
+
+	pub fn prepare_window(&self, app_handle: AppHandle<R>, mut pending: PendingWindow<R>, window_labels: &[String]) -> crate::Result<PendingWindow<R>> {
+		if self.windows_lock().contains_key(&pending.label) {
+			return Err(crate::Error::WindowLabelAlreadyExists(pending.label));
+		}
+		#[allow(unused_mut)] // mut url only for the data-url parsing
+		let (is_local, mut url) = match &pending.webview_attributes.url {
+			WindowUrl::App(path) => {
+				let url = self.get_url();
+				(
+					true,
+					// ignore "index.html" just to simplify the url
+					if path.to_str() != Some("index.html") {
+						url.join(&*path.to_string_lossy())
+							.map_err(crate::Error::InvalidUrl)
+							// this will never fail
+							.unwrap()
+					} else {
+						url.into_owned()
+					}
+				)
+			}
+			WindowUrl::External(url) => (url.scheme() == "millennium", url.clone()),
+			_ => unimplemented!()
+		};
+
+		#[cfg(not(feature = "window-data-url"))]
+		if url.scheme() == "data" {
+			return Err(crate::Error::InvalidWindowUrl(
+				"data URLs are not supported without the `window-data-url` feature."
+			));
+		}
+
+		#[cfg(feature = "window-data-url")]
+		if let Some(csp) = self.csp() {
+			if url.scheme() == "data" {
+				if let Ok(data_url) = data_url::DataUrl::process(url.as_str()) {
+					let (body, _) = data_url.decode_to_vec().unwrap();
+					let html = String::from_utf8_lossy(&body).into_owned();
+					// naive way to check if it's an html
+					if html.contains('<') && html.contains('>') {
+						let mut document = millennium_utils::html::parse(html);
+						millennium_utils::html::inject_csp(&mut document, &csp);
+						url.set_path(&format!("text/html,{}", document.to_string()));
+					}
+				}
+			}
+		}
+
+		pending.url = url.to_string();
+
+		if is_local {
+			let label = pending.label.clone();
+			pending = self.prepare_pending_window(pending, &label, window_labels, app_handle.clone())?;
+			pending.ipc_handler = Some(self.prepare_ipc_handler(app_handle.clone()));
+		}
+
+		if pending.webview_attributes.file_drop_handler_enabled {
+			pending.file_drop_handler = Some(self.prepare_file_drop(app_handle));
+		}
+
+		// in `Windows`, we need to force a data_directory
+		// but we do respect user-specification
+		#[cfg(any(target_os = "linux", target_os = "windows"))]
+		if pending.webview_attributes.data_directory.is_none() {
+			let local_app_data = resolve_path(
+				&self.inner.config,
+				&self.inner.package_info,
+				self.inner.state.get::<crate::Env>().inner(),
+				&self.inner.config.millennium.bundle.identifier,
+				Some(BaseDirectory::LocalData)
+			);
+			if let Ok(user_data_dir) = local_app_data {
+				pending.webview_attributes.data_directory = Some(user_data_dir);
+			}
+		}
+
+		// make sure the directory is created and available to prevent a panic
+		if let Some(user_data_dir) = &pending.webview_attributes.data_directory {
+			if !user_data_dir.exists() {
+				create_dir_all(user_data_dir)?;
+			}
+		}
+
+		Ok(pending)
+	}
+
+	pub fn attach_window(&self, app_handle: AppHandle<R>, window: DetachedWindow<R>) -> Window<R> {
+		let window = Window::new(self.clone(), window, app_handle);
+
+		let window_ = window.clone();
+		let window_event_listeners = self.inner.window_event_listeners.clone();
+		let manager = self.clone();
+		window.on_window_event(move |event| {
+			let _ = on_window_event(&window_, &manager, event);
+			for handler in window_event_listeners.iter() {
+				handler(GlobalWindowEvent {
+					window: window_.clone(),
+					event: event.clone()
+				});
+			}
+		});
+		{
+			let window_ = window.clone();
+			let menu_event_listeners = self.inner.menu_event_listeners.clone();
+			window.on_menu_event(move |event| {
+				let _ = on_menu_event(&window_, &event);
+				for handler in menu_event_listeners.iter() {
+					handler(WindowMenuEvent {
+						window: window_.clone(),
+						menu_item_id: event.menu_item_id.clone()
+					});
+				}
+			});
+		}
+
+		// insert the window into our manager
+		{
+			self.windows_lock().insert(window.label().to_string(), window.clone());
+		}
+
+		// let plugins know that a new window has been added to the manager
+		{
+			self.inner.plugins.lock().expect("poisoned plugin store").created(window.clone());
+		}
+
+		window
+	}
+
+	pub(crate) fn on_window_close(&self, label: &str) {
+		self.windows_lock().remove(label);
+	}
+
+	pub fn emit_filter<S, F>(&self, event: &str, source_window_label: Option<&str>, payload: S, filter: F) -> crate::Result<()>
+	where
+		S: Serialize + Clone,
+		F: Fn(&Window<R>) -> bool
+	{
+		assert_event_name_is_valid(event);
+		self.windows_lock()
+			.values()
+			.filter(|&w| filter(w))
+			.try_for_each(|window| window.emit_internal(event, source_window_label, payload.clone()))
+	}
+
+	pub fn labels(&self) -> HashSet<String> {
+		self.windows_lock().keys().cloned().collect()
+	}
+
+	pub fn config(&self) -> Arc<Config> {
+		self.inner.config.clone()
+	}
+
+	pub fn package_info(&self) -> &PackageInfo {
+		&self.inner.package_info
+	}
+
+	pub fn unlisten(&self, handler_id: EventHandler) {
+		self.inner.listeners.unlisten(handler_id)
+	}
+
+	pub fn trigger(&self, event: &str, window: Option<String>, data: Option<String>) {
+		assert_event_name_is_valid(event);
+		self.inner.listeners.trigger(event, window, data)
+	}
+
+	pub fn listen<F: Fn(Event) + Send + 'static>(&self, event: String, window: Option<String>, handler: F) -> EventHandler {
+		assert_event_name_is_valid(&event);
+		self.inner.listeners.listen(event, window, handler)
+	}
+
+	pub fn once<F: FnOnce(Event) + Send + 'static>(&self, event: String, window: Option<String>, handler: F) -> EventHandler {
+		assert_event_name_is_valid(&event);
+		self.inner.listeners.once(event, window, handler)
+	}
+
+	pub fn event_listeners_object_name(&self) -> String {
+		self.inner.listeners.listeners_object_name()
+	}
+
+	pub fn event_emit_function_name(&self) -> String {
+		self.inner.listeners.function_name()
+	}
+
+	pub fn get_window(&self, label: &str) -> Option<Window<R>> {
+		self.windows_lock().get(label).cloned()
+	}
+
+	pub fn windows(&self) -> HashMap<String, Window<R>> {
+		self.windows_lock().clone()
+	}
+}
+
+fn on_window_event<R: Runtime>(window: &Window<R>, manager: &WindowManager<R>, event: &WindowEvent) -> crate::Result<()> {
+	match event {
+		WindowEvent::Resized(size) => window.emit_and_trigger(WINDOW_RESIZED_EVENT, size)?,
+		WindowEvent::Moved(position) => window.emit_and_trigger(WINDOW_MOVED_EVENT, position)?,
+		WindowEvent::CloseRequested { label: _, signal_tx } => {
+			if window.has_js_listener(Some(window.label().into()), WINDOW_CLOSE_REQUESTED_EVENT) {
+				signal_tx.send(true).unwrap();
+			}
+			window.emit_and_trigger(WINDOW_CLOSE_REQUESTED_EVENT, ())?;
+		}
+		WindowEvent::Destroyed => {
+			window.emit_and_trigger(WINDOW_DESTROYED_EVENT, ())?;
+			let label = window.label();
+			for window in manager.inner.windows.lock().unwrap().values() {
+				window.eval(&format!(
+					r#"window.__MILLENNIUM_METADATA__.__windows = window.__MILLENNIUM_METADATA__.__windows.filter(w => w.label !== "{}");"#,
+					label
+				))?;
+			}
+		}
+		WindowEvent::Focused(focused) => window.emit_and_trigger(if *focused { WINDOW_FOCUS_EVENT } else { WINDOW_BLUR_EVENT }, ())?,
+		WindowEvent::ScaleFactorChanged {
+			scale_factor, new_inner_size, ..
+		} => window.emit_and_trigger(
+			WINDOW_SCALE_FACTOR_CHANGED_EVENT,
+			ScaleFactorChanged {
+				scale_factor: *scale_factor,
+				size: *new_inner_size
+			}
+		)?,
+		_ => unimplemented!()
+	}
+	Ok(())
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ScaleFactorChanged {
+	scale_factor: f64,
+	size: PhysicalSize<u32>
+}
+
+fn on_menu_event<R: Runtime>(window: &Window<R>, event: &MenuEvent) -> crate::Result<()> {
+	window.emit_and_trigger(MENU_EVENT, event.menu_item_id.clone())
+}
+
+#[cfg(feature = "isolation")]
+fn request_to_path(request: &millennium_runtime::http::Request, replace: &str) -> String {
+	let mut path = request
+		.uri()
+		.split(&['?', '#'][..])
+		// ignore query string
+		.next()
+		.unwrap()
+		.to_string()
+		.replace(replace, "");
+
+	if path.ends_with('/') {
+		path.pop();
+	}
+
+	let path = percent_encoding::percent_decode(path.as_bytes()).decode_utf8_lossy().to_string();
+
+	if path.is_empty() {
+		// if the url has no path, we should load `index.html`
+		"index.html".to_string()
+	} else {
+		// skip leading `/`
+		path.chars().skip(1).collect()
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::replace_with_callback;
+
+	#[test]
+	fn string_replace_with_callback() {
+		let mut millennium_index = 0;
+		for (src, pattern, replacement, result) in [(
+			"millennium is awesome, millennium is amazing",
+			"millennium",
+			|| {
+				millennium_index += 1;
+				millennium_index.to_string()
+			},
+			"1 is awesome, 2 is amazing"
+		)] {
+			assert_eq!(replace_with_callback(src, pattern, replacement), result);
+		}
+	}
+}

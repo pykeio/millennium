@@ -1,0 +1,10 @@
+{
+	"rust-analyzer.cache.warmup": true,
+	"rust-analyzer.diagnostics.enableExperimental": true,
+	"[rust]": {
+		"editor.semanticHighlighting.enabled": true
+	},
+	"rust-analyzer.diagnostics.disabled": [
+		"unresolved-macro-call"
+    ]
+}
