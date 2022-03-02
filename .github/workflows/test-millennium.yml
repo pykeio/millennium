@@ -1,13 +1,13 @@
 name: Test Millennium
 on:
-	push:
-		branches:
-			- master
-			- main
-	pull_request:
-		paths:
-			- '.github/workflows/test-millennium.yml'
-			- 'src/**'
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    paths:
+      - '.github/workflows/test-millennium.yml'
+      - 'src/**'
 env:
 	RUST_BACKTRACE: 1
   CARGO_INCREMENTAL: 0 # This is set to 0 by rust-cache.
