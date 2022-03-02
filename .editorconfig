@@ -16,3 +16,7 @@ max_line_length = 160
 
 [*.{html,css,js,ts}]
 quote_type = single
+
+[*.yml]
+indent_style = space
+tab_width = 2
