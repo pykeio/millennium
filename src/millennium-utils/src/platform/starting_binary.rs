@@ -73,7 +73,16 @@ impl StartingBinary {
 	/// symlink protections.
 	#[cfg(all(target_os = "macos", not(feature = "process-relaunch-dangerous-allow-symlink-macos")))]
 	fn has_symlink(path: &Path) -> Option<&Path> {
-		path.ancestors()
-			.find(|ancestor| matches!(ancestor.symlink_metadata().as_ref().map(std::fs::Metadata::is_symlink), Ok(true)))
+		path.ancestors().find(|ancestor| {
+			matches!(
+				ancestor
+					.symlink_metadata()
+					.as_ref()
+					.map(std::fs::Metadata::file_type)
+					.as_ref()
+					.map(std::fs::FileType::is_symlink),
+				Ok(true)
+			)
+		})
 	}
 }
