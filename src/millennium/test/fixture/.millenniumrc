@@ -1,26 +1,26 @@
 {
-  "build": {
-    "distDir": "../dist",
-    "devPath": "http://localhost:4000"
-  },
-  "millennium": {
-    "bundle": {
-      "identifier": "studio.tauri.example",
-      "active": true
-    },
-    "allowlist": {
-      "all": true
-    },
-    "windows": [
-      {
-        "title": "Tauri App"
-      }
-    ],
-    "security": {
-      "csp": "default-src blob: data: filesystem: ws: wss: http: https: tauri: 'unsafe-eval' 'unsafe-inline' 'self'"
-    },
-    "updater": {
-      "active": false
-    }
-  }
+	"build": {
+		"distDir": "./src",
+		"devPath": "http://localhost:4000"
+	},
+	"millennium": {
+		"bundle": {
+			"identifier": "com.millennium.example",
+			"active": true
+		},
+		"allowlist": {
+			"all": true
+		},
+		"windows": [
+			{
+				"title": "Millennium App"
+			}
+		],
+		"security": {
+			"csp": "default-src blob: data: filesystem: ws: wss: http: https: millennium: 'unsafe-eval' 'unsafe-inline' 'self'"
+		},
+		"updater": {
+			"active": false
+		}
+	}
 }

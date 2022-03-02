@@ -556,7 +556,7 @@ impl<R: Runtime> App<R> {
 /// ```rust,no_run
 /// millennium::Builder::default()
 ///   // on an actual app, remove the string argument
-///   .run(Millennium::generate_context!("test/fixture/.millenniumrc"))
+///   .run(millennium::generate_context!("test/fixture/.millenniumrc"))
 ///   .expect("error while running Millennium application");
 /// ```
 #[allow(clippy::type_complexity)]

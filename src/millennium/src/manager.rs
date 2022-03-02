@@ -134,7 +134,7 @@ fn replace_with_callback<F: FnMut() -> String>(original: &str, pattern: &str, mu
 	let mut last_end = 0;
 	for (start, part) in original.match_indices(pattern) {
 		// make sure this is whole word
-		if original.as_bytes()[start + 1] != b' ' {
+		if original.as_bytes()[start + part.len()] != b' ' {
 			continue;
 		}
 
@@ -844,7 +844,7 @@ impl<R: Runtime> WindowManager<R> {
 	}
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(feature = "rust_analyzer_hack")))]
 mod test {
 	use super::WindowManager;
 	use crate::{generate_context, plugin::PluginStore, MillenniumWebview, StateManager};

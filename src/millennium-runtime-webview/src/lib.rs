@@ -87,7 +87,7 @@ use millennium_webview::{
 	webview::{FileDropEvent as MillenniumFileDropEvent, WebContext, WebView, WebViewBuilder}
 };
 use uuid::Uuid;
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "rust_analyzer_hack")))]
 use webview2_com::FocusChangedEventHandler;
 #[cfg(windows)]
 use windows::Win32::{Foundation::HWND, System::WinRT::EventRegistrationToken};
@@ -1521,7 +1521,7 @@ impl Runtime for MillenniumWebview {
 			pending
 		)?;
 
-		#[cfg(target_os = "windows")]
+		#[cfg(all(target_os = "windows", not(feature = "rust_analyzer_hack")))]
 		{
 			let id = webview.inner.window().id();
 			if let WindowHandle::Webview(ref webview) = webview.inner {
