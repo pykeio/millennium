@@ -1,0 +1,9 @@
+{
+	"recommendations": [
+		"matklad.rust-analyzer",
+		"dustypomerleau.rust-syntax"
+	],
+	"unwantedRecommendations": [
+		"rust-lang.rust"
+	]
+}

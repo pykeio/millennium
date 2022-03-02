@@ -9,7 +9,7 @@ on:
       - '.github/workflows/test-millennium.yml'
       - 'src/**'
 env:
-	RUST_BACKTRACE: 1
+  RUST_BACKTRACE: 1
   CARGO_INCREMENTAL: 0 # This is set to 0 by rust-cache.
   CARGO_PROFILE_DEV_DEBUG: 0 # This would add unnecessary bloat to the target folder, decreasing cache efficiency.
 jobs:
