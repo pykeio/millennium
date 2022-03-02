@@ -109,20 +109,20 @@ impl Cmd {
 				let program = PathBuf::from(program);
 				let program_as_string = program.display().to_string();
 				let program_no_ext_as_string = program.with_extension("").display().to_string();
-				let is_configured = context
+				let configured_sidecar = context
 					.config
 					.millennium
 					.bundle
 					.external_bin
 					.as_ref()
-					.map(|bins| bins.iter().any(|b| b == &program_as_string || b == &program_no_ext_as_string))
+					.map(|bins| bins.iter().find(|b| b == &&program_as_string || b == &&program_no_ext_as_string))
 					.unwrap_or_default();
-				if is_configured {
+				if let Some(sidecar) = configured_sidecar {
 					context
 						.window
 						.state::<Scopes>()
 						.shell
-						.prepare(&program.to_string_lossy(), args, true)
+						.prepare_sidecar(&program.to_string_lossy(), sidecar, args)
 						.map_err(crate::error::into_anyhow)?
 				} else {
 					return Err(crate::Error::SidecarNotAllowed(program).into_anyhow());
@@ -132,7 +132,7 @@ impl Cmd {
 			#[cfg(not(shell_execute))]
 			return Err(crate::Error::ApiNotAllowlisted("shell > execute".to_string()).into_anyhow());
 			#[cfg(shell_execute)]
-			match context.window.state::<Scopes>().shell.prepare(&program, args, false) {
+			match context.window.state::<Scopes>().shell.prepare(&program, args) {
 				Ok(cmd) => cmd,
 				Err(e) => {
 					#[cfg(debug_assertions)]
