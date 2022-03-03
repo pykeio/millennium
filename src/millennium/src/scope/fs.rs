@@ -14,7 +14,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{fmt, path::Path};
+use std::{
+	fmt,
+	path::{Path, PathBuf}
+};
 
 use glob::Pattern;
 use millennium_utils::{
@@ -44,6 +47,7 @@ impl Scope {
 		let mut allow_patterns = Vec::new();
 		for path in &scope.0 {
 			if let Ok(path) = parse_path(config, package_info, env, path) {
+				let path: PathBuf = path.components().collect();
 				allow_patterns.push(Pattern::new(&path.to_string_lossy()).expect("invalid glob pattern"));
 				#[cfg(windows)]
 				{
@@ -64,6 +68,7 @@ impl Scope {
 		};
 
 		if let Ok(path) = path {
+			let path: PathBuf = path.components().collect();
 			let allowed = self.allow_patterns.iter().any(|p| p.matches_path(&path));
 			allowed
 		} else {
