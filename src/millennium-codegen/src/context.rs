@@ -55,7 +55,7 @@ fn load_csp(document: &mut NodeRef, key: &AssetKey, csp_hashes: &mut CspHashes) 
 }
 
 fn map_core_assets(options: &AssetOptions) -> impl Fn(&AssetKey, &Path, &mut Vec<u8>, &mut CspHashes) -> Result<(), EmbeddedAssetsError> {
-	#[cfg(feature = "isolation")]
+	#[cfg(any(feature = "isolation", feature = "__isolation-docs"))]
 	let pattern = millennium_utils::html::PatternObject::from(&options.pattern);
 	let csp = options.csp;
 	move |key, path, input, csp_hashes| {
@@ -65,7 +65,7 @@ fn map_core_assets(options: &AssetOptions) -> impl Fn(&AssetKey, &Path, &mut Vec
 			if csp {
 				load_csp(&mut document, key, csp_hashes);
 
-				#[cfg(feature = "isolation")]
+				#[cfg(any(feature = "isolation", feature = "__isolation-docs"))]
 				if let millennium_utils::html::PatternObject::Isolation { .. } = &pattern {
 					// create the csp for the isolation iframe styling now, to make the runtime less
 					// complex
@@ -82,7 +82,7 @@ fn map_core_assets(options: &AssetOptions) -> impl Fn(&AssetKey, &Path, &mut Vec
 	}
 }
 
-#[cfg(feature = "isolation")]
+#[cfg(any(feature = "isolation", feature = "__isolation-docs"))]
 fn map_isolation(_options: &AssetOptions, dir: PathBuf) -> impl Fn(&AssetKey, &Path, &mut Vec<u8>, &mut CspHashes) -> Result<(), EmbeddedAssetsError> {
 	move |_key, path, input, _csp_hashes| {
 		if path.extension() == Some(OsStr::new("html")) {
@@ -233,7 +233,7 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 
 	let pattern = match &options.pattern {
 		PatternKind::Brownfield => quote!(#root::Pattern::Brownfield(std::marker::PhantomData)),
-		#[cfg(feature = "isolation")]
+		#[cfg(any(feature = "isolation", feature = "__isolation-docs"))]
 		PatternKind::Isolation { dir } => {
 			let dir = config_parent.join(dir);
 			if !dir.exists() {

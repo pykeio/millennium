@@ -15,15 +15,15 @@ repository = "https://github.com/pykeio/millennium"
 version = "1.0.0-rc.3"
 
 [package.metadata.docs.rs]
-default-features = false
+no-default-features = true
 features = [
 	"compression",
 	"millennium_webview",
-	"isolation",
+	"__isolation-docs",
 	"custom-protocol",
 	"api-all",
 	"cli",
-	"updater",
+	"__updater-docs",
 	"system-tray",
 	"devtools",
 	"dox"
@@ -59,7 +59,7 @@ serde_repr = "0.1"
 state = "0.5"
 tar = "0.4"
 tempfile = "3"
-zip = "0.5"
+zip = { version = "0.5", optional = true }
 ignore = "0.4"
 either = "1.6"
 flate2 = "1.0"
@@ -108,19 +108,23 @@ quickcheck = "1.0.3"
 quickcheck_macros = "1.0.0"
 serde = { version = "1.0", features = [ "derive" ] }
 serde_json = "1.0"
-millennium = { path = "." }
+millennium = { path = ".", default-features = false, features = [ "millennium_webview" ] }
 tokio-test = "0.4.2"
 tokio = { version = "1.16", features = [ "full" ] }
 
 [features]
-default = [ "millennium_webview", "compression" ]
+default = [ "millennium_webview", "compression", "objc-exception" ]
 compression = [ "millennium-macros/compression", "millennium-utils/compression" ]
 millennium_webview = [ "millennium-runtime-webview" ]
+objc-exception = [ "millennium-runtime-webview/objc-exception" ]
 isolation = [ "millennium-utils/isolation", "millennium-macros/isolation" ]
+__isolation-docs = [ "millennium-utils/__isolation-docs", "millennium-macros/__isolation-docs" ]
 custom-protocol = [ "millennium-macros/custom-protocol" ]
-updater = [ "minisign-verify", "base64", "http-api", "dialog-ask" ]
+updater = [ "minisign-verify", "base64", "http-api", "dialog-ask", "fs-extract-api" ]
+__updater-docs = [ "minisign-verify", "base64", "http-api", "dialog-ask" ]
 http-api = [ "attohttpc" ]
 shell-open-api = [ "open", "regex", "millennium-macros/shell-scope" ]
+fs-extract-api = [ "zip" ]
 reqwest-client = [ "reqwest", "bytes" ]
 command = [ "shared_child", "os_pipe", "memchr" ]
 dialog = [ "rfd" ]
@@ -130,23 +134,23 @@ system-tray = [ "millennium-runtime/system-tray", "millennium-runtime-webview/sy
 devtools = [ "millennium-runtime/devtools", "millennium-runtime-webview/devtools" ]
 dox = [ "millennium-runtime-webview/dox" ]
 macos-private-api = [
-  "millennium-runtime/macos-private-api",
-  "millennium-runtime-webview/macos-private-api"
+	"millennium-runtime/macos-private-api",
+	"millennium-runtime-webview/macos-private-api"
 ]
 window-data-url = [ "data-url" ]
 api-all = [
-  "clipboard-all",
-  "dialog-all",
-  "fs-all",
-  "global-shortcut-all",
-  "http-all",
-  "notification-all",
-  "os-all",
-  "path-all",
-  "process-all",
-  "protocol-all",
-  "shell-all",
-  "window-all"
+	"clipboard-all",
+	"dialog-all",
+	"fs-all",
+	"global-shortcut-all",
+	"http-all",
+	"notification-all",
+	"os-all",
+	"path-all",
+	"process-all",
+	"protocol-all",
+	"shell-all",
+	"window-all"
 ]
 clipboard-all = [ "clipboard-write-text", "clipboard-read-text" ]
 clipboard-read-text = [ ]
@@ -158,14 +162,14 @@ dialog-message = [ "dialog" ]
 dialog-open = [ "dialog" ]
 dialog-save = [ "dialog" ]
 fs-all = [
-  "fs-copy-file",
-  "fs-create-dir",
-  "fs-read-file",
-  "fs-read-dir",
-  "fs-remove-dir",
-  "fs-remove-file",
-  "fs-rename-file",
-  "fs-write-file"
+	"fs-copy-file",
+	"fs-create-dir",
+	"fs-read-file",
+	"fs-read-dir",
+	"fs-remove-dir",
+	"fs-remove-file",
+	"fs-rename-file",
+	"fs-write-file"
 ]
 fs-copy-file = [ ]
 fs-create-dir = [ ]
@@ -192,30 +196,30 @@ shell-execute = [ "command", "regex", "millennium-macros/shell-scope" ]
 shell-sidecar = [ "command", "regex", "millennium-macros/shell-scope" ]
 shell-open = [ "shell-open-api" ]
 window-all = [
-  "window-create",
-  "window-center",
-  "window-request-user-attention",
-  "window-set-resizable",
-  "window-set-title",
-  "window-maximize",
-  "window-unmaximize",
-  "window-minimize",
-  "window-unminimize",
-  "window-show",
-  "window-hide",
-  "window-close",
-  "window-set-decorations",
-  "window-set-always-on-top",
-  "window-set-size",
-  "window-set-min-size",
-  "window-set-max-size",
-  "window-set-position",
-  "window-set-fullscreen",
-  "window-set-focus",
-  "window-set-icon",
-  "window-set-skip-taskbar",
-  "window-start-dragging",
-  "window-print"
+	"window-create",
+	"window-center",
+	"window-request-user-attention",
+	"window-set-resizable",
+	"window-set-title",
+	"window-maximize",
+	"window-unmaximize",
+	"window-minimize",
+	"window-unminimize",
+	"window-show",
+	"window-hide",
+	"window-close",
+	"window-set-decorations",
+	"window-set-always-on-top",
+	"window-set-size",
+	"window-set-min-size",
+	"window-set-max-size",
+	"window-set-position",
+	"window-set-fullscreen",
+	"window-set-focus",
+	"window-set-icon",
+	"window-set-skip-taskbar",
+	"window-start-dragging",
+	"window-print"
 ]
 window-create = [ ]
 window-center = [ ]

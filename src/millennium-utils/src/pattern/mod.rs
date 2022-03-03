@@ -15,5 +15,5 @@
 // limitations under the License.
 
 /// Handling the Millennium isolation pattern.
-#[cfg(feature = "isolation")]
+#[cfg(any(feature = "isolation", feature = "__isolation-docs"))]
 pub mod isolation;

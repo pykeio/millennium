@@ -30,5 +30,6 @@ uuid = { version = "0.8", features = [ "v4" ] }
 default = [ "compression" ]
 compression = [ "zstd", "millennium-utils/compression" ]
 isolation = [ "millennium-utils/isolation" ]
+__isolation-docs = [ "millennium-utils/__isolation-docs" ]
 shell-scope = [ "regex" ]
 config-json5 = [ "millennium-utils/config-json5" ]
