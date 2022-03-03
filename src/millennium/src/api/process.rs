@@ -20,11 +20,11 @@ use std::path::PathBuf;
 
 use crate::Env;
 
-#[cfg(feature = "command")]
-#[cfg_attr(doc_cfg, doc(cfg(feature = "command")))]
+#[cfg(feature = "process-command-api")]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "process-command-api")))]
 mod command;
-#[cfg(feature = "command")]
-#[cfg_attr(doc_cfg, doc(cfg(feature = "command")))]
+#[cfg(feature = "process-command-api")]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "process-command-api")))]
 pub use command::*;
 
 /// Finds the current running binary's path.
