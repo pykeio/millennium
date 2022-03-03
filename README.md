@@ -10,6 +10,8 @@ Millennium is an experimental cross-platform GUI framework written in Rust. With
 
 Millennium is a fork of [Tauri](https://tauri.studio/) and its companion libraries, [Tao](https://github.com/tauri-apps/tao/) and [WRY](https://github.com/tauri-apps/wry). We have unified the 3 libraries into one repo, heavily modified the API and made other large changes suitable for [Allie Project](https://github.com/allie-project/) and [pyke](https://github.com/pykeio/)'s internal projects. You should probably use Tauri for your own projects as it has a much larger community. Commits from Tauri, Tao, and WRY will be ported to Millennium after each release of Tauri.
 
-* [**tao**](https://github.com/tauri-apps/tao) @ [`19d7887`](https://github.com/tauri-apps/tao/tree/19d788700687515f0f854e9bf53fd9b628f9640e/)
-* [**wry**](https://github.com/tauri-apps/wry) @ [`d3d03dc`](https://github.com/tauri-apps/tao/tree/d3d03dc247bc0a45328b5d471877538bc740f51a/)
-* [**tauri**](https://github.com/tauri-apps/tauri) @ [`b10a7cf`](https://github.com/tauri-apps/tauri/tree/b10a7cfa00b50019939d2b063a81584a73d81284/)
+## Upstream
+
+* [**tao**](https://github.com/tauri-apps/tao) @ [`11dac10`](https://github.com/tauri-apps/tao/tree/11dac10241330c30aae660a2621d43ee5eb3775d/)
+* [**wry**](https://github.com/tauri-apps/wry) @ [`742a8cb`](https://github.com/tauri-apps/tao/tree/742a8cb87802b2964b2e888d73347777b9164f77/)
+* [**tauri**](https://github.com/tauri-apps/tauri) @ [`0f15589`](https://github.com/tauri-apps/tauri/tree/0f1558980a0fb1d6c042988e173047f0590b6574/)
