@@ -1,13 +1,15 @@
 [package]
+publish = false
 name = "millennium-webview"
-version = "0.13.3"
-authors = [ "pyke.io", "Tauri Programme within The Commons Conservancy" ]
-edition = "2021"
-license = "Apache-2.0 OR MIT"
 description = "Cross-platform WebView rendering library"
+version = "0.13.3"
+license = "Apache-2.0 OR MIT"
 readme = "README.md"
 repository = "https://github.com/pykeio/millennium"
+authors = [ "pyke.io", "Tauri Programme within The Commons Conservancy" ]
 categories = [ "gui" ]
+rust-version = "1.57"
+edition = "2021"
 
 [package.metadata.docs.rs]
 default-features = false

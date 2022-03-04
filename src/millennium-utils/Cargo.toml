@@ -1,15 +1,19 @@
 [package]
-name = "millennium-utils"
 publish = false
-version = "1.0.0-rc.2"
-authors = [ "pyke.io", "Tauri Programme within The Commons Conservancy" ]
-license = "Apache-2.0"
-repository = "https://github.com/pykeio/millennium"
+name = "millennium-utils"
 description = "Utilities for Millennium"
-edition = "2021"
-rust-version = "1.57"
-exclude = [ ".license_template", "CHANGELOG.md", "/target" ]
+version = "1.0.0-rc.2"
+license = "Apache-2.0"
 readme = "README.md"
+repository = "https://github.com/pykeio/millennium"
+authors = [ "pyke.io", "Tauri Programme within The Commons Conservancy" ]
+rust-version = "1.57"
+edition = "2021"
+exclude = [
+	".license_template",
+	"CHANGELOG.md",
+	"/target"
+]
 
 [dependencies]
 serde = { version = "1.0", features = [ "derive" ] }

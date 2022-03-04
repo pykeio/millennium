@@ -302,7 +302,8 @@ impl WindowFlags {
 			}
 		}
 
-		// Minimize operations should execute after maximize for proper window animations
+		// Minimize operations should execute after maximize for proper window
+		// animations
 		if diff.contains(WindowFlags::MINIMIZED) {
 			unsafe {
 				ShowWindow(

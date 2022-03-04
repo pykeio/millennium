@@ -1,20 +1,22 @@
 [package]
+publish = false
+name = "millennium"
+description = "Make tiny, secure apps for all desktop platforms"
+version = "1.0.0-rc.3"
+license = "Apache-2.0 OR MIT"
+readme = "README.md"
+repository = "https://github.com/pykeio/millennium"
 authors = [ "pykeio", "Tauri Programme within The Commons Conservancy" ]
 categories = [ "gui", "web-programming" ]
-description = "Make tiny, secure apps for all desktop platforms"
-edition = "2021"
 rust-version = "1.57"
+edition = "2021"
 exclude = [
 	"/test",
 	"/target"
 ]
-license = "Apache-2.0 OR MIT"
-name = "millennium"
-readme = "README.md"
-repository = "https://github.com/pykeio/millennium"
-version = "1.0.0-rc.3"
 
 [package.metadata.docs.rs]
+rustdoc-args = [ "--cfg", "doc_cfg" ]
 no-default-features = true
 features = [
 	"compression",
@@ -28,7 +30,6 @@ features = [
 	"devtools",
 	"dox"
 ]
-rustdoc-args = [ "--cfg", "doc_cfg" ]
 default-target = "x86_64-unknown-linux-gnu"
 targets = [
 	"x86_64-pc-windows-msvc",
@@ -155,6 +156,7 @@ api-all = [
 clipboard-all = [ "clipboard-write-text", "clipboard-read-text" ]
 clipboard-read-text = [ ]
 clipboard-write-text = [ ]
+config-json5 = [ "millennium-macros/config-json5" ]
 dialog-all = [ "dialog-open", "dialog-save", "dialog-message", "dialog-ask" ]
 dialog-ask = [ "dialog" ]
 dialog-confirm = [ "dialog" ]
@@ -245,5 +247,4 @@ window-set-icon = [ ]
 window-set-skip-taskbar = [ ]
 window-start-dragging = [ ]
 window-print = [ ]
-config-json5 = [ "millennium-macros/config-json5" ]
-rust_analyzer_hack = [ ]
+__rust_analyzer_hack = [ ]

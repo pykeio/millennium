@@ -1,19 +1,24 @@
 [package]
+publish = false
 name = "millennium-runtime"
+description = "Runtime for Millennium applications"
 version = "0.3.2"
+license = "Apache-2.0 OR MIT"
+readme = "README.md"
+repository = "https://github.com/pykeio/millennium"
 authors = [ "pyke.io", "Tauri Programme within The Commons Conservancy" ]
 categories = [ "gui", "web-programming" ]
-license = "Apache-2.0 OR MIT"
-repository = "https://github.com/pykeio/millennium"
-description = "Runtime for Millennium applications"
-edition = "2021"
 rust-version = "1.57"
-exclude = [ ".license_template", "CHANGELOG.md", "/target" ]
-readme = "README.md"
+edition = "2021"
+exclude = [
+	".license_template",
+	"CHANGELOG.md",
+	"/target"
+]
 
 [package.metadata.docs.rs]
-all-features = true
 rustdoc-args = [ "--cfg", "doc_cfg" ]
+all-features = true
 default-target = "x86_64-unknown-linux-gnu"
 targets = [
 	"x86_64-pc-windows-msvc",

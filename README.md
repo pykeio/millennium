@@ -1,5 +1,6 @@
 <div align=center>
 	<img src="banner.png" width=1920>
+	<sub><i>Millennium Icon by <a href="https://github.com/xfaonae">XFaon</a>. *Stats are from <a href="https://github.com/tauri-apps/tauri">Tauri</a> and may not be fully accurate.</i><sub>
 	<br /><br />
 	<img alt="Test status" src="https://img.shields.io/github/workflow/status/pykeio/millennium/test-millennium?event=push&style=flat-square"> <img alt="Code Climate maintainability" src="https://img.shields.io/codeclimate/maintainability/pykeio/millennium?label=maintainability&style=flat-square">
 	<br /><br />

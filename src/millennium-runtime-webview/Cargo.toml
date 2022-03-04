@@ -1,15 +1,20 @@
 [package]
+publish = false
 name = "millennium-runtime-webview"
+description = "Millennium Webview bindings to the Millennium runtime"
 version = "0.3.2"
+license = "Apache-2.0 OR MIT"
+readme = "README.md"
+repository = "https://github.com/pykeio/millennium"
 authors = [ "pyke.io", "Tauri Programme within The Commons Conservancy" ]
 categories = [ "gui", "web-programming" ]
-license = "Apache-2.0 OR MIT"
-repository = "https://github.com/pykeio/millennium"
-description = "Millennium Webview bindings to the Millennium runtime"
-edition = "2021"
 rust-version = "1.57"
-exclude = [ ".license_template", "CHANGELOG.md", "/target" ]
-readme = "README.md"
+edition = "2021"
+exclude = [
+	".license_template",
+	"CHANGELOG.md",
+	"/target"
+]
 
 [dependencies]
 millennium-webview = { path = "../millennium-webview", default-features = false, features = [ "file-drop", "protocol" ] }
