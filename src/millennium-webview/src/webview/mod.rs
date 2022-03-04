@@ -461,13 +461,50 @@ pub fn webview_version() -> Result<String> {
 #[cfg(target_os = "windows")]
 pub trait WebviewExtWindows {
 	/// Returns WebView2 Controller
-	fn controller(&self) -> Option<ICoreWebView2Controller>;
+	fn controller(&self) -> ICoreWebView2Controller;
 }
 
 #[cfg(target_os = "windows")]
 impl WebviewExtWindows for WebView {
-	fn controller(&self) -> Option<ICoreWebView2Controller> {
-		Some(self.webview.controller.clone())
+	fn controller(&self) -> ICoreWebView2Controller {
+		self.webview.controller.clone()
+	}
+}
+
+#[cfg(target_os = "linux")]
+pub trait WebviewExtUnix {
+	fn webview(&self) -> Rc<webkit2gtk::WebView>;
+}
+
+#[cfg(target_os = "linux")]
+impl WebviewExtUnix for WebView {
+	fn webview(&self) -> Rc<webkit2gtk::WebView> {
+		self.webview.webview.clone()
+	}
+}
+
+#[cfg(target_os = "macos")]
+pub trait WebviewExtMacOS {
+	/// Returns the WKWebView handle.
+	fn webview(&self) -> cocoa::base::id;
+	/// Returns the WKWebView manager [(userContentController)](https://developer.apple.com/documentation/webkit/wkscriptmessagehandler/1396222-usercontentcontroller) handle.
+	fn manager(&self) -> cocoa::base::id;
+	/// Returns the NSWindow associated with the WKWebView.
+	fn ns_window(&self) -> cocoa::base::id;
+}
+
+#[cfg(target_os = "macos")]
+impl WebviewExtMacOS for WebView {
+	fn webview(&self) -> cocoa::base::id {
+		self.webview.webview.clone()
+	}
+
+	fn manager(&self) -> cocoa::base::id {
+		self.webview.manager.clone()
+	}
+
+	fn ns_window(&self) -> cocoa::base::id {
+		self.webview.ns_window.clone()
 	}
 }
 

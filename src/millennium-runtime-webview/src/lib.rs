@@ -1525,31 +1525,30 @@ impl Runtime for MillenniumWebview {
 		{
 			let id = webview.inner.window().id();
 			if let WindowHandle::Webview(ref webview) = webview.inner {
-				if let Some(controller) = webview.controller() {
-					let proxy = self.event_loop.create_proxy();
-					let mut token = EventRegistrationToken::default();
-					unsafe {
-						controller.GotFocus(
-							FocusChangedEventHandler::create(Box::new(move |_, _| {
-								let _ = proxy.send_event(Message::Webview(id, WebviewMessage::WebviewEvent(WebviewEvent::Focused(true))));
-								Ok(())
-							})),
-							&mut token
-						)
-					}
-					.unwrap();
-					let proxy = self.event_loop.create_proxy();
-					unsafe {
-						controller.LostFocus(
-							FocusChangedEventHandler::create(Box::new(move |_, _| {
-								let _ = proxy.send_event(Message::Webview(id, WebviewMessage::WebviewEvent(WebviewEvent::Focused(false))));
-								Ok(())
-							})),
-							&mut token
-						)
-					}
-					.unwrap();
+				let controller = webview.controller();
+				let proxy = self.event_loop.create_proxy();
+				let mut token = EventRegistrationToken::default();
+				unsafe {
+					controller.GotFocus(
+						FocusChangedEventHandler::create(Box::new(move |_, _| {
+							let _ = proxy.send_event(Message::Webview(id, WebviewMessage::WebviewEvent(WebviewEvent::Focused(true))));
+							Ok(())
+						})),
+						&mut token
+					)
 				}
+				.unwrap();
+				let proxy = self.event_loop.create_proxy();
+				unsafe {
+					controller.LostFocus(
+						FocusChangedEventHandler::create(Box::new(move |_, _| {
+							let _ = proxy.send_event(Message::Webview(id, WebviewMessage::WebviewEvent(WebviewEvent::Focused(false))));
+							Ok(())
+						})),
+						&mut token
+					)
+				}
+				.unwrap();
 			}
 		}
 

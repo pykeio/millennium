@@ -39,7 +39,7 @@ mod file_drop;
 mod web_context;
 
 pub struct InnerWebView {
-	webview: Rc<WebView>
+	pub(crate) webview: Rc<WebView>
 }
 
 impl InnerWebView {
