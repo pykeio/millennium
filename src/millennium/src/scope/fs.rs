@@ -31,7 +31,8 @@ use crate::api::path::parse as parse_path;
 /// Scope for filesystem access.
 #[derive(Clone)]
 pub struct Scope {
-	allow_patterns: Arc<Mutex<Vec<Pattern>>>
+	allow_patterns: Arc<Mutex<Vec<Pattern>>>,
+	forbidden_patterns: Arc<Mutex<Vec<Pattern>>>
 }
 
 impl fmt::Debug for Scope {
@@ -40,6 +41,10 @@ impl fmt::Debug for Scope {
 			.field(
 				"allow_patterns",
 				&self.allow_patterns.lock().unwrap().iter().map(|p| p.as_str()).collect::<Vec<&str>>()
+			)
+			.field(
+				"forbidden_patterns",
+				&self.forbidden_patterns.lock().unwrap().iter().map(|p| p.as_str()).collect::<Vec<&str>>()
 			)
 			.finish()
 	}
@@ -58,13 +63,24 @@ impl Scope {
 	/// Creates a new scope from a `FsAllowlistScope` configuration.
 	pub fn for_fs_api(config: &Config, package_info: &PackageInfo, env: &Env, scope: &FsAllowlistScope) -> Self {
 		let mut allow_patterns = Vec::new();
-		for path in &scope.0 {
+		for path in scope.allowed_paths() {
 			if let Ok(path) = parse_path(config, package_info, env, path) {
 				push_pattern(&mut allow_patterns, path);
 			}
 		}
+
+		let mut forbidden_patterns = Vec::new();
+		if let Some(forbidden_paths) = scope.forbidden_paths() {
+			for path in forbidden_paths {
+				if let Ok(path) = parse_path(config, package_info, env, path) {
+					push_pattern(&mut forbidden_patterns, path);
+				}
+			}
+		}
+
 		Self {
-			allow_patterns: Arc::new(Mutex::new(allow_patterns))
+			allow_patterns: Arc::new(Mutex::new(allow_patterns)),
+			forbidden_patterns: Arc::new(Mutex::new(forbidden_patterns))
 		}
 	}
 
@@ -91,6 +107,26 @@ impl Scope {
 		push_pattern(&mut self.allow_patterns.lock().unwrap(), path);
 	}
 
+	/// Set the given directory path to be forbidden by this scope.
+	///
+	/// **Note**: this takes precedence over allowed paths, so its access gets denied **always**.
+	pub fn forbid_directory<P: AsRef<Path>>(&self, path: P, recursive: bool) {
+		let path = path.as_ref().to_path_buf();
+		let mut list = self.forbidden_patterns.lock().unwrap();
+
+		// forbid the directory to be read
+		push_pattern(&mut list, &path);
+		// forbid its files and subdirectories to be read
+		push_pattern(&mut list, path.join(if recursive { "**" } else { "*" }));
+	}
+
+	/// Set the given file path to be forbidden by this scope.
+	///
+	/// **Note**: this takes precedence over allowed paths, so its access gets denied **always**.
+	pub fn forbid_file<P: AsRef<Path>>(&self, path: P) {
+		push_pattern(&mut self.forbidden_patterns.lock().unwrap(), path);
+	}
+
 	/// Determines if the given path is allowed on this scope.
 	pub fn is_allowed<P: AsRef<Path>>(&self, path: P) -> bool {
 		let path = path.as_ref();
@@ -102,8 +138,14 @@ impl Scope {
 
 		if let Ok(path) = path {
 			let path: PathBuf = path.components().collect();
-			let allowed = self.allow_patterns.lock().unwrap().iter().any(|p| p.matches_path(&path));
-			allowed
+
+			let forbidden = self.forbidden_patterns.lock().unwrap().iter().any(|p| p.matches_path(&path));
+			if forbidden {
+				false
+			} else {
+				let allowed = self.allow_patterns.lock().unwrap().iter().any(|p| p.matches_path(&path));
+				allowed
+			}
 		} else {
 			false
 		}
