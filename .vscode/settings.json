@@ -7,5 +7,5 @@
 	"rust-analyzer.diagnostics.disabled": [
 		"unresolved-macro-call"
 	],
-	"rust-analyzer.cargo.features": [ "rust_analyzer_hack" ]
+	"rust-analyzer.cargo.features": [ "__rust_analyzer_hack" ]
 }

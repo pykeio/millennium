@@ -844,7 +844,7 @@ impl<R: Runtime> WindowManager<R> {
 	}
 }
 
-#[cfg(all(test, not(feature = "rust_analyzer_hack")))]
+#[cfg(all(test, not(feature = "__rust_analyzer_hack")))]
 mod test {
 	use super::WindowManager;
 	use crate::{generate_context, plugin::PluginStore, MillenniumWebview, StateManager};

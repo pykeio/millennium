@@ -44,5 +44,5 @@ macos-private-api = [
 	"millennium-webview/transparent",
 	"millennium-runtime/macos-private-api"
 ]
-rust_analyzer_hack = []
+__rust_analyzer_hack = []
 objc-exception = [ "millennium-webview/objc-exception" ]
