@@ -109,7 +109,8 @@ impl Scope {
 
 	/// Set the given directory path to be forbidden by this scope.
 	///
-	/// **Note**: this takes precedence over allowed paths, so its access gets denied **always**.
+	/// **Note**: this takes precedence over allowed paths, so its access gets
+	/// denied **always**.
 	pub fn forbid_directory<P: AsRef<Path>>(&self, path: P, recursive: bool) {
 		let path = path.as_ref().to_path_buf();
 		let mut list = self.forbidden_patterns.lock().unwrap();
@@ -122,7 +123,8 @@ impl Scope {
 
 	/// Set the given file path to be forbidden by this scope.
 	///
-	/// **Note**: this takes precedence over allowed paths, so its access gets denied **always**.
+	/// **Note**: this takes precedence over allowed paths, so its access gets
+	/// denied **always**.
 	pub fn forbid_file<P: AsRef<Path>>(&self, path: P) {
 		push_pattern(&mut self.forbidden_patterns.lock().unwrap(), path);
 	}

@@ -2457,7 +2457,7 @@ mod build {
 				Self::AllowedPaths(allow) => {
 					let allowed_paths = vec_lit(allow, path_buf_lit);
 					quote! { #prefix::AllowedPaths(#allowed_paths) }
-				},
+				}
 				Self::Scope { allow, deny } => {
 					let allow = vec_lit(allow, path_buf_lit);
 					let deny = vec_lit(deny, path_buf_lit);
