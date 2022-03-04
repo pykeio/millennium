@@ -137,46 +137,56 @@ pub fn assert_label_is_valid(label: &str) {
 
 impl<R: Runtime> PendingWindow<R> {
 	/// Create a new [`PendingWindow`] with a label and starting url.
-	pub fn new(window_builder: <R::Dispatcher as Dispatch>::WindowBuilder, webview_attributes: WebviewAttributes, label: impl Into<String>) -> Self {
+	pub fn new(
+		window_builder: <R::Dispatcher as Dispatch>::WindowBuilder,
+		webview_attributes: WebviewAttributes,
+		label: impl Into<String>
+	) -> crate::Result<Self> {
 		let mut menu_ids = HashMap::new();
 		if let Some(menu) = window_builder.get_menu() {
 			get_menu_ids(&mut menu_ids, menu);
 		}
 		let label = label.into();
-		assert_label_is_valid(&label);
-		Self {
-			window_builder,
-			webview_attributes,
-			uri_scheme_protocols: Default::default(),
-			label,
-			ipc_handler: None,
-			file_drop_handler: None,
-			url: "millennium://localhost".to_string(),
-			menu_ids: Arc::new(Mutex::new(menu_ids)),
-			js_event_listeners: Default::default()
+		if !is_label_valid(&label) {
+			Err(crate::Error::InvalidWindowLabel)
+		} else {
+			Ok(Self {
+				window_builder,
+				webview_attributes,
+				uri_scheme_protocols: Default::default(),
+				label,
+				ipc_handler: None,
+				file_drop_handler: None,
+				url: "millennium://localhost".to_string(),
+				menu_ids: Arc::new(Mutex::new(menu_ids)),
+				js_event_listeners: Default::default()
+			})
 		}
 	}
 
 	/// Create a new [`PendingWindow`] from a [`WindowConfig`] with a label and
 	/// starting url.
-	pub fn with_config(window_config: WindowConfig, webview_attributes: WebviewAttributes, label: impl Into<String>) -> Self {
+	pub fn with_config(window_config: WindowConfig, webview_attributes: WebviewAttributes, label: impl Into<String>) -> crate::Result<Self> {
 		let window_builder = <<R::Dispatcher as Dispatch>::WindowBuilder>::with_config(window_config);
 		let mut menu_ids = HashMap::new();
 		if let Some(menu) = window_builder.get_menu() {
 			get_menu_ids(&mut menu_ids, menu);
 		}
 		let label = label.into();
-		assert_label_is_valid(&label);
-		Self {
-			window_builder,
-			webview_attributes,
-			uri_scheme_protocols: Default::default(),
-			label,
-			ipc_handler: None,
-			file_drop_handler: None,
-			url: "millennium://localhost".to_string(),
-			menu_ids: Arc::new(Mutex::new(menu_ids)),
-			js_event_listeners: Default::default()
+		if !is_label_valid(&label) {
+			Err(crate::Error::InvalidWindowLabel)
+		} else {
+			Ok(Self {
+				window_builder,
+				webview_attributes,
+				uri_scheme_protocols: Default::default(),
+				label,
+				ipc_handler: None,
+				file_drop_handler: None,
+				url: "millennium://localhost".to_string(),
+				menu_ids: Arc::new(Mutex::new(menu_ids)),
+				js_event_listeners: Default::default()
+			})
 		}
 	}
 

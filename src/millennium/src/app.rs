@@ -358,7 +358,7 @@ macro_rules! shared_app_impl {
 				F: FnOnce(<R::Dispatcher as Dispatch>::WindowBuilder, WebviewAttributes) -> (<R::Dispatcher as Dispatch>::WindowBuilder, WebviewAttributes)
 			{
 				let (window_builder, webview_attributes) = setup(<R::Dispatcher as Dispatch>::WindowBuilder::new(), WebviewAttributes::new(url));
-				self.create_new_window(PendingWindow::new(window_builder, webview_attributes, label))
+				self.create_new_window(PendingWindow::new(window_builder, webview_attributes, label)?)
 			}
 
 			#[cfg(feature = "system-tray")]
@@ -835,14 +835,13 @@ impl<R: Runtime> Builder<R> {
 	///     return (win, webview);
 	///   });
 	/// ```
-	#[must_use]
-	pub fn create_window<F>(mut self, label: impl Into<String>, url: WindowUrl, setup: F) -> Self
+	pub fn create_window<F>(mut self, label: impl Into<String>, url: WindowUrl, setup: F) -> crate::Result<Self>
 	where
 		F: FnOnce(<R::Dispatcher as Dispatch>::WindowBuilder, WebviewAttributes) -> (<R::Dispatcher as Dispatch>::WindowBuilder, WebviewAttributes)
 	{
 		let (window_builder, webview_attributes) = setup(<R::Dispatcher as Dispatch>::WindowBuilder::new(), WebviewAttributes::new(url));
-		self.pending_windows.push(PendingWindow::new(window_builder, webview_attributes, label));
-		self
+		self.pending_windows.push(PendingWindow::new(window_builder, webview_attributes, label)?);
+		Ok(self)
 	}
 
 	/// Adds the icon configured in `.millenniumrc` to the system tray with the
@@ -1044,7 +1043,7 @@ impl<R: Runtime> Builder<R> {
 				webview_attributes = webview_attributes.disable_file_drop_handler();
 			}
 
-			self.pending_windows.push(PendingWindow::with_config(config, webview_attributes, label));
+			self.pending_windows.push(PendingWindow::with_config(config, webview_attributes, label)?);
 		}
 
 		#[cfg(any(windows, target_os = "linux"))]

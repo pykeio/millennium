@@ -188,7 +188,7 @@ impl<R: Runtime> Window<R> {
 		F: FnOnce(<R::Dispatcher as Dispatch>::WindowBuilder, WebviewAttributes) -> (<R::Dispatcher as Dispatch>::WindowBuilder, WebviewAttributes)
 	{
 		let (window_builder, webview_attributes) = setup(<R::Dispatcher as Dispatch>::WindowBuilder::new(), WebviewAttributes::new(url));
-		self.create_new_window(PendingWindow::new(window_builder, webview_attributes, label))
+		self.create_new_window(PendingWindow::new(window_builder, webview_attributes, label)?)
 	}
 
 	pub(crate) fn invoke_responder(&self) -> Arc<InvokeResponder<R>> {
