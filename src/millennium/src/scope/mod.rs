@@ -19,6 +19,8 @@ mod http;
 #[cfg(shell_scope)]
 mod shell;
 
+use std::path::Path;
+
 pub use fs::Scope as FsScope;
 #[cfg(shell_scope)]
 pub use shell::{
@@ -36,4 +38,20 @@ pub(crate) struct Scopes {
 	pub http: HttpScope,
 	#[cfg(shell_scope)]
 	pub shell: ShellScope
+}
+
+impl Scopes {
+	#[allow(dead_code)]
+	pub(crate) fn allow_directory(&self, path: &Path, recursive: bool) {
+		self.fs.allow_directory(path, recursive);
+		#[cfg(protocol_asset)]
+		self.asset_protocol.allow_directory(path, recursive);
+	}
+
+	#[allow(dead_code)]
+	pub(crate) fn allow_file(&self, path: &Path) {
+		self.fs.allow_file(path);
+		#[cfg(protocol_asset)]
+		self.asset_protocol.allow_file(path);
+	}
 }
