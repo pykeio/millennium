@@ -1,19 +1,26 @@
-name: Test Millennium
+name: Test Millennium (Rust)
 on:
   push:
     branches:
       - master
       - main
+    paths:
+      - '.github/workflows/test-rust.yml'
+      - 'src/**'
+    paths-ignore:
+      - '**.js'
   pull_request:
     paths:
-      - '.github/workflows/test-millennium.yml'
+      - '.github/workflows/test-rust.yml'
       - 'src/**'
+    paths-ignore:
+      - '**.js'
 env:
   RUST_BACKTRACE: 1
   CARGO_INCREMENTAL: 0 # This is set to 0 by rust-cache.
   CARGO_PROFILE_DEV_DEBUG: 0 # This would add unnecessary bloat to the target folder, decreasing cache efficiency.
 jobs:
-  test-millennium:
+  test-rust:
     runs-on: ${{ matrix.platform }}
     strategy:
       fail-fast: false
@@ -51,7 +58,7 @@ jobs:
             ${{ matrix.platform }}-stable-${{ env.cache-name }}-
             ${{ matrix.platform }}-stable-
             ${{ matrix.platform }}-
-      - name: Test Millennium
+      - name: Test Rust packages
         run: |
           cargo test -p millennium
           cargo test -p millennium --features api-all
