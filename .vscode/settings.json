@@ -1,7 +1,12 @@
 {
+	"rust-analyzer.checkOnSave.command": "clippy",
+	"rust-analyzer.cargo.allFeatures": false,
 	"rust-analyzer.cache.warmup": true,
 	"rust-analyzer.diagnostics.enableExperimental": true,
+	"rust-analyzer.rustfmt.extraArgs": [ "+nightly" ],
 	"[rust]": {
+		"editor.formatOnSave": true,
+		"editor.defaultFormatter": "matklad.rust-analyzer",
 		"editor.semanticHighlighting.enabled": true
 	},
 	"rust-analyzer.diagnostics.disabled": [

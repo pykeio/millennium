@@ -2047,15 +2047,14 @@ unsafe fn handle_raw_input<T: 'static>(subclass_input: &ThreadMsgTargetSubclassI
 				0x0000
 			}
 		};
-		let scancode;
-		if keyboard.MakeCode == 0 {
+		let scancode = if keyboard.MakeCode == 0 {
 			// In some cases (often with media keys) the device reports a scancode of 0 but
 			// a valid virtual key. In these cases we obtain the scancode from the virtual
 			// key.
-			scancode = MapVirtualKeyW(keyboard.VKey as u32, MAPVK_VK_TO_VSC_EX) as u16;
+			MapVirtualKeyW(keyboard.VKey as u32, MAPVK_VK_TO_VSC_EX) as u16
 		} else {
-			scancode = keyboard.MakeCode | extension;
-		}
+			keyboard.MakeCode | extension
+		};
 		if scancode == 0xE11D || scancode == 0xE02A {
 			// At the hardware (or driver?) level, pressing the Pause key is equivalent to
 			// pressing Ctrl+NumLock.
@@ -2079,8 +2078,7 @@ unsafe fn handle_raw_input<T: 'static>(subclass_input: &ThreadMsgTargetSubclassI
 			// https://devblogs.microsoft.com/oldnewthing/20080211-00/?p=23503
 			return;
 		}
-		let code;
-		if keyboard.VKey == VK_NUMLOCK {
+		let code = if keyboard.VKey == VK_NUMLOCK {
 			// Historically, the NumLock and the Pause key were one and the same physical
 			// key. The user could trigger Pause by pressing Ctrl+NumLock.
 			// Now these are often physically separate and the two keys can be
@@ -2094,10 +2092,10 @@ unsafe fn handle_raw_input<T: 'static>(subclass_input: &ThreadMsgTargetSubclassI
 			// For more on this, read the article by Raymond Chen, titled:
 			// "Why does Ctrl+ScrollLock cancel dialogs?"
 			// https://devblogs.microsoft.com/oldnewthing/20080211-00/?p=23503
-			code = KeyCode::NumLock;
+			KeyCode::NumLock
 		} else {
-			code = KeyCode::from_scancode(scancode as u32);
-		}
+			KeyCode::from_scancode(scancode as u32)
+		};
 		if keyboard.VKey == VK_SHIFT {
 			match code {
 				KeyCode::NumpadDecimal

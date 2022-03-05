@@ -62,6 +62,7 @@ use millennium_webview::application::platform::windows::{WindowBuilderExtWindows
 use millennium_webview::application::system_tray::{SystemTray as MillenniumSystemTray, SystemTrayBuilder};
 pub use millennium_webview::application::window::{Window, WindowBuilder as MillenniumWindowBuilder, WindowId};
 #[cfg(target_os = "windows")]
+#[allow(unused_imports)]
 use millennium_webview::webview::WebviewExtWindows;
 use millennium_webview::{
 	application::{
@@ -90,6 +91,7 @@ use uuid::Uuid;
 #[cfg(all(windows, not(feature = "__rust_analyzer_hack")))]
 use webview2_com::FocusChangedEventHandler;
 #[cfg(windows)]
+#[allow(unused_imports)]
 use windows::Win32::{Foundation::HWND, System::WinRT::EventRegistrationToken};
 
 #[cfg(feature = "system-tray")]
@@ -661,7 +663,7 @@ impl WindowBuilder for WindowBuilderWrapper {
 	fn with_config(config: WindowConfig) -> Self {
 		let mut window = WindowBuilderWrapper::new()
 			.title(config.title.to_string())
-			.inner_size(config.width, config.height)
+			.set_inner_size(config.width, config.height)
 			.visible(config.visible)
 			.resizable(config.resizable)
 			.fullscreen(config.fullscreen)
@@ -711,7 +713,7 @@ impl WindowBuilder for WindowBuilderWrapper {
 		self
 	}
 
-	fn inner_size(mut self, width: f64, height: f64) -> Self {
+	fn set_inner_size(mut self, width: f64, height: f64) -> Self {
 		self.inner = self.inner.with_inner_size(MillenniumLogicalSize::new(width, height));
 		self
 	}

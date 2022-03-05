@@ -221,13 +221,12 @@ impl KeyEventBuilder {
 					let mod_state = WindowsModifiers::active_modifiers(&kbd_state);
 
 					let (_, layout) = layouts.get_current_layout();
-					let ctrl_on;
-					if layout.has_alt_graph {
+					let ctrl_on = if layout.has_alt_graph {
 						let alt_on = mod_state.contains(WindowsModifiers::ALT);
-						ctrl_on = !alt_on && mod_state.contains(WindowsModifiers::CONTROL)
+						!alt_on && mod_state.contains(WindowsModifiers::CONTROL)
 					} else {
-						ctrl_on = mod_state.contains(WindowsModifiers::CONTROL)
-					}
+						mod_state.contains(WindowsModifiers::CONTROL)
+					};
 
 					// If Ctrl is not pressed, just use the text with all
 					// modifiers because that already consumed the dead key. Otherwise,
@@ -387,12 +386,7 @@ impl KeyEventBuilder {
 		let layout = layouts.layouts.get(&locale_id.0).unwrap();
 		let logical_key = layout.get_key(mods, num_lock_on, vk, scancode, code);
 		let key_without_modifiers = layout.get_key(WindowsModifiers::empty(), false, vk, scancode, code);
-		let text;
-		if key_state == ElementState::Pressed {
-			text = logical_key.to_text();
-		} else {
-			text = None;
-		}
+		let text = if key_state == ElementState::Pressed { logical_key.to_text() } else { None };
 		let event_info = PartialKeyEventInfo {
 			vkey: vk,
 			logical_key: PartialLogicalKey::This(logical_key.clone()),
@@ -455,16 +449,15 @@ impl PartialKeyEventInfo {
 
 		let (_, layout) = layouts.get_current_layout();
 		let lparam_struct = destructure_key_lparam(lparam);
-		let scancode;
 		let vkey = wparam.0 as VIRTUAL_KEY;
-		if lparam_struct.scancode == 0 {
+		let scancode = if lparam_struct.scancode == 0 {
 			// In some cases (often with media keys) the device reports a scancode of 0 but
 			// a valid virtual key. In these cases we obtain the scancode from the virtual
 			// key.
-			scancode = unsafe { MapVirtualKeyExW(u32::from(vkey), MAPVK_VK_TO_VSC_EX, layout.hkl) as u16 };
+			unsafe { MapVirtualKeyExW(u32::from(vkey), MAPVK_VK_TO_VSC_EX, layout.hkl) as u16 }
 		} else {
-			scancode = new_ex_scancode(lparam_struct.scancode, lparam_struct.extended);
-		}
+			new_ex_scancode(lparam_struct.scancode, lparam_struct.extended)
+		};
 		let code = KeyCode::from_scancode(scancode as u32);
 		let location = get_location(scancode, layout.hkl);
 

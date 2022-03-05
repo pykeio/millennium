@@ -112,7 +112,7 @@ pub trait WindowBuilder: WindowBuilderBase {
 
 	/// Window size.
 	#[must_use]
-	fn inner_size(self, width: f64, height: f64) -> Self;
+	fn set_inner_size(self, width: f64, height: f64) -> Self;
 
 	/// Window min inner size.
 	#[must_use]

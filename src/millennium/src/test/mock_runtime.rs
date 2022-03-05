@@ -155,7 +155,7 @@ impl WindowBuilder for MockWindowBuilder {
 		self
 	}
 
-	fn inner_size(self, min_width: f64, min_height: f64) -> Self {
+	fn set_inner_size(self, min_width: f64, min_height: f64) -> Self {
 		self
 	}
 

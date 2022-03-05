@@ -14,6 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#![allow(clippy::large_enum_variant)]
+
 //! The `Window` struct and associated types.
 use std::fmt;
 
@@ -1062,7 +1064,6 @@ impl Default for CursorIcon {
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq)]
 pub enum Fullscreen {
-	#[allow(clippy::large_enum_variant)]
 	Exclusive(VideoMode),
 
 	/// Providing `None` to `Borderless` will fullscreen on the current monitor.
