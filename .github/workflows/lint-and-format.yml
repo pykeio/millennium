@@ -6,15 +6,13 @@ on:
       - main
     paths:
       - '.github/workflows/lint-and-format.yml'
-      - 'src/**'
-    paths-ignore:
-      - '**.js'
+      - 'src/**/*.rs'
+      - 'src/**/Cargo.toml'
   pull_request:
     paths:
       - '.github/workflows/lint-and-format.yml'
-      - 'src/**'
-    paths-ignore:
-      - '**.js'
+      - 'src/**/*.rs'
+      - 'src/**/Cargo.toml'
 env:
   RUST_BACKTRACE: 1
   CARGO_INCREMENTAL: 0 # This is set to 0 by rust-cache.
@@ -35,7 +33,7 @@ jobs:
           command: fmt
           args: --all -- --check
   check_lint:
-    runs-on: ubuntu-latest:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         clippy:

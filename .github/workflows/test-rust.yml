@@ -5,16 +5,14 @@ on:
       - master
       - main
     paths:
-      - '.github/workflows/test-rust.yml'
-      - 'src/**'
-    paths-ignore:
-      - '**.js'
+      - '.github/workflows/lint-and-format.yml'
+      - 'src/**/*.rs'
+      - 'src/**/Cargo.toml'
   pull_request:
     paths:
-      - '.github/workflows/test-rust.yml'
-      - 'src/**'
-    paths-ignore:
-      - '**.js'
+      - '.github/workflows/lint-and-format.yml'
+      - 'src/**/*.rs'
+      - 'src/**/Cargo.toml'
 env:
   RUST_BACKTRACE: 1
   CARGO_INCREMENTAL: 0 # This is set to 0 by rust-cache.
