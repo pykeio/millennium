@@ -282,10 +282,16 @@ impl<R: Runtime> AppHandle<R> {
 		Ok(())
 	}
 
-	/// Exits the app
+	/// Exits the app. This is the same as [`std::process::exit`], but it performs cleanup before exiting.
 	pub fn exit(&self, exit_code: i32) {
 		self.cleanup_before_exit();
 		std::process::exit(exit_code);
+	}
+
+	/// Restarts the app. This is the same as [`crate::api::process::restart`], but it performs cleanup before restarting.
+	pub fn restart(&self) {
+		self.cleanup_before_exit();
+		crate::api::process::restart(&self.env());
 	}
 
 	/// Runs necessary cleanup tasks before exiting the process
