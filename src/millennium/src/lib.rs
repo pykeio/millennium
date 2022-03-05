@@ -429,7 +429,7 @@ impl<A: Assets> Context<A> {
 pub trait Manager<R: Runtime>: sealed::ManagerBase<R> {
 	/// The application handle associated with this manager.
 	fn app_handle(&self) -> AppHandle<R> {
-		sealed::ManagerBase::app_handle(self)
+		self.managed_app_handle()
 	}
 
 	/// The [`Config`] the manager was created with.
@@ -562,20 +562,20 @@ pub(crate) mod sealed {
 		fn manager(&self) -> &WindowManager<R>;
 
 		fn runtime(&self) -> RuntimeOrDispatch<'_, R>;
-		fn app_handle(&self) -> AppHandle<R>;
+		fn managed_app_handle(&self) -> AppHandle<R>;
 
 		/// Creates a new [`Window`] on the [`Runtime`] and attaches it to the
 		/// [`Manager`].
 		fn create_new_window(&self, pending: crate::PendingWindow<R>) -> crate::Result<crate::Window<R>> {
 			use crate::runtime::Dispatch;
 			let labels = self.manager().labels().into_iter().collect::<Vec<_>>();
-			let pending = self.manager().prepare_window(self.app_handle(), pending, &labels)?;
+			let pending = self.manager().prepare_window(self.managed_app_handle(), pending, &labels)?;
 			let window = match self.runtime() {
 				RuntimeOrDispatch::Runtime(runtime) => runtime.create_window(pending),
 				RuntimeOrDispatch::RuntimeHandle(handle) => handle.create_window(pending),
 				RuntimeOrDispatch::Dispatch(mut dispatcher) => dispatcher.create_window(pending)
 			}
-			.map(|window| self.manager().attach_window(self.app_handle(), window))?;
+			.map(|window| self.manager().attach_window(self.managed_app_handle(), window))?;
 
 			self.manager().emit_filter(
 				"millennium://window-created",

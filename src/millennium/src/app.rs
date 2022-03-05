@@ -282,13 +282,15 @@ impl<R: Runtime> AppHandle<R> {
 		Ok(())
 	}
 
-	/// Exits the app. This is the same as [`std::process::exit`], but it performs cleanup before exiting.
+	/// Exits the app. This is the same as [`std::process::exit`], but it
+	/// performs cleanup before exiting.
 	pub fn exit(&self, exit_code: i32) {
 		self.cleanup_before_exit();
 		std::process::exit(exit_code);
 	}
 
-	/// Restarts the app. This is the same as [`crate::api::process::restart`], but it performs cleanup before restarting.
+	/// Restarts the app. This is the same as [`crate::api::process::restart`],
+	/// but it performs cleanup before restarting.
 	pub fn restart(&self) {
 		self.cleanup_before_exit();
 		crate::api::process::restart(&self.env());
@@ -317,7 +319,7 @@ impl<R: Runtime> ManagerBase<R> for AppHandle<R> {
 		RuntimeOrDispatch::RuntimeHandle(self.runtime_handle.clone())
 	}
 
-	fn app_handle(&self) -> AppHandle<R> {
+	fn managed_app_handle(&self) -> AppHandle<R> {
 		self.clone()
 	}
 }
@@ -348,7 +350,7 @@ impl<R: Runtime> ManagerBase<R> for App<R> {
 		RuntimeOrDispatch::Runtime(self.runtime.as_ref().unwrap())
 	}
 
-	fn app_handle(&self) -> AppHandle<R> {
+	fn managed_app_handle(&self) -> AppHandle<R> {
 		self.handle()
 	}
 }

@@ -395,12 +395,7 @@ mod core;
 mod error;
 
 pub use self::error::Error;
-use crate::{
-	api::dialog::blocking::ask,
-	runtime::Runtime,
-	utils::config::UpdaterConfig,
-	Env, Manager, Window
-};
+use crate::{api::dialog::blocking::ask, runtime::Runtime, utils::config::UpdaterConfig, Env, Manager, Window};
 
 /// Check for new updates
 pub const EVENT_CHECK_UPDATE: &str = "millennium://update";

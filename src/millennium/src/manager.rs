@@ -116,7 +116,6 @@ fn set_csp<R: Runtime>(
 		default_src.push(format_real_schema(schema));
 	}
 
-	
 	#[cfg(target_os = "linux")]
 	{
 		*asset = asset.replacen(millennium_utils::html::CSP_TOKEN, &csp, 1);
