@@ -844,7 +844,7 @@ impl<R: Runtime> Builder<R> {
 	///     let win = win
 	///       .title("My Main Window")
 	///       .resizable(true)
-	///       .inner_size(800.0, 550.0)
+	///       .set_inner_size(800.0, 550.0)
 	///       .min_inner_size(400.0, 200.0);
 	///     return (win, webview);
 	///   });

@@ -188,7 +188,7 @@ impl<R: Runtime> WindowBuilder<R> {
 
 	/// Window size.
 	#[must_use]
-	pub fn inner_size(mut self, width: f64, height: f64) -> Self {
+	pub fn set_inner_size(mut self, width: f64, height: f64) -> Self {
 		self.window_builder = self.window_builder.set_inner_size(width, height);
 		self
 	}
