@@ -116,12 +116,12 @@ fn set_csp<R: Runtime>(
 		default_src.push(format_real_schema(schema));
 	}
 
-	
+	let csp = Csp::DirectiveMap(csp).to_string();
 	#[cfg(target_os = "linux")]
 	{
 		*asset = asset.replacen(millennium_utils::html::CSP_TOKEN, &csp, 1);
 	}
-	Csp::DirectiveMap(csp).to_string()
+	csp
 }
 
 // inspired by https://github.com/rust-lang/rust/blob/1be5c8f90912c446ecbdc405cbc4a89f9acd20fd/library/alloc/src/str.rs#L260-L297
