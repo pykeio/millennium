@@ -25,7 +25,8 @@ pub struct Scope {
 
 impl Scope {
 	/// Creates a new scope from the allowlist's `http` scope configuration.
-	pub fn for_http_api(scope: &HttpAllowlistScope) -> Self {
+	#[allow(dead_code)]
+	pub(crate) fn for_http_api(scope: &HttpAllowlistScope) -> Self {
 		Self {
 			allowed_urls: scope
 				.0

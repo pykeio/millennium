@@ -119,7 +119,10 @@ pub enum Error {
 	IsolationPattern(#[from] millennium_utils::pattern::isolation::Error),
 	/// An invalid window URL was provided. Includes details about the error.
 	#[error("invalid window url: {0}")]
-	InvalidWindowUrl(&'static str)
+	InvalidWindowUrl(&'static str),
+	/// Invalid glob pattern.
+	#[error("invalid glob pattern: {0}")]
+	GlobPattern(#[from] glob::PatternError)
 }
 
 pub(crate) fn into_anyhow<T: std::fmt::Display>(err: T) -> anyhow::Error {

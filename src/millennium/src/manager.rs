@@ -116,12 +116,12 @@ fn set_csp<R: Runtime>(
 		default_src.push(format_real_schema(schema));
 	}
 
-	let csp = Csp::DirectiveMap(csp).to_string();
+	
 	#[cfg(target_os = "linux")]
 	{
 		*asset = asset.replacen(millennium_utils::html::CSP_TOKEN, &csp, 1);
 	}
-	csp
+	Csp::DirectiveMap(csp).to_string()
 }
 
 // inspired by https://github.com/rust-lang/rust/blob/1be5c8f90912c446ecbdc405cbc4a89f9acd20fd/library/alloc/src/str.rs#L260-L297
@@ -743,9 +743,9 @@ impl<R: Runtime> WindowManager<R> {
 					let scopes = window.state::<Scopes>();
 					for path in &paths {
 						if path.is_file() {
-							scopes.allow_file(path);
+							let _ = scopes.allow_file(path);
 						} else {
-							scopes.allow_directory(path, false);
+							let _ = scopes.allow_directory(path, false);
 						}
 					}
 					window.emit_and_trigger("millennium://file-drop", paths)
