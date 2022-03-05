@@ -32,7 +32,7 @@ pub trait EventLoopExtIOS {
 
 impl<T: 'static> EventLoopExtIOS for EventLoop<T> {
 	fn idiom(&self) -> Idiom {
-		return self.event_loop.idiom();
+		self.event_loop.idiom()
 	}
 }
 
@@ -117,17 +117,17 @@ pub trait WindowExtIOS {
 impl WindowExtIOS for Window {
 	#[inline]
 	fn ui_window(&self) -> *mut c_void {
-		return self.window.ui_window() as _;
+		self.window.ui_window() as _
 	}
 
 	#[inline]
 	fn ui_view_controller(&self) -> *mut c_void {
-		return self.window.ui_view_controller() as _;
+		self.window.ui_view_controller() as _
 	}
 
 	#[inline]
 	fn ui_view(&self) -> *mut c_void {
-		return self.window.ui_view() as _;
+		self.window.ui_view() as _
 	}
 
 	#[inline]
@@ -216,37 +216,37 @@ impl WindowBuilderExtIOS for WindowBuilder {
 	#[inline]
 	fn with_root_view_class(mut self, root_view_class: *const c_void) -> WindowBuilder {
 		self.platform_specific.root_view_class = unsafe { &*(root_view_class as *const _) };
-		return self;
+		self
 	}
 
 	#[inline]
 	fn with_scale_factor(mut self, scale_factor: f64) -> WindowBuilder {
 		self.platform_specific.scale_factor = Some(scale_factor);
-		return self;
+		self
 	}
 
 	#[inline]
 	fn with_valid_orientations(mut self, valid_orientations: ValidOrientations) -> WindowBuilder {
 		self.platform_specific.valid_orientations = valid_orientations;
-		return self;
+		self
 	}
 
 	#[inline]
 	fn with_prefers_home_indicator_hidden(mut self, hidden: bool) -> WindowBuilder {
 		self.platform_specific.prefers_home_indicator_hidden = hidden;
-		return self;
+		self
 	}
 
 	#[inline]
 	fn with_preferred_screen_edges_deferring_system_gestures(mut self, edges: ScreenEdge) -> WindowBuilder {
 		self.platform_specific.preferred_screen_edges_deferring_system_gestures = edges;
-		return self;
+		self
 	}
 
 	#[inline]
 	fn with_prefers_status_bar_hidden(mut self, hidden: bool) -> WindowBuilder {
 		self.platform_specific.prefers_status_bar_hidden = hidden;
-		return self;
+		self
 	}
 }
 
@@ -266,12 +266,12 @@ pub trait MonitorHandleExtIOS {
 impl MonitorHandleExtIOS for MonitorHandle {
 	#[inline]
 	fn ui_screen(&self) -> *mut c_void {
-		return self.inner.ui_screen() as _;
+		self.inner.ui_screen() as _
 	}
 
 	#[inline]
 	fn preferred_video_mode(&self) -> VideoMode {
-		return self.inner.preferred_video_mode();
+		self.inner.preferred_video_mode()
 	}
 }
 
@@ -291,7 +291,7 @@ pub enum ValidOrientations {
 impl Default for ValidOrientations {
 	#[inline]
 	fn default() -> ValidOrientations {
-		return ValidOrientations::LandscapeAndPortrait;
+		ValidOrientations::LandscapeAndPortrait
 	}
 }
 

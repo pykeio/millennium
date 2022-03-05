@@ -65,27 +65,27 @@ pub trait WindowExtMacOS {
 impl WindowExtMacOS for Window {
 	#[inline]
 	fn ns_window(&self) -> *mut c_void {
-		return self.window.ns_window();
+		self.window.ns_window()
 	}
 
 	#[inline]
 	fn ns_view(&self) -> *mut c_void {
-		return self.window.ns_view();
+		self.window.ns_view()
 	}
 
 	#[inline]
 	fn simple_fullscreen(&self) -> bool {
-		return self.window.simple_fullscreen();
+		self.window.simple_fullscreen()
 	}
 
 	#[inline]
 	fn set_simple_fullscreen(&self, fullscreen: bool) -> bool {
-		return self.window.set_simple_fullscreen(fullscreen);
+		self.window.set_simple_fullscreen(fullscreen)
 	}
 
 	#[inline]
 	fn has_shadow(&self) -> bool {
-		return self.window.has_shadow();
+		self.window.has_shadow()
 	}
 
 	#[inline]
@@ -108,7 +108,7 @@ pub enum ActivationPolicy {
 
 impl Default for ActivationPolicy {
 	fn default() -> Self {
-		return ActivationPolicy::Regular;
+		ActivationPolicy::Regular
 	}
 }
 
@@ -241,7 +241,7 @@ pub enum NativeImage {
 
 impl NativeImage {
 	pub(crate) unsafe fn get_ns_image(self) -> id {
-		return match self {
+		match self {
 			NativeImage::Add => appkit::NSImageNameAddTemplate,
 			NativeImage::StatusAvailable => appkit::NSImageNameStatusAvailable,
 			NativeImage::StatusUnavailable => appkit::NSImageNameStatusUnavailable,
@@ -298,7 +298,7 @@ impl NativeImage {
 			NativeImage::UserAccounts => appkit::NSImageNameUserAccounts,
 			NativeImage::UserGroup => appkit::NSImageNameUserGroup,
 			NativeImage::UserGuest => appkit::NSImageNameUserGuest
-		};
+		}
 	}
 }
 
@@ -339,61 +339,61 @@ impl WindowBuilderExtMacOS for WindowBuilder {
 	#[inline]
 	fn with_parent_window(mut self, parent: *mut c_void) -> WindowBuilder {
 		self.platform_specific.parent = Parent::ChildOf(parent);
-		return self;
+		self
 	}
 
 	#[inline]
 	fn with_movable_by_window_background(mut self, movable_by_window_background: bool) -> WindowBuilder {
 		self.platform_specific.movable_by_window_background = movable_by_window_background;
-		return self;
+		self
 	}
 
 	#[inline]
 	fn with_titlebar_transparent(mut self, titlebar_transparent: bool) -> WindowBuilder {
 		self.platform_specific.titlebar_transparent = titlebar_transparent;
-		return self;
+		self
 	}
 
 	#[inline]
 	fn with_titlebar_hidden(mut self, titlebar_hidden: bool) -> WindowBuilder {
 		self.platform_specific.titlebar_hidden = titlebar_hidden;
-		return self;
+		self
 	}
 
 	#[inline]
 	fn with_titlebar_buttons_hidden(mut self, titlebar_buttons_hidden: bool) -> WindowBuilder {
 		self.platform_specific.titlebar_buttons_hidden = titlebar_buttons_hidden;
-		return self;
+		self
 	}
 
 	#[inline]
 	fn with_title_hidden(mut self, title_hidden: bool) -> WindowBuilder {
 		self.platform_specific.title_hidden = title_hidden;
-		return self;
+		self
 	}
 
 	#[inline]
 	fn with_fullsize_content_view(mut self, fullsize_content_view: bool) -> WindowBuilder {
 		self.platform_specific.fullsize_content_view = fullsize_content_view;
-		return self;
+		self
 	}
 
 	#[inline]
 	fn with_resize_increments(mut self, increments: LogicalSize<f64>) -> WindowBuilder {
 		self.platform_specific.resize_increments = Some(increments);
-		return self;
+		self
 	}
 
 	#[inline]
 	fn with_disallow_hidpi(mut self, disallow_hidpi: bool) -> WindowBuilder {
 		self.platform_specific.disallow_hidpi = disallow_hidpi;
-		return self;
+		self
 	}
 
 	#[inline]
 	fn with_has_shadow(mut self, has_shadow: bool) -> WindowBuilder {
 		self.platform_specific.has_shadow = has_shadow;
-		return self;
+		self
 	}
 }
 
@@ -445,11 +445,11 @@ pub trait MonitorHandleExtMacOS {
 impl MonitorHandleExtMacOS for MonitorHandle {
 	#[inline]
 	fn native_id(&self) -> u32 {
-		return self.inner.native_identifier();
+		self.inner.native_identifier()
 	}
 
 	fn ns_screen(&self) -> Option<*mut c_void> {
-		return self.inner.ns_screen().map(|s| s as *mut c_void);
+		self.inner.ns_screen().map(|s| s as *mut c_void)
 	}
 }
 
@@ -501,7 +501,7 @@ pub trait SystemTrayBuilderExtMacOS {
 impl SystemTrayBuilderExtMacOS for SystemTrayBuilder {
 	fn with_icon_as_template(mut self, is_template: bool) -> Self {
 		self.0.system_tray.icon_is_template = is_template;
-		return self;
+		self
 	}
 }
 

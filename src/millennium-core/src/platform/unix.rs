@@ -34,7 +34,7 @@ pub trait WindowExtUnix {
 
 impl WindowExtUnix for Window {
 	fn gtk_window(&self) -> &gtk::ApplicationWindow {
-		return &self.window.window;
+		&self.window.window
 	}
 
 	fn set_skip_taskbar(&self, skip: bool) {
@@ -50,7 +50,7 @@ pub trait WindowBuilderExtUnix {
 impl WindowBuilderExtUnix for WindowBuilder {
 	fn with_skip_taskbar(mut self, skip: bool) -> WindowBuilder {
 		self.platform_specific.skip_taskbar = skip;
-		return self;
+		self
 	}
 }
 
@@ -66,15 +66,15 @@ pub trait EventLoopExtUnix {
 }
 
 fn wrap_ev<T>(event_loop: UnixEventLoop<T>) -> EventLoop<T> {
-	return EventLoop {
+	EventLoop {
 		event_loop,
 		_marker: std::marker::PhantomData
-	};
+	}
 }
 
 impl<T> EventLoopExtUnix for EventLoop<T> {
 	#[inline]
 	fn new_any_thread() -> Self {
-		return wrap_ev(UnixEventLoop::new_any_thread());
+		wrap_ev(UnixEventLoop::new_any_thread())
 	}
 }

@@ -41,11 +41,11 @@ pub trait WindowExtAndroid {
 
 impl WindowExtAndroid for Window {
 	fn content_rect(&self) -> Rect {
-		return self.window.content_rect();
+		self.window.content_rect()
 	}
 
 	fn config(&self) -> Configuration {
-		return self.window.config();
+		self.window.config()
 	}
 }
 

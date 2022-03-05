@@ -79,16 +79,16 @@ pub struct Menu;
 
 impl Default for Menu {
 	fn default() -> Self {
-		return Menu::new();
+		Menu::new()
 	}
 }
 
 impl Menu {
 	pub fn new() -> Self {
-		return Menu {};
+		Menu {}
 	}
 	pub fn new_popup_menu() -> Self {
-		return Self::new();
+		Self::new()
 	}
 	pub fn add_item(
 		&mut self,
@@ -99,17 +99,17 @@ impl Menu {
 		_selected: bool,
 		_menu_type: MenuType
 	) -> CustomMenuItem {
-		return CustomMenuItem(MenuItemAttributes {});
+		CustomMenuItem(MenuItemAttributes {})
 	}
 	pub fn add_submenu(&mut self, _title: &str, _enabled: bool, _submenu: Menu) {}
 	pub fn add_native_item(&mut self, _item: MenuItem, _menu_type: MenuType) -> Option<CustomMenuItem> {
-		return None;
+		None
 	}
 }
 
 impl MenuItemAttributes {
 	pub fn id(self) -> MenuId {
-		return MenuId::EMPTY;
+		MenuId::EMPTY
 	}
 	pub fn set_enabled(&mut self, _is_enabled: bool) {}
 	pub fn set_title(&mut self, _title: &str) {}
@@ -138,7 +138,7 @@ macro_rules! call_event_handler {
 
 impl<T: 'static> EventLoop<T> {
 	pub fn new() -> Self {
-		return Self {
+		Self {
 			window_target: event_loop::EventLoopWindowTarget {
 				p: EventLoopWindowTarget {
 					_marker: std::marker::PhantomData
@@ -150,7 +150,7 @@ impl<T: 'static> EventLoop<T> {
 			start_cause: event::StartCause::Init,
 			looper: ThreadLooper::for_thread().unwrap(),
 			running: false
-		};
+		}
 	}
 
 	pub fn run<F>(mut self, event_handler: F) -> !
@@ -381,14 +381,14 @@ impl<T: 'static> EventLoop<T> {
 	}
 
 	pub fn window_target(&self) -> &event_loop::EventLoopWindowTarget<T> {
-		return &self.window_target;
+		&self.window_target
 	}
 
 	pub fn create_proxy(&self) -> EventLoopProxy<T> {
-		return EventLoopProxy {
+		EventLoopProxy {
 			queue: self.user_queue.clone(),
 			looper: ForeignLooper::for_thread().expect("called from event loop thread")
-		};
+		}
 	}
 }
 
@@ -401,16 +401,16 @@ impl<T> EventLoopProxy<T> {
 	pub fn send_event(&self, event: T) -> Result<(), event_loop::EventLoopClosed<T>> {
 		self.queue.lock().unwrap().push_back(event);
 		self.looper.wake();
-		return Ok(());
+		Ok(())
 	}
 }
 
 impl<T> Clone for EventLoopProxy<T> {
 	fn clone(&self) -> Self {
-		return EventLoopProxy {
+		EventLoopProxy {
 			queue: self.queue.clone(),
 			looper: self.looper.clone()
-		};
+		}
 	}
 }
 
@@ -421,13 +421,13 @@ pub struct EventLoopWindowTarget<T: 'static> {
 
 impl<T: 'static> EventLoopWindowTarget<T> {
 	pub fn primary_monitor(&self) -> Option<monitor::MonitorHandle> {
-		return Some(monitor::MonitorHandle { inner: MonitorHandle });
+		Some(monitor::MonitorHandle { inner: MonitorHandle });
 	}
 
 	pub fn available_monitors(&self) -> VecDeque<MonitorHandle> {
 		let mut v = VecDeque::with_capacity(1);
 		v.push_back(MonitorHandle);
-		return v;
+		v
 	}
 }
 
@@ -436,7 +436,7 @@ pub struct WindowId;
 
 impl WindowId {
 	pub fn dummy() -> Self {
-		return WindowId;
+		WindowId
 	}
 }
 
@@ -445,7 +445,7 @@ pub struct DeviceId;
 
 impl DeviceId {
 	pub fn dummy() -> Self {
-		return DeviceId;
+		DeviceId
 	}
 }
 
@@ -461,29 +461,29 @@ impl Window {
 		_: PlatformSpecificWindowBuilderAttributes
 	) -> Result<Self, error::OsError> {
 		// FIXME this ignores requested window attributes
-		return Ok(Self);
+		Ok(Self)
 	}
 
 	pub fn id(&self) -> WindowId {
-		return WindowId;
+		WindowId
 	}
 
 	pub fn primary_monitor(&self) -> Option<monitor::MonitorHandle> {
-		return Some(monitor::MonitorHandle { inner: MonitorHandle });
+		Some(monitor::MonitorHandle { inner: MonitorHandle })
 	}
 
 	pub fn available_monitors(&self) -> VecDeque<MonitorHandle> {
 		let mut v = VecDeque::with_capacity(1);
 		v.push_back(MonitorHandle);
-		return v;
+		v
 	}
 
 	pub fn current_monitor(&self) -> Option<monitor::MonitorHandle> {
-		return Some(monitor::MonitorHandle { inner: MonitorHandle });
+		Some(monitor::MonitorHandle { inner: MonitorHandle })
 	}
 
 	pub fn scale_factor(&self) -> f64 {
-		return MonitorHandle.scale_factor();
+		MonitorHandle.scale_factor()
 	}
 
 	pub fn request_redraw(&self) {
@@ -491,11 +491,11 @@ impl Window {
 	}
 
 	pub fn inner_position(&self) -> Result<PhysicalPosition<i32>, error::NotSupportedError> {
-		return Err(error::NotSupportedError::new());
+		Err(error::NotSupportedError::new())
 	}
 
 	pub fn outer_position(&self) -> Result<PhysicalPosition<i32>, error::NotSupportedError> {
-		return Err(error::NotSupportedError::new());
+		Err(error::NotSupportedError::new())
 	}
 
 	pub fn set_outer_position(&self, _position: Position) {
@@ -503,7 +503,7 @@ impl Window {
 	}
 
 	pub fn inner_size(&self) -> PhysicalSize<u32> {
-		return self.outer_size();
+		self.outer_size()
 	}
 
 	pub fn set_inner_size(&self, _size: Size) {
@@ -511,7 +511,7 @@ impl Window {
 	}
 
 	pub fn outer_size(&self) -> PhysicalSize<u32> {
-		return MonitorHandle.size();
+		MonitorHandle.size()
 	}
 
 	pub fn set_min_inner_size(&self, _: Option<Size>) {}
@@ -536,22 +536,22 @@ impl Window {
 	pub fn set_maximized(&self, _maximized: bool) {}
 
 	pub fn is_maximized(&self) -> bool {
-		return false;
+		false
 	}
 
 	pub fn is_visible(&self) -> bool {
 		log::warn!("`Window::is_visible` is ignored on android");
-		return false;
+		false
 	}
 
 	pub fn is_resizable(&self) -> bool {
 		warn!("`Window::is_resizable` is ignored on android");
-		return false;
+		false
 	}
 
 	pub fn is_decorated(&self) -> bool {
 		warn!("`Window::is_decorated` is ignored on Android");
-		return false;
+		false
 	}
 
 	pub fn set_fullscreen(&self, _monitor: Option<window::Fullscreen>) {
@@ -559,7 +559,7 @@ impl Window {
 	}
 
 	pub fn fullscreen(&self) -> Option<window::Fullscreen> {
-		return None;
+		None
 	}
 
 	pub fn set_decorations(&self, _decorations: bool) {}
@@ -578,23 +578,23 @@ impl Window {
 
 	pub fn is_menu_visible(&self) -> bool {
 		warn!("`Window::is_menu_visible` is ignored on Android");
-		return false;
+		false
 	}
 
 	pub fn set_cursor_icon(&self, _: window::CursorIcon) {}
 
 	pub fn set_cursor_position(&self, _: Position) -> Result<(), error::ExternalError> {
-		return Err(error::ExternalError::NotSupported(error::NotSupportedError::new()));
+		Err(error::ExternalError::NotSupported(error::NotSupportedError::new()))
 	}
 
 	pub fn set_cursor_grab(&self, _: bool) -> Result<(), error::ExternalError> {
-		return Err(error::ExternalError::NotSupported(error::NotSupportedError::new()));
+		Err(error::ExternalError::NotSupported(error::NotSupportedError::new()))
 	}
 
 	pub fn set_cursor_visible(&self, _: bool) {}
 
 	pub fn drag_window(&self) -> Result<(), error::ExternalError> {
-		return Err(error::ExternalError::NotSupported(error::NotSupportedError::new()));
+		Err(error::ExternalError::NotSupported(error::NotSupportedError::new()))
 	}
 
 	pub fn raw_window_handle(&self) -> RawWindowHandle {
@@ -604,15 +604,15 @@ impl Window {
 		} else {
 			panic!("Cannot get the native window, it's null and will always be null before Event::Resumed and after Event::Suspended. Make sure you only call this function between those events.");
 		};
-		return RawWindowHandle::AndroidNdk(handle);
+		RawWindowHandle::AndroidNdk(handle)
 	}
 
 	pub fn config(&self) -> Configuration {
-		return CONFIG.read().unwrap().clone();
+		CONFIG.read().unwrap().clone()
 	}
 
 	pub fn content_rect(&self) -> Rect {
-		return ndk_glue::content_rect();
+		ndk_glue::content_rect()
 	}
 }
 
@@ -622,7 +622,7 @@ pub struct OsError;
 use std::fmt::{self, Display, Formatter};
 impl Display for OsError {
 	fn fmt(&self, fmt: &mut Formatter<'_>) -> Result<(), fmt::Error> {
-		return write!(fmt, "Android OS Error");
+		write!(fmt, "Android OS Error")
 	}
 }
 
@@ -633,26 +633,26 @@ pub struct MonitorHandle;
 
 impl MonitorHandle {
 	pub fn name(&self) -> Option<String> {
-		return Some("Android Device".to_owned());
+		Some("Android Device".to_owned())
 	}
 
 	pub fn size(&self) -> PhysicalSize<u32> {
 		if let Some(native_window) = ndk_glue::native_window().as_ref() {
 			let width = native_window.width() as _;
 			let height = native_window.height() as _;
-			return PhysicalSize::new(width, height);
+			PhysicalSize::new(width, height)
 		} else {
-			return PhysicalSize::new(0, 0);
+			PhysicalSize::new(0, 0)
 		}
 	}
 
 	pub fn position(&self) -> PhysicalPosition<i32> {
-		return (0, 0).into();
+		(0, 0).into()
 	}
 
 	pub fn scale_factor(&self) -> f64 {
 		let config = CONFIG.read().unwrap();
-		return config.density().map(|dpi| dpi as f64 / 160.0).unwrap_or(1.0);
+		config.density().map(|dpi| dpi as f64 / 160.0).unwrap_or(1.0)
 	}
 
 	pub fn video_modes(&self) -> impl Iterator<Item = monitor::VideoMode> {
@@ -668,7 +668,7 @@ impl MonitorHandle {
 				monitor: self.clone()
 			}
 		});
-		return v.into_iter();
+		v.into_iter()
 	}
 }
 
@@ -682,19 +682,19 @@ pub struct VideoMode {
 
 impl VideoMode {
 	pub fn size(&self) -> PhysicalSize<u32> {
-		return self.size.into();
+		self.size.into()
 	}
 
 	pub fn bit_depth(&self) -> u16 {
-		return self.bit_depth;
+		self.bit_depth
 	}
 
 	pub fn refresh_rate(&self) -> u16 {
-		return self.refresh_rate;
+		self.refresh_rate
 	}
 
 	pub fn monitor(&self) -> monitor::MonitorHandle {
-		return monitor::MonitorHandle { inner: self.monitor.clone() };
+		monitor::MonitorHandle { inner: self.monitor.clone() }
 	}
 }
 
@@ -713,7 +713,7 @@ fn keycode_to_logical(keycode: ndk::event::Keycode, native: NativeKeyCode) -> Ke
 	// "are not reliable and vary from device to device". Which seems to mean
 	// that there's no way to reliably get the physical_key on android.
 
-	return match keycode {
+	match keycode {
 		Unknown => Key::Unidentified(native),
 
 		// Can be added on demand
@@ -1026,13 +1026,13 @@ fn keycode_to_logical(keycode: ndk::event::Keycode, native: NativeKeyCode) -> Ke
 		ThumbsUp => Key::Unidentified(native),
 		ThumbsDown => Key::Unidentified(native),
 		ProfileSwitch => Key::Unidentified(native)
-	};
+	}
 }
 
 fn keycode_to_location(keycode: ndk::event::Keycode) -> KeyLocation {
 	use ndk::event::Keycode::*;
 
-	return match keycode {
+	match keycode {
 		AltLeft => KeyLocation::Left,
 		AltRight => KeyLocation::Right,
 		ShiftLeft => KeyLocation::Left,
@@ -1069,14 +1069,14 @@ fn keycode_to_location(keycode: ndk::event::Keycode) -> KeyLocation {
 		NumpadRightParen => KeyLocation::Numpad,
 
 		_ => KeyLocation::Standard
-	};
+	}
 }
 
 // FIXME: Implement android
 pub fn keycode_to_scancode(_code: KeyCode) -> Option<u32> {
-	return None;
+	None
 }
 
 pub fn keycode_from_scancode(_scancode: u32) -> KeyCode {
-	return KeyCode::Unidentified(NativeKeyCode::Unidentified);
+	KeyCode::Unidentified(NativeKeyCode::Unidentified)
 }

@@ -1,9 +1,6 @@
 name: Lint & Format (Rust)
 on:
   push:
-    branches:
-      - master
-      - main
     paths:
       - '.github/workflows/lint-and-format.yml'
       - 'src/**/*.rs'
@@ -74,5 +71,5 @@ jobs:
       - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-targets ${{ matrix.clippy.args }} -- -D warnings
+          args: --all-targets ${{ matrix.clippy.args }}
           name: ${{ matrix.clippy.key }}

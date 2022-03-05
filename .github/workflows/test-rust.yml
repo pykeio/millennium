@@ -1,9 +1,6 @@
 name: Test Millennium (Rust)
 on:
   push:
-    branches:
-      - master
-      - main
     paths:
       - '.github/workflows/lint-and-format.yml'
       - 'src/**/*.rs'
