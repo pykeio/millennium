@@ -24,7 +24,7 @@ use millennium_macros::default_runtime;
 pub use crate::runtime::{
 	menu::{MenuHash, MenuId, MenuIdRef, MenuUpdate, SystemTrayMenu, SystemTrayMenuEntry, TrayHandle},
 	window::dpi::{PhysicalPosition, PhysicalSize},
-	Icon, Runtime, SystemTray, TrayIcon
+	Runtime, SystemTray, TrayIcon
 };
 
 pub(crate) fn get_menu_ids(map: &mut HashMap<MenuHash, MenuId>, menu: &SystemTrayMenu) {
