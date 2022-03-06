@@ -201,7 +201,7 @@ impl TrayIcon {
 	#[cfg(not(target_os = "linux"))]
 	pub fn into_platform_icon(self) -> Vec<u8> {
 		match self {
-			Self::Raw(bytes) => bytes,
+			Self::Raw(r) => r,
 			Self::File(_) => {
 				panic!("non-linux system menu icons must be raw bytes, not a file path.")
 			}
