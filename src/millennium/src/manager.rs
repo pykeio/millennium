@@ -735,7 +735,7 @@ impl<R: Runtime> WindowManager<R> {
 				.replace("millennium://localhost", "");
 			let asset = manager.get_asset(path)?;
 			let mut builder = HttpResponseBuilder::new().mimetype(&asset.mime_type);
-			if let Some(csp) = asset.csp_header {
+			if let Some(csp) = &asset.csp_header {
 				builder = builder.header("Content-Security-Policy", csp);
 			}
 			let mut response = builder.body(asset.bytes)?;
