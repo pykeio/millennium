@@ -830,7 +830,7 @@ pub enum FsAllowlistScope {
 		#[serde(default)]
 		allow: Vec<PathBuf>,
 		/// A list of paths that are not allowed by this scope.
-		/// This has precedence over the [`Self::allow`] list.
+		/// This has precedence over the [`Self::Scope::allow`] list.
 		#[serde(default)]
 		deny: Vec<PathBuf>
 	}
@@ -1347,6 +1347,7 @@ impl Allowlist for DialogAllowlistConfig {
 ///   "github.com" with the "pykeio/millennium" path
 /// - "https://myapi.service.com/users/*": allows access to any URLs that begins
 ///   with "https://myapi.service.com/users/"
+#[allow(rustdoc::bare_urls)]
 #[derive(Debug, Default, PartialEq, Clone, Deserialize, Serialize)]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
 pub struct HttpAllowlistScope(pub Vec<Url>);

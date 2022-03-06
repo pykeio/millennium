@@ -456,7 +456,7 @@ impl ClipboardManager for ClipboardManagerWrapper {
 }
 
 /// Wrapper around a [`millennium_webview::application::window::Icon`] that can
-/// be created from an [`Icon`].
+/// be created from a [`WindowIcon`].
 pub struct MillenniumIcon(MillenniumWindowIcon);
 
 fn icon_err<E: std::error::Error + Send + 'static>(e: E) -> Error {
