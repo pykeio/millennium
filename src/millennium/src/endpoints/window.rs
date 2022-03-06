@@ -14,13 +14,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::path::PathBuf;
-
 use millennium_macros::{module_command_handler, CommandModule};
 use serde::Deserialize;
 
 use super::{InvokeContext, InvokeResponse};
-use crate::runtime::Icon;
 #[cfg(window_create)]
 use crate::runtime::{webview::WindowBuilder, Dispatch};
 use crate::{
@@ -29,21 +26,31 @@ use crate::{
 		Runtime, UserAttentionType
 	},
 	utils::config::WindowConfig,
-	Manager
+	Icon, Manager
 };
 
 #[derive(Deserialize)]
 #[serde(untagged)]
 pub enum IconDto {
-	File(PathBuf),
-	Raw(Vec<u8>)
+	#[cfg(any(feature = "icon-png", feature = "icon-ico"))]
+	File(std::path::PathBuf),
+	#[cfg(any(feature = "icon-png", feature = "icon-ico"))]
+	Raw(Vec<u8>),
+	Rgba {
+		rgba: Vec<u8>,
+		width: u32,
+		height: u32
+	}
 }
 
 impl From<IconDto> for Icon {
 	fn from(icon: IconDto) -> Self {
 		match icon {
+			#[cfg(any(feature = "icon-png", feature = "icon-ico"))]
 			IconDto::File(path) => Self::File(path),
-			IconDto::Raw(raw) => Self::Raw(raw)
+			#[cfg(any(feature = "icon-png", feature = "icon-ico"))]
+			IconDto::Raw(raw) => Self::Raw(raw),
+			IconDto::Rgba { rgba, width, height } => Self::Rgba { rgba, width, height }
 		}
 	}
 }

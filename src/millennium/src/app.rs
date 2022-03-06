@@ -29,7 +29,7 @@ use millennium_utils::PackageInfo;
 use crate::runtime::menu::{Menu, MenuId, MenuIdRef};
 use crate::runtime::RuntimeHandle;
 #[cfg(feature = "system-tray")]
-use crate::runtime::{Icon, SystemTrayEvent as RuntimeSystemTrayEvent};
+use crate::runtime::{SystemTrayEvent as RuntimeSystemTrayEvent, TrayIcon};
 #[cfg(shell_scope)]
 use crate::scope::ShellScope;
 #[cfg(feature = "updater")]
@@ -1009,7 +1009,7 @@ impl<R: Runtime> Builder<R> {
 			if self.system_tray.is_some() {
 				use std::io::{Error, ErrorKind};
 				#[cfg(target_os = "linux")]
-				if let Some(Icon::Raw(_)) = icon {
+				if let Some(TrayIcon::Raw(..)) = icon {
 					return Err(crate::Error::InvalidIcon(Box::new(Error::new(
 						ErrorKind::InvalidInput,
 						"system tray icons on linux must be a file path"
@@ -1017,7 +1017,7 @@ impl<R: Runtime> Builder<R> {
 				}
 
 				#[cfg(not(target_os = "linux"))]
-				if let Some(Icon::File(_)) = icon {
+				if let Some(TrayIcon::File(_)) = icon {
 					return Err(crate::Error::InvalidIcon(Box::new(Error::new(
 						ErrorKind::InvalidInput,
 						"system tray icons on non-linux platforms must be the raw bytes"

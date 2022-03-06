@@ -22,7 +22,7 @@ use std::{
 use millennium_runtime::menu::MenuHash;
 pub use millennium_runtime::{
 	menu::{Menu, MenuEntry, MenuItem, MenuUpdate, Submenu, SystemTrayMenu, SystemTrayMenuEntry, SystemTrayMenuItem, TrayHandle},
-	Icon, SystemTrayEvent
+	SystemTrayEvent, TrayIcon
 };
 #[cfg(target_os = "macos")]
 pub use millennium_webview::application::platform::macos::CustomMenuItemExtMacOS;
@@ -45,7 +45,7 @@ pub struct SystemTrayHandle {
 }
 
 impl TrayHandle for SystemTrayHandle {
-	fn set_icon(&self, icon: Icon) -> Result<()> {
+	fn set_icon(&self, icon: TrayIcon) -> Result<()> {
 		self.proxy
 			.send_event(Message::Tray(TrayMessage::UpdateIcon(icon)))
 			.map_err(|_| Error::FailedToSendMessage)

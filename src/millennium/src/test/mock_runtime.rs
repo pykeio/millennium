@@ -23,17 +23,20 @@ use std::{
 };
 
 use millennium_runtime::{
-	menu::{Menu, MenuUpdate, SystemTrayMenu, TrayHandle},
+	menu::{Menu, MenuUpdate},
 	monitor::Monitor,
 	webview::{WindowBuilder, WindowBuilderBase},
 	window::{
 		dpi::{PhysicalPosition, PhysicalSize, Position, Size},
 		DetachedWindow, MenuEvent, PendingWindow, WindowEvent
 	},
-	ClipboardManager, Dispatch, GlobalShortcutManager, Icon, Result, RunEvent, Runtime, RuntimeHandle, UserAttentionType
+	ClipboardManager, Dispatch, GlobalShortcutManager, Result, RunEvent, Runtime, RuntimeHandle, UserAttentionType, WindowIcon
 };
 #[cfg(feature = "system-tray")]
-use millennium_runtime::{SystemTray, SystemTrayEvent};
+use millennium_runtime::{
+	menu::{SystemTrayMenu, TrayHandle},
+	SystemTray, SystemTrayEvent, TrayIcon
+};
 use millennium_utils::config::WindowConfig;
 use uuid::Uuid;
 #[cfg(windows)]
@@ -205,7 +208,7 @@ impl WindowBuilder for MockWindowBuilder {
 		self
 	}
 
-	fn icon(self, icon: Icon) -> Result<Self> {
+	fn icon(self, icon: WindowIcon) -> Result<Self> {
 		Ok(self)
 	}
 
@@ -415,7 +418,7 @@ impl Dispatch for MockDispatcher {
 		Ok(())
 	}
 
-	fn set_icon(&self, icon: Icon) -> Result<()> {
+	fn set_icon(&self, icon: WindowIcon) -> Result<()> {
 		Ok(())
 	}
 
@@ -436,13 +439,15 @@ impl Dispatch for MockDispatcher {
 	}
 }
 
+#[cfg(feature = "system-tray")]
 #[derive(Debug, Clone)]
 pub struct MockTrayHandler {
 	context: RuntimeContext
 }
 
+#[cfg(feature = "system-tray")]
 impl TrayHandle for MockTrayHandler {
-	fn set_icon(&self, icon: Icon) -> Result<()> {
+	fn set_icon(&self, icon: TrayIcon) -> Result<()> {
 		Ok(())
 	}
 	fn set_menu(&self, menu: SystemTrayMenu) -> Result<()> {

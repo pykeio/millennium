@@ -24,7 +24,7 @@ use millennium_macros::default_runtime;
 pub use crate::runtime::{
 	menu::{MenuHash, MenuId, MenuIdRef, MenuUpdate, SystemTrayMenu, SystemTrayMenuEntry, TrayHandle},
 	window::dpi::{PhysicalPosition, PhysicalSize},
-	Icon, Runtime, SystemTray
+	Icon, Runtime, SystemTray, TrayIcon
 };
 
 pub(crate) fn get_menu_ids(map: &mut HashMap<MenuHash, MenuId>, menu: &SystemTrayMenu) {
@@ -136,9 +136,9 @@ impl<R: Runtime> SystemTrayHandle<R> {
 		panic!("item id not found")
 	}
 
-	/// Updates the tray icon. Must be a [`Icon::File`] on Linux and a
-	/// [`Icon::Raw`] on Windows and macOS.
-	pub fn set_icon(&self, icon: Icon) -> crate::Result<()> {
+	/// Updates the tray icon. Must be a [`TrayIcon::File`] on Linux and a
+	/// [`TrayIcon::Raw`] on Windows and macOS.
+	pub fn set_icon(&self, icon: TrayIcon) -> crate::Result<()> {
 		self.inner.set_icon(icon).map_err(Into::into)
 	}
 

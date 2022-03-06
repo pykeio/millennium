@@ -20,7 +20,6 @@ use std::{
 		HashMap, HashSet
 	},
 	fmt,
-	fs::read,
 	ops::Deref,
 	path::PathBuf,
 	sync::{
@@ -40,8 +39,8 @@ use millennium_runtime::{
 		dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize, Position, Size},
 		DetachedWindow, JsEventListenerKey, PendingWindow, WindowEvent
 	},
-	ClipboardManager, Dispatch, Error, ExitRequestedEventAction, GlobalShortcutManager, Icon, Result, RunEvent, RunIteration, Runtime, RuntimeHandle,
-	UserAttentionType
+	ClipboardManager, Dispatch, Error, ExitRequestedEventAction, GlobalShortcutManager, Result, RunEvent, RunIteration, Runtime, RuntimeHandle,
+	UserAttentionType, WindowIcon
 };
 #[cfg(target_os = "macos")]
 use millennium_runtime::{menu::NativeImage, ActivationPolicy};
@@ -80,7 +79,7 @@ use millennium_webview::{
 			MenuItemAttributes as MillenniumMenuItemAttributes, MenuType
 		},
 		monitor::MonitorHandle,
-		window::{Fullscreen, Icon as WindowIcon, UserAttentionType as MillenniumUserAttentionType}
+		window::{Fullscreen, Icon as MillenniumWindowIcon, UserAttentionType as MillenniumUserAttentionType}
 	},
 	http::{
 		Request as MillenniumHttpRequest, RequestParts as MillenniumRequestParts, Response as MillenniumHttpResponse, ResponseParts as MillenniumResponseParts
@@ -460,42 +459,16 @@ impl ClipboardManager for ClipboardManagerWrapper {
 
 /// Wrapper around a [`millennium_webview::application::window::Icon`] that can
 /// be created from an [`Icon`].
-pub struct MillenniumIcon(WindowIcon);
+pub struct MillenniumIcon(MillenniumWindowIcon);
 
 fn icon_err<E: std::error::Error + Send + 'static>(e: E) -> Error {
 	Error::InvalidIcon(Box::new(e))
 }
 
-impl TryFrom<Icon> for MillenniumIcon {
+impl TryFrom<WindowIcon> for MillenniumIcon {
 	type Error = Error;
-	fn try_from(icon: Icon) -> std::result::Result<Self, Self::Error> {
-		let image_bytes = match icon {
-			Icon::File(path) => read(path).map_err(icon_err)?,
-			Icon::Raw(raw) => raw,
-			_ => unimplemented!()
-		};
-		let extension = infer::get(&image_bytes).expect("could not determine icon extension").extension();
-		match extension {
-			#[cfg(windows)]
-			"ico" => {
-				let icon_dir = ico::IconDir::read(std::io::Cursor::new(image_bytes)).map_err(icon_err)?;
-				let entry = &icon_dir.entries()[0];
-				let icon = WindowIcon::from_rgba(entry.decode().map_err(icon_err)?.rgba_data().to_vec(), entry.width(), entry.height()).map_err(icon_err)?;
-				Ok(Self(icon))
-			}
-			#[cfg(target_os = "linux")]
-			"png" => {
-				let decoder = png::Decoder::new(std::io::Cursor::new(image_bytes));
-				let (info, mut reader) = decoder.read_info().map_err(icon_err)?;
-				let mut buffer = Vec::new();
-				while let Ok(Some(row)) = reader.next_row() {
-					buffer.extend(row);
-				}
-				let icon = WindowIcon::from_rgba(buffer, info.width, info.height).map_err(icon_err)?;
-				Ok(Self(icon))
-			}
-			_ => panic!("image `{}` extension not supported; please file a feature request", extension)
-		}
+	fn try_from(icon: WindowIcon) -> std::result::Result<Self, Self::Error> {
+		MillenniumWindowIcon::from_rgba(icon.rgba, icon.width, icon.height).map(Self).map_err(icon_err)
 	}
 }
 
@@ -791,7 +764,7 @@ impl WindowBuilder for WindowBuilderWrapper {
 		self
 	}
 
-	fn icon(mut self, icon: Icon) -> Result<Self> {
+	fn icon(mut self, icon: WindowIcon) -> Result<Self> {
 		self.inner = self.inner.with_window_icon(Some(MillenniumIcon::try_from(icon)?.0));
 		Ok(self)
 	}
@@ -895,7 +868,7 @@ pub enum WindowMessage {
 	SetPosition(Position),
 	SetFullscreen(bool),
 	SetFocus,
-	SetIcon(WindowIcon),
+	SetIcon(MillenniumWindowIcon),
 	SetSkipTaskbar(bool),
 	DragWindow,
 	UpdateMenuItem(u16, MenuUpdate),
@@ -921,7 +894,7 @@ pub enum WebviewEvent {
 pub enum TrayMessage {
 	UpdateItem(u16, MenuUpdate),
 	UpdateMenu(SystemTrayMenu),
-	UpdateIcon(Icon),
+	UpdateIcon(TrayIcon),
 	#[cfg(target_os = "macos")]
 	UpdateIconAsTemplate(bool),
 	Close
@@ -1231,7 +1204,7 @@ impl Dispatch for MillenniumDispatcher {
 		send_user_message(&self.context, Message::Window(self.window_id, WindowMessage::SetFocus))
 	}
 
-	fn set_icon(&self, icon: Icon) -> Result<()> {
+	fn set_icon(&self, icon: WindowIcon) -> Result<()> {
 		send_user_message(
 			&self.context,
 			Message::Window(self.window_id, WindowMessage::SetIcon(MillenniumIcon::try_from(icon)?.0))
@@ -1585,7 +1558,7 @@ impl Runtime for MillenniumWebview {
 
 	#[cfg(feature = "system-tray")]
 	fn system_tray(&self, system_tray: SystemTray) -> Result<Self::TrayHandler> {
-		let icon = system_tray.icon.expect("tray icon not set").into_tray_icon();
+		let icon = system_tray.icon.expect("tray icon not set").into_platform_icon();
 
 		let mut items = HashMap::new();
 
@@ -1931,7 +1904,7 @@ fn handle_user_message(
 			}
 			TrayMessage::UpdateIcon(icon) => {
 				if let Some(tray) = &*tray_context.tray.lock().unwrap() {
-					tray.lock().unwrap().set_icon(icon.into_tray_icon());
+					tray.lock().unwrap().set_icon(icon.into_platform_icon());
 				}
 			}
 			#[cfg(target_os = "macos")]

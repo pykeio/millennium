@@ -122,7 +122,11 @@ pub enum Error {
 	InvalidWindowUrl(&'static str),
 	/// Invalid glob pattern.
 	#[error("invalid glob pattern: {0}")]
-	GlobPattern(#[from] glob::PatternError)
+	GlobPattern(#[from] glob::PatternError),
+	/// Error decoding PNG image.
+	#[cfg(feature = "icon-png")]
+	#[error("failed to decode PNG: {0}")]
+	PngDecode(#[from] png::DecodingError)
 }
 
 pub(crate) fn into_anyhow<T: std::fmt::Display>(err: T) -> anyhow::Error {

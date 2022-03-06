@@ -22,7 +22,7 @@ use millennium_utils::config::{WindowConfig, WindowUrl};
 #[cfg(windows)]
 use windows::Win32::Foundation::HWND;
 
-use crate::{menu::Menu, window::DetachedWindow, Icon};
+use crate::{menu::Menu, window::DetachedWindow, WindowIcon};
 
 /// The attributes used to create an webview.
 #[derive(Debug, Clone)]
@@ -163,7 +163,7 @@ pub trait WindowBuilder: WindowBuilderBase {
 	fn always_on_top(self, always_on_top: bool) -> Self;
 
 	/// Sets the window icon.
-	fn icon(self, icon: Icon) -> crate::Result<Self>;
+	fn icon(self, icon: WindowIcon) -> crate::Result<Self>;
 
 	/// Sets whether or not the window icon should be added to the taskbar.
 	#[must_use]
