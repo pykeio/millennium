@@ -216,10 +216,7 @@ struct HttpRequestWrapper(HttpRequest);
 
 impl From<&MillenniumHttpRequest> for HttpRequestWrapper {
 	fn from(req: &MillenniumHttpRequest) -> Self {
-		Self(HttpRequest {
-			body: req.body.clone(),
-			head: HttpRequestPartsWrapper::from(req.head.clone()).0
-		})
+		Self(HttpRequest::new_internal(HttpRequestPartsWrapper::from(req.head.clone()).0, req.body.clone()))
 	}
 }
 
@@ -239,9 +236,10 @@ impl From<HttpResponseParts> for HttpResponsePartsWrapper {
 struct HttpResponseWrapper(MillenniumHttpResponse);
 impl From<HttpResponse> for HttpResponseWrapper {
 	fn from(response: HttpResponse) -> Self {
+		let (parts, body) = response.into_parts();
 		Self(MillenniumHttpResponse {
-			body: response.body,
-			head: HttpResponsePartsWrapper::from(response.head).0
+			body,
+			head: HttpResponsePartsWrapper::from(parts).0
 		})
 	}
 }
@@ -1290,6 +1288,23 @@ pub struct MillenniumWebview {
 	menu_event_listeners: MenuEventListeners,
 	#[cfg(feature = "system-tray")]
 	tray_context: TrayContext
+}
+
+impl fmt::Debug for MillenniumWebview {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		let mut d = f.debug_struct("MillenniumWebview");
+		d.field("main_thread_id", &self.main_thread_id)
+			.field("global_shortcut_manager", &self.global_shortcut_manager)
+			.field("global_shortcut_manager_handle", &self.global_shortcut_manager_handle)
+			.field("clipboard_manager", &self.clipboard_manager)
+			.field("clipboard_manager_handle", &self.clipboard_manager_handle)
+			.field("event_loop", &self.event_loop)
+			.field("windows", &self.windows)
+			.field("web_context", &self.web_context);
+		#[cfg(feature = "system-tray")]
+		d.field("tray_context", &self.tray_context);
+		d.finish()
+	}
 }
 
 /// A handle to the Millennium Webview runtime.

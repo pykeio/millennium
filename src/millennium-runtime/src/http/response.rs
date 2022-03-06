@@ -44,8 +44,8 @@ type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 ///     .unwrap();
 /// ```
 pub struct Response {
-	pub head: ResponseParts,
-	pub body: Vec<u8>
+	head: ResponseParts,
+	body: Vec<u8>
 }
 
 /// Component parts of an HTTP `Response`
@@ -54,16 +54,16 @@ pub struct Response {
 /// header fields.
 #[derive(Clone)]
 pub struct ResponseParts {
-	/// The response's status
+	/// The response's status.
 	pub status: StatusCode,
 
-	/// The response's version
+	/// The response's version.
 	pub version: Version,
 
-	/// The response's headers
+	/// The response's headers.
 	pub headers: HeaderMap<HeaderValue>,
 
-	/// The response's mimetype type
+	/// The response's mimetype type.
 	pub mimetype: Option<String>
 }
 
@@ -86,16 +86,38 @@ impl Response {
 		}
 	}
 
+	/// Consumes the response returning the head and body `ResponseParts`.
+	///
+	/// ## Stability
+	/// This API is used internally. It may have breaking changes in the future.
+	#[inline]
+	#[doc(hidden)]
+	pub fn into_parts(self) -> (ResponseParts, Vec<u8>) {
+		(self.head, self.body)
+	}
+
+	/// Sets the status code.
+	#[inline]
+	pub fn set_status(&mut self, status: StatusCode) {
+		self.head.status = status;
+	}
+
 	/// Returns the `StatusCode`.
 	#[inline]
 	pub fn status(&self) -> StatusCode {
 		self.head.status
 	}
 
+	/// Sets the mimetype.
+	#[inline]
+	pub fn set_mimetype(&mut self, mimetype: Option<String>) {
+		self.head.mimetype = mimetype;
+	}
+
 	/// Returns a reference to the mime type.
 	#[inline]
-	pub fn mimetype(&self) -> Option<String> {
-		self.head.mimetype.clone()
+	pub fn mimetype(&self) -> Option<&String> {
+		self.head.mimetype.as_ref()
 	}
 
 	/// Returns a reference to the associated version.
@@ -104,10 +126,22 @@ impl Response {
 		self.head.version
 	}
 
+	/// Returns a mutable reference to the associated header field map.
+	#[inline]
+	pub fn headers_mut(&mut self) -> &mut HeaderMap<HeaderValue> {
+		&mut self.head.headers
+	}
+
 	/// Returns a reference to the associated header field map.
 	#[inline]
 	pub fn headers(&self) -> &HeaderMap<HeaderValue> {
 		&self.head.headers
+	}
+
+	/// Returns a mutable reference to the associated HTTP body.
+	#[inline]
+	pub fn body_mut(&mut self) -> &mut Vec<u8> {
+		&mut self.body
 	}
 
 	/// Returns a reference to the associated HTTP body.
