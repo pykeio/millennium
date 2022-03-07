@@ -258,6 +258,10 @@ pub struct WindowsConfig {
 	pub certificate_thumbprint: Option<String>,
 	/// Server to use during timestamping.
 	pub timestamp_url: Option<String>,
+	/// Whether to use Time-Stamp Protocol (TSP, RFC 3161) for the timestamp
+	/// server. Your code signing provider may use a TSP timestamp server, like
+	/// SSL.com does.
+	pub tsp: Option<bool>,
 	/// Path to the webview fixed runtime to use.
 	///
 	/// The fixed version can be downloaded [on the official website](https://developer.microsoft.com/en-us/microsoft-edge/webview2/#download-section).
