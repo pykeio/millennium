@@ -1,6 +1,6 @@
 {
 	"rust-analyzer.checkOnSave.command": "clippy",
-	"rust-analyzer.cargo.allFeatures": false,
+	"rust-analyzer.cargo.allFeatures": true,
 	"rust-analyzer.cache.warmup": true,
 	"rust-analyzer.diagnostics.enableExperimental": true,
 	"rust-analyzer.rustfmt.extraArgs": [ "+nightly" ],
@@ -11,6 +11,5 @@
 	},
 	"rust-analyzer.diagnostics.disabled": [
 		"unresolved-macro-call"
-	],
-	"rust-analyzer.cargo.features": [ "__rust_analyzer_hack" ]
+	]
 }
