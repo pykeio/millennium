@@ -2078,7 +2078,9 @@ fn handle_event_loop(
 			// windows.
 			if event == MillenniumWindowEvent::Focused(true) {
 				if let Some(WindowHandle::Webview(webview)) = windows.lock().expect("poisoned webview collection").get(&window_id).map(|w| &w.inner) {
-					webview.focus();
+					if webview.window().is_visible() {
+						webview.focus();
+					}
 				}
 			}
 
