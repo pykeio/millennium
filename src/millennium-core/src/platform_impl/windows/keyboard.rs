@@ -14,8 +14,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{char, collections::HashSet, ffi::OsString, mem::MaybeUninit, os::windows::ffi::OsStringExt, sync::MutexGuard};
+use std::{
+	char,
+	collections::{HashMap, HashSet},
+	ffi::OsString,
+	mem::MaybeUninit,
+	os::windows::ffi::OsStringExt
+};
 
+use parking_lot::{Mutex, MutexGuard};
 use unicode_segmentation::UnicodeSegmentation;
 use windows::Win32::{
 	Foundation::{HWND, LPARAM, LRESULT, WPARAM},
@@ -29,10 +36,13 @@ use windows::Win32::{
 use crate::{
 	event::{ElementState, KeyEvent},
 	keyboard::{Key, KeyCode, KeyLocation, NativeKeyCode},
-	platform_impl::platform::{
-		event_loop::ProcResult,
-		keyboard_layout::{get_or_insert_str, Layout, LayoutCache, WindowsModifiers, LAYOUT_CACHE},
-		KeyEventExtra
+	platform_impl::{
+		platform::{
+			event_loop::ProcResult,
+			keyboard_layout::{get_or_insert_str, Layout, LayoutCache, WindowsModifiers, LAYOUT_CACHE},
+			KeyEventExtra
+		},
+		WindowId
 	}
 };
 
@@ -47,6 +57,10 @@ pub type ExScancode = u16;
 pub struct MessageAsKeyEvent {
 	pub event: KeyEvent,
 	pub is_synthetic: bool
+}
+
+lazy_static! {
+	pub(crate) static ref KEY_EVENT_BUILDERS: Mutex<HashMap<WindowId, KeyEventBuilder>> = Mutex::new(HashMap::new());
 }
 
 /// Stores information required to make `KeyEvent`s.
@@ -107,7 +121,7 @@ impl KeyEventBuilder {
 				}
 				*result = ProcResult::Value(LRESULT(0));
 
-				let mut layouts = LAYOUT_CACHE.lock().unwrap();
+				let mut layouts = LAYOUT_CACHE.lock();
 				let event_info = PartialKeyEventInfo::from_message(wparam, lparam, ElementState::Pressed, &mut layouts);
 
 				let mut next_msg = MaybeUninit::uninit();
@@ -148,7 +162,7 @@ impl KeyEventBuilder {
 				// At this point, we know that there isn't going to be any more events related
 				// to this key press
 				let event_info = self.event_info.take().unwrap();
-				let mut layouts = LAYOUT_CACHE.lock().unwrap();
+				let mut layouts = LAYOUT_CACHE.lock();
 				let ev = event_info.finalize(&mut layouts.strings);
 				return vec![MessageAsKeyEvent {
 					event: ev,
@@ -214,7 +228,7 @@ impl KeyEventBuilder {
 							return vec![];
 						}
 					};
-					let mut layouts = LAYOUT_CACHE.lock().unwrap();
+					let mut layouts = LAYOUT_CACHE.lock();
 					// It's okay to call `ToUnicode` here, because at this point the dead key
 					// is already consumed by the character.
 					let kbd_state = get_kbd_state();
@@ -252,7 +266,7 @@ impl KeyEventBuilder {
 			win32wm::WM_KEYUP | win32wm::WM_SYSKEYUP => {
 				*result = ProcResult::Value(LRESULT(0));
 
-				let mut layouts = LAYOUT_CACHE.lock().unwrap();
+				let mut layouts = LAYOUT_CACHE.lock();
 				let event_info = PartialKeyEventInfo::from_message(wparam, lparam, ElementState::Released, &mut layouts);
 				let mut next_msg = MaybeUninit::uninit();
 				let peek_retval = unsafe { PeekMessageW(next_msg.as_mut_ptr(), hwnd, WM_KEYFIRST, WM_KEYLAST, PM_NOREMOVE) };
@@ -283,7 +297,7 @@ impl KeyEventBuilder {
 	fn synthesize_kbd_state(&mut self, key_state: ElementState, kbd_state: &[u8; 256]) -> Vec<MessageAsKeyEvent> {
 		let mut key_events = Vec::new();
 
-		let mut layouts = LAYOUT_CACHE.lock().unwrap();
+		let mut layouts = LAYOUT_CACHE.lock();
 		let (locale_id, _) = layouts.get_current_layout();
 
 		let is_key_pressed = |vk: VIRTUAL_KEY| &kbd_state[usize::from(vk)] & 0x80 != 0;

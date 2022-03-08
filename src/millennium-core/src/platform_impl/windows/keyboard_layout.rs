@@ -17,11 +17,11 @@
 use std::{
 	collections::{hash_map::Entry, HashMap, HashSet},
 	ffi::OsString,
-	os::windows::ffi::OsStringExt,
-	sync::Mutex
+	os::windows::ffi::OsStringExt
 };
 
 use lazy_static::lazy_static;
+use parking_lot::Mutex;
 use windows::Win32::{
 	Foundation::PWSTR,
 	System::SystemServices::{LANG_JAPANESE, LANG_KOREAN},

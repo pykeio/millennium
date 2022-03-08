@@ -43,6 +43,7 @@ use windows::Win32::{
 	}
 };
 
+use super::keyboard::{KeyEventBuilder, KEY_EVENT_BUILDERS};
 use crate::{
 	dpi::{PhysicalPosition, PhysicalSize, Position, Size},
 	error::{ExternalError, NotSupportedError, OsError as RootOsError},
@@ -852,6 +853,8 @@ unsafe fn init<T: 'static>(
 		thread_executor: event_loop.create_thread_executor(),
 		menu: None
 	};
+
+	KEY_EVENT_BUILDERS.lock().insert(win.id(), KeyEventBuilder::default());
 
 	win.set_skip_taskbar(pl_attribs.skip_taskbar);
 

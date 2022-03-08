@@ -34,7 +34,7 @@ pub struct ContextData {
 	pub dev: bool,
 	pub config: Config,
 	pub config_parent: PathBuf,
-	pub root: TokenStream,
+	pub root: TokenStream
 }
 
 fn load_csp(document: &mut NodeRef, key: &AssetKey, csp_hashes: &mut CspHashes) {
@@ -107,7 +107,7 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 		dev,
 		config,
 		config_parent,
-		root,
+		root
 	} = data;
 
 	let mut options = AssetOptions::new(config.millennium.pattern.clone()).freeze_prototype(config.millennium.security.freeze_prototype);
@@ -139,10 +139,10 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 				}
 				EmbeddedAssets::new(assets_path, map_core_assets(&options))?
 			}
-			_ => unimplemented!(),
+			_ => unimplemented!()
 		},
 		AppUrl::Files(files) => EmbeddedAssets::new(files.iter().map(|p| config_parent.join(p)).collect::<Vec<_>>(), map_core_assets(&options))?,
-		_ => unimplemented!(),
+		_ => unimplemented!()
 	};
 
 	#[cfg(any(windows, target_os = "linux"))]
@@ -291,7 +291,7 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 					})
 				}
 			},
-			_ => panic!("unknown shell open format, unable to prepare"),
+			_ => panic!("unknown shell open format, unable to prepare")
 		};
 
 		quote!(#root::ShellScopeConfig {
@@ -426,12 +426,12 @@ fn get_allowed_clis(root: &TokenStream, scope: &ShellAllowlistScope) -> TokenStr
 
 							quote!(#root::scope::ShellScopeAllowedArg::Var { validator: #validator })
 						}
-						_ => panic!("unknown shell scope arg, unable to prepare"),
+						_ => panic!("unknown shell scope arg, unable to prepare")
 					});
 
 					quote!(::std::option::Option::Some(::std::vec![#(#list),*]))
 				}
-				_ => panic!("unknown shell scope command, unable to prepare"),
+				_ => panic!("unknown shell scope command, unable to prepare")
 			};
 
 			(
@@ -442,7 +442,7 @@ fn get_allowed_clis(root: &TokenStream, scope: &ShellAllowlistScope) -> TokenStr
 					args: #args,
 					sidecar: #sidecar,
 				  }
-				),
+				)
 			)
 		})
 		.collect::<Vec<_>>();
