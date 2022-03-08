@@ -34,7 +34,7 @@ pub struct ContextData {
 	pub dev: bool,
 	pub config: Config,
 	pub config_parent: PathBuf,
-	pub root: TokenStream
+	pub root: TokenStream,
 }
 
 fn load_csp(document: &mut NodeRef, key: &AssetKey, csp_hashes: &mut CspHashes) {
@@ -107,7 +107,7 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 		dev,
 		config,
 		config_parent,
-		root
+		root,
 	} = data;
 
 	let mut options = AssetOptions::new(config.millennium.pattern.clone()).freeze_prototype(config.millennium.security.freeze_prototype);
@@ -139,22 +139,35 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 				}
 				EmbeddedAssets::new(assets_path, map_core_assets(&options))?
 			}
-			_ => unimplemented!()
+			_ => unimplemented!(),
 		},
 		AppUrl::Files(files) => EmbeddedAssets::new(files.iter().map(|p| config_parent.join(p)).collect::<Vec<_>>(), map_core_assets(&options))?,
-		_ => unimplemented!()
+		_ => unimplemented!(),
+	};
+
+	#[cfg(any(windows, target_os = "linux"))]
+	let out_dir = {
+		let out_dir = std::env::var("OUT_DIR")
+			.map_err(|_| EmbeddedAssetsError::OutDir)
+			.map(PathBuf::from)
+			.and_then(|p| p.canonicalize().map_err(|_| EmbeddedAssetsError::OutDir))?;
+
+		// make sure that our output directory is created
+		std::fs::create_dir_all(&out_dir).map_err(|_| EmbeddedAssetsError::OutDir)?;
+
+		out_dir
 	};
 
 	// handle default window icons for Windows targets
 	#[cfg(windows)]
 	let default_window_icon = {
 		let icon_path = find_icon(&config, &config_parent, |i| i.ends_with(".ico"), "icons/icon.ico");
-		ico_icon(&root, icon_path)
+		ico_icon(&root, &out_dir, icon_path)?
 	};
 	#[cfg(target_os = "linux")]
 	let default_window_icon = {
 		let icon_path = find_icon(&config, &config_parent, |i| i.ends_with(".png"), "icons/icon.png");
-		png_icon(&root, icon_path)
+		png_icon(&root, &out_dir, icon_path)?
 	};
 	#[cfg(not(any(windows, target_os = "linux")))]
 	let default_window_icon = quote!(None);
@@ -278,7 +291,7 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 					})
 				}
 			},
-			_ => panic!("unknown shell open format, unable to prepare")
+			_ => panic!("unknown shell open format, unable to prepare"),
 		};
 
 		quote!(#root::ShellScopeConfig {
@@ -303,7 +316,10 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 }
 
 #[cfg(windows)]
-fn ico_icon<P: AsRef<Path>>(root: &TokenStream, path: P) -> TokenStream {
+fn ico_icon<P: AsRef<Path>>(root: &TokenStream, out_dir: &Path, path: P) -> Result<TokenStream, EmbeddedAssetsError> {
+	use std::fs::File;
+	use std::io::Write;
+
 	let path = path.as_ref();
 	let bytes = std::fs::read(&path)
 		.unwrap_or_else(|_| panic!("failed to read window icon {}", path.display()))
@@ -317,12 +333,23 @@ fn ico_icon<P: AsRef<Path>>(root: &TokenStream, path: P) -> TokenStream {
 		.to_vec();
 	let width = entry.width();
 	let height = entry.height();
-	let rgba_items = rgba.into_iter();
-	quote!(Some(#root::Icon::Rgba { rgba: vec![#(#rgba_items),*], width: #width, height: #height }))
+
+	let out_path = out_dir.join(path.file_name().unwrap());
+	let mut out_file = File::create(&out_path).map_err(|error| EmbeddedAssetsError::AssetWrite { path: out_path.clone(), error })?;
+	out_file
+		.write_all(&rgba)
+		.map_err(|error| EmbeddedAssetsError::AssetWrite { path: path.to_owned(), error })?;
+
+	let out_path = out_path.display().to_string();
+	let icon = quote!(Some(#root::Icon::Rgba { rgba: include_bytes!(#out_path).to_vec(), width: #width, height: #height }));
+	Ok(icon)
 }
 
 #[cfg(target_os = "linux")]
-fn png_icon<P: AsRef<Path>>(root: &TokenStream, path: P) -> TokenStream {
+fn png_icon<P: AsRef<Path>>(root: &TokenStream, out_dir: &Path, path: P) -> Result<TokenStream, EmbeddedAssetsError> {
+	use std::fs::File;
+	use std::io::Write;
+
 	let path = path.as_ref();
 	let bytes = std::fs::read(&path)
 		.unwrap_or_else(|_| panic!("failed to read window icon {}", path.display()))
@@ -333,10 +360,18 @@ fn png_icon<P: AsRef<Path>>(root: &TokenStream, path: P) -> TokenStream {
 	while let Ok(Some(row)) = reader.next_row() {
 		buffer.extend(row);
 	}
-	let rgba_items = buffer.into_iter();
 	let width = info.width;
 	let height = info.height;
-	quote!(Some(#root::Icon::Rgba { rgba: vec![#(#rgba_items),*], width: #width, height: #height }))
+
+	let out_path = out_dir.join(path.file_name().unwrap());
+	let mut out_file = File::create(&out_path).map_err(|error| EmbeddedAssetsError::AssetWrite { path: out_path.clone(), error })?;
+	out_file
+		.write_all(&buffer)
+		.map_err(|error| EmbeddedAssetsError::AssetWrite { path: path.to_owned(), error })?;
+
+	let out_path = out_path.display().to_string();
+	let icon = quote!(Some(#root::Icon::Rgba { rgba: include_bytes!(#out_path).to_vec(), width: #width, height: #height }));
+	Ok(icon)
 }
 
 #[cfg(any(windows, target_os = "linux"))]
@@ -391,12 +426,12 @@ fn get_allowed_clis(root: &TokenStream, scope: &ShellAllowlistScope) -> TokenStr
 
 							quote!(#root::scope::ShellScopeAllowedArg::Var { validator: #validator })
 						}
-						_ => panic!("unknown shell scope arg, unable to prepare")
+						_ => panic!("unknown shell scope arg, unable to prepare"),
 					});
 
 					quote!(::std::option::Option::Some(::std::vec![#(#list),*]))
 				}
-				_ => panic!("unknown shell scope command, unable to prepare")
+				_ => panic!("unknown shell scope command, unable to prepare"),
 			};
 
 			(
@@ -407,7 +442,7 @@ fn get_allowed_clis(root: &TokenStream, scope: &ShellAllowlistScope) -> TokenStr
 					args: #args,
 					sidecar: #sidecar,
 				  }
-				)
+				),
 			)
 		})
 		.collect::<Vec<_>>();
