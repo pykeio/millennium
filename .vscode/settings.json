@@ -11,5 +11,9 @@
 	},
 	"rust-analyzer.diagnostics.disabled": [
 		"unresolved-macro-call"
-	]
+	],
+	"[mdx]": {
+		"editor.wordWrap": "on",
+		"editor.insertSpaces": true
+	}
 }

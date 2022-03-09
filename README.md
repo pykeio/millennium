@@ -1,5 +1,5 @@
 <div align=center>
-	<img src="banner.png" width=1920>
+	<a href="https://millennium.pyke.io"><img src="https://github.com/pykeio/millennium/raw/master/banner.png" width=1920></a>
 	<sub><i>Millennium Icon by <a href="https://github.com/xfaonae">XFaon</a>. *Stats are from <a href="https://github.com/tauri-apps/tauri">Tauri</a> and may not be fully accurate.</i><sub>
 	<br /><br />
 	<a href="https://github.com/pykeio/millennium/actions"><img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/pykeio/millennium/Test%20Millennium%20(Rust)?style=flat-square"></a> <img alt="Code Climate maintainability" src="https://img.shields.io/codeclimate/maintainability/pykeio/millennium?label=maintainability&style=flat-square">
@@ -10,9 +10,9 @@
 Millennium is an experimental cross-platform GUI framework written in Rust. With Millennium, you can design consistent UI that works across all platforms, using HTML, CSS, and JavaScript.
 		
 ## How It Works
-You can interact with native code and perform system-level operations, including reading/writing files & TCP/UDP networking. It leverages modern operating systems' pre-included webview libraries (<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ubuntu/ubuntu-plain.svg" height=14 /> WebKitGTK, <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/windows8/windows8-original.svg" height=14 /> WebView2, <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/apple/apple-original.svg" height=14 /> WebKit) for smaller, faster, more secure, and less resource-heavy applications compared to Electron. The size of a simple Millennium app is less than __10 MB__ and can be reduced further to less than __2 MB__. Millennium apps launch almost twice as fast as equivalent Electron applications and use as little as __1/4 of the amount of RAM.__
+You can interact with native code and perform system-level operations, including reading/writing files & TCP/UDP networking. It leverages modern operating systems' pre-included webview libraries (<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ubuntu/ubuntu-plain.svg" height=14 /> WebKitGTK, <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/windows8/windows8-original.svg" height=14 /> WebView2, <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/apple/apple-original.svg" height=14 /> WebKit) for smaller, faster, more secure, and less resource-heavy applications compared to Electron. A simple Millennium app can be less than **10 MB** in size and can be reduced further to less than **2 MB**. Millennium apps launch almost twice as fast as equivalent Electron applications and use as little as __1/4 of the amount of RAM.__
 
-Millennium is a fork of [Tauri](https://tauri.studio/), its [official plugins](https://github.com/tauri-apps/awesome-tauri#plugins), [tao](https://github.com/tauri-apps/tao/), and [wry](https://github.com/tauri-apps/wry). We have merged them all into one repo and made some changes suitable for [Allie Project](https://github.com/allie-project/) and [pyke](https://github.com/pykeio/)'s internal projects. You should probably use Tauri for your own projects as it has a much larger community. Patches from Tauri, tao, and wry will be ported to Millennium regularly.
+Millennium is a fork of [Tauri](https://tauri.studio/), its [official plugins](https://github.com/tauri-apps/awesome-tauri#plugins), [tao](https://github.com/tauri-apps/tao/), and [wry](https://github.com/tauri-apps/wry). We have merged them all into one repo and made some changes suitable for [Allie Project](https://github.com/allie-project/) and [pyke](https://github.com/pykeio/)'s internal projects. You should probably use Tauri for your projects as it has a much larger community.
 
 ## Upstream
 
