@@ -202,6 +202,10 @@ impl Menu {
 				anno_title.push('\t');
 				format_hotkey(accelerators, &mut anno_title);
 			}
+			// the title must be a null-terminated string
+			if !anno_title.ends_with('\0') {
+				anno_title.push('\0');
+			}
 
 			AppendMenuW(self.hmenu, flags, menu_id.0 as _, anno_title);
 
