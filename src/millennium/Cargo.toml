@@ -2,7 +2,7 @@
 publish = false
 name = "millennium"
 description = "Make tiny, secure apps for all desktop platforms"
-version = "1.0.0-rc.3"
+version = "1.0.0-beta.1"
 license = "Apache-2.0 OR MIT"
 readme = "README.md"
 repository = "https://github.com/pykeio/millennium"
@@ -50,10 +50,10 @@ url = { version = "2.2" }
 anyhow = "1.0"
 thiserror = "1.0"
 once_cell = "1.9"
-millennium-runtime = { path = "../millennium-runtime" }
-millennium-macros = { path = "../millennium-macros" }
-millennium-utils = { path = "../millennium-utils" }
-millennium-runtime-webview = { path = "../millennium-runtime-webview", optional = true }
+millennium-runtime = { version = "1.0.0-beta.1", path = "../millennium-runtime" }
+millennium-macros = { version = "1.0.0-beta.1", path = "../millennium-macros" }
+millennium-utils = { version = "1.0.0-beta.1", path = "../millennium-utils" }
+millennium-runtime-webview = { version = "1.0.0-beta.1", path = "../millennium-runtime-webview", optional = true }
 rand = "0.8"
 semver = "1.0"
 serde_repr = "0.1"

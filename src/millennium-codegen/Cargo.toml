@@ -2,7 +2,7 @@
 publish = false
 name = "millennium-codegen"
 description = "Code generation macros for Millennium"
-version = "1.0.0-rc.2"
+version = "1.0.0-beta.1"
 license = "Apache-2.0 OR MIT"
 readme = "README.md"
 repository = "https://github.com/pykeio/millennium"
@@ -24,7 +24,7 @@ proc-macro2 = "1"
 quote = "1"
 serde = { version = "1", features = [ "derive" ] }
 serde_json = "1"
-millennium-utils = { path = "../millennium-utils", features = [ "build" ] }
+millennium-utils = { version = "1.0.0-beta.1", path = "../millennium-utils", features = [ "build" ] }
 thiserror = "1"
 walkdir = "2"
 zstd = { version = "0.10", optional = true }
@@ -35,7 +35,7 @@ uuid = { version = "0.8", features = [ "v4" ] }
 ico = "0.1"
 
 [target."cfg(target_os = \"linux\")".dependencies]
-png = "0.16"
+png = "0.17"
 
 [features]
 default = [ "compression" ]

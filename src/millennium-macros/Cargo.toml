@@ -2,7 +2,7 @@
 publish = false
 name = "millennium-macros"
 description = "Macros for the Millennium crate"
-version = "1.0.0-rc.2"
+version = "1.0.0-beta.1"
 license = "Apache-2.0 OR MIT"
 readme = "README.md"
 repository = "https://github.com/pykeio/millennium"
@@ -24,8 +24,8 @@ proc-macro2 = "1"
 quote = "1"
 syn = { version = "1", features = [ "full" ] }
 heck = "0.4"
-millennium-codegen = { path = "../millennium-codegen", default-features = false }
-millennium-utils = { path = "../millennium-utils" }
+millennium-codegen = { version = "1.0.0-beta.1", path = "../millennium-codegen", default-features = false }
+millennium-utils = { version = "1.0.0-beta.1", path = "../millennium-utils" }
 
 [features]
 custom-protocol = [ ]

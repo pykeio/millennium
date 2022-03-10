@@ -2,7 +2,7 @@
 publish = false
 name = "millennium-core"
 description = "Cross-platform window management library for Millennium"
-version = "0.6.3"
+version = "1.0.0-beta.1"
 license = "Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/pykeio/millennium"

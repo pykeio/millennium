@@ -2,7 +2,7 @@
 publish = false
 name = "millennium-utils"
 description = "Utilities for Millennium"
-version = "1.0.0-rc.2"
+version = "1.0.0-beta.1"
 license = "Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/pykeio/millennium"
@@ -30,7 +30,7 @@ schemars = { version = "0.8", features = [ "url" ], optional = true }
 serde_with = "1.12"
 aes-gcm = { version = "0.9", optional = true }
 ring = { version = "0.16", optional = true, features = [ "std" ] }
-once_cell = { version = "1.9", optional = true }
+once_cell = { version = "1.10", optional = true }
 serialize-to-javascript = "=0.1.1"
 ctor = "0.1"
 json5 = { version = "0.4", optional = true }
