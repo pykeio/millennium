@@ -2604,8 +2604,9 @@ mod build {
 			let csp = opt_lit(self.csp.as_ref());
 			let dev_csp = opt_lit(self.dev_csp.as_ref());
 			let freeze_prototype = self.freeze_prototype;
+			let allow_notifications = self.allow_notifications;
 
-			literal_struct!(tokens, SecurityConfig, csp, dev_csp, freeze_prototype);
+			literal_struct!(tokens, SecurityConfig, csp, dev_csp, freeze_prototype, allow_notifications);
 		}
 	}
 
