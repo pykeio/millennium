@@ -105,6 +105,10 @@ impl Cmd {
 
 #[cfg(notification_all)]
 fn request_permission<R: Runtime>(context: &InvokeContext<R>) -> bool {
+	if context.config.millennium.security.allow_notifications {
+		return true;
+	}
+
 	let mut settings = crate::settings::read_settings(&context.config, &context.package_info, context.window.state::<Env>().inner());
 	if let Some(allow_notification) = settings.allow_notification {
 		return allow_notification;
@@ -119,6 +123,10 @@ fn request_permission<R: Runtime>(context: &InvokeContext<R>) -> bool {
 
 #[cfg(notification_all)]
 fn is_permission_granted<R: Runtime>(context: &InvokeContext<R>) -> Option<bool> {
+	if context.config.millennium.security.allow_notifications {
+		return Some(true);
+	}
+
 	crate::settings::read_settings(&context.config, &context.package_info, context.window.state::<Env>().inner()).allow_notification
 }
 

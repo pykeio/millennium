@@ -795,7 +795,11 @@ pub struct SecurityConfig {
 	pub dev_csp: Option<Csp>,
 	/// Freeze the `Object.prototype` when using the custom protocol.
 	#[serde(default)]
-	pub freeze_prototype: bool
+	pub freeze_prototype: bool,
+	/// Allow the use of notifications without prompting the user for
+	/// permission.
+	#[serde(default)]
+	pub allow_notifications: bool
 }
 
 /// Defines an allowlist type.
@@ -2845,7 +2849,8 @@ mod test {
 			security: SecurityConfig {
 				csp: None,
 				dev_csp: None,
-				freeze_prototype: false
+				freeze_prototype: false,
+				allow_notifications: false
 			},
 			allowlist: AllowlistConfig::default(),
 			system_tray: None,
