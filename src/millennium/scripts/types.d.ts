@@ -64,11 +64,12 @@ declare global {
 		__MILLENNIUM_IPC__: (args: MillenniumIpcMessage) => void;
 
 		__MILLENNIUM_METADATA__: {
-			__windows: Partial<MillenniumWindow>[];
+			__windows: MillenniumWindow[];
+			__currentWindow: MillenniumWindow;
 		};
 
 		__MILLENNIUM_PATTERN__: {
 			pattern: MillenniumPattern;
 		};
 	}
-};
+}
