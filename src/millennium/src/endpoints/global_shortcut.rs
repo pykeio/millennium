@@ -57,34 +57,19 @@ impl Cmd {
 
 	#[module_command_handler(global_shortcut_all, "globalShortcut > all")]
 	fn unregister<R: Runtime>(context: InvokeContext<R>, shortcut: String) -> super::Result<()> {
-		context
-			.window
-			.app_handle
-			.global_shortcut_manager()
-			.unregister(&shortcut)
-			.map_err(crate::error::into_anyhow)?;
+		context.window.app_handle.global_shortcut_manager().unregister(&shortcut).map_err(crate::error::into_anyhow)?;
 		Ok(())
 	}
 
 	#[module_command_handler(global_shortcut_all, "globalShortcut > all")]
 	fn unregister_all<R: Runtime>(context: InvokeContext<R>) -> super::Result<()> {
-		context
-			.window
-			.app_handle
-			.global_shortcut_manager()
-			.unregister_all()
-			.map_err(crate::error::into_anyhow)?;
+		context.window.app_handle.global_shortcut_manager().unregister_all().map_err(crate::error::into_anyhow)?;
 		Ok(())
 	}
 
 	#[module_command_handler(global_shortcut_all, "globalShortcut > all")]
 	fn is_registered<R: Runtime>(context: InvokeContext<R>, shortcut: String) -> super::Result<bool> {
-		context
-			.window
-			.app_handle
-			.global_shortcut_manager()
-			.is_registered(&shortcut)
-			.map_err(crate::error::into_anyhow)
+		context.window.app_handle.global_shortcut_manager().is_registered(&shortcut).map_err(crate::error::into_anyhow)
 	}
 }
 

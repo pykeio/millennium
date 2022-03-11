@@ -266,7 +266,7 @@ pub fn keycode_from_scancode(scancode: u32) -> KeyCode {
 		0x7c => KeyCode::ArrowRight,
 		0x7d => KeyCode::ArrowDown,
 		0x7e => KeyCode::ArrowUp,
-		// 0x7f =>  unknown,
+		// 0x7f => unknown,
 
 		// 0xA is the caret (^) an macOS's German QERTZ layout. This key is at the same location as
 		// backquote (`) on Windows' US layout.

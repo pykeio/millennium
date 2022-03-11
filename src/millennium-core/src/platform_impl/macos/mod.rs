@@ -91,11 +91,7 @@ impl Deref for Window {
 }
 
 impl Window {
-	pub fn new<T: 'static>(
-		_window_target: &EventLoopWindowTarget<T>,
-		attributes: WindowAttributes,
-		pl_attribs: PlatformSpecificWindowBuilderAttributes
-	) -> Result<Self, RootOsError> {
+	pub fn new<T: 'static>(_window_target: &EventLoopWindowTarget<T>, attributes: WindowAttributes, pl_attribs: PlatformSpecificWindowBuilderAttributes) -> Result<Self, RootOsError> {
 		let (window, _delegate) = UnownedWindow::new(attributes, pl_attribs)?;
 		Ok(Window { window, _delegate })
 	}

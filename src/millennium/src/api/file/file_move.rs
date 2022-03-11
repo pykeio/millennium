@@ -25,7 +25,7 @@ use ignore::WalkBuilder;
 /// replaced using the given temporary path.
 ///
 /// * Errors:
-///     * Io - copying / renaming
+///   * Io - copying / renaming
 #[derive(Debug)]
 pub struct Move<'a> {
 	source: &'a path::Path,

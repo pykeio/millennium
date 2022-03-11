@@ -293,7 +293,7 @@ impl LayoutCache {
 		// numlock was off. We rely on this behavior to find all virtual keys which are
 		// not numpad-specific but map to the numpad.
 		//
-		// src_vkey: VK  ==>  scancode: u16 (on the numpad)
+		// src_vkey: VK ==> scancode: u16 (on the numpad)
 		//
 		// Then we convert the source virtual key into a `Key` and the scancode into a
 		// virtual key to get the reverse mapping.

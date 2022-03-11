@@ -36,10 +36,7 @@ use crate::Result;
 /// ```
 /// # use millennium_webview::http::*;
 ///
-/// let response = ResponseBuilder::new()
-///     .status(202)
-///     .body("hello!".as_bytes().to_vec())
-///     .unwrap();
+/// let response = ResponseBuilder::new().status(202).body("hello!".as_bytes().to_vec()).unwrap();
 /// ```
 
 pub struct Response {
@@ -79,10 +76,7 @@ impl Response {
 	/// Creates a new blank `Response` with the body
 	#[inline]
 	pub fn new(body: Vec<u8>) -> Response {
-		Response {
-			head: ResponseParts::new(),
-			body
-		}
+		Response { head: ResponseParts::new(), body }
 	}
 
 	/// Returns the `StatusCode`.
@@ -165,16 +159,11 @@ impl Builder {
 	/// ```
 	/// # use millennium_webview::http::*;
 	///
-	/// let response = ResponseBuilder::new()
-	///     .status(200)
-	///     .body(Vec::new())
-	///     .unwrap();
+	/// let response = ResponseBuilder::new().status(200).body(Vec::new()).unwrap();
 	/// ```
 	#[inline]
 	pub fn new() -> Builder {
-		Builder {
-			inner: Ok(ResponseParts::new())
-		}
+		Builder { inner: Ok(ResponseParts::new()) }
 	}
 
 	/// Set the HTTP mimetype for this response.
@@ -246,9 +235,7 @@ impl Builder {
 	/// ```
 	/// # use millennium_webview::http::*;
 	///
-	/// let response = ResponseBuilder::new()
-	///     .body(Vec::new())
-	///     .unwrap();
+	/// let response = ResponseBuilder::new().body(Vec::new()).unwrap();
 	/// ```
 	pub fn body(self, body: Vec<u8>) -> Result<Response> {
 		self.inner.map(move |head| Response { head, body })
@@ -260,17 +247,13 @@ impl Builder {
 	where
 		F: FnOnce(ResponseParts) -> Result<ResponseParts>
 	{
-		Builder {
-			inner: self.inner.and_then(func)
-		}
+		Builder { inner: self.inner.and_then(func) }
 	}
 }
 
 impl Default for Builder {
 	#[inline]
 	fn default() -> Builder {
-		Builder {
-			inner: Ok(ResponseParts::new())
-		}
+		Builder { inner: Ok(ResponseParts::new()) }
 	}
 }

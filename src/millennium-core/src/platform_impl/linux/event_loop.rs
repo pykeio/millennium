@@ -787,11 +787,7 @@ impl<T: 'static> EventLoop<T> {
 							ControlFlow::WaitUntil(requested_resume) => {
 								let start = Instant::now();
 								if start >= requested_resume {
-									callback(
-										Event::NewEvents(StartCause::ResumeTimeReached { start, requested_resume }),
-										window_target,
-										&mut control_flow
-									);
+									callback(Event::NewEvents(StartCause::ResumeTimeReached { start, requested_resume }), window_target, &mut control_flow);
 									state = EventState::EventQueue;
 								} else if !events.is_empty() {
 									callback(
@@ -896,8 +892,8 @@ fn assert_is_main_thread(suggested_method: &str) {
 	assert!(
 		is_main_thread(),
 		"Initializing the event loop outside of the main thread is a significant \
-             cross-platform compatibility hazard. If you really, absolutely need to create an \
-             EventLoop on a different thread, please use the `EventLoopExtUnix::{}` function.",
+		cross-platform compatibility hazard. If you really, absolutely need to create an \
+		EventLoop on a different thread, please use the `EventLoopExtUnix::{}` function.",
 		suggested_method
 	);
 }

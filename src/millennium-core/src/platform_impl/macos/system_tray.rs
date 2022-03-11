@@ -80,10 +80,7 @@ impl SystemTrayBuilder {
 			(*tray_target).set_ivar("menu", nil);
 			let _: () = msg_send![button, setAction: sel!(click:)];
 			let _: () = msg_send![button, setTarget: tray_target];
-			let _: () = msg_send![
-				button,
-				sendActionOn: NSEventMask::NSLeftMouseDownMask | NSEventMask::NSRightMouseDownMask | NSEventMask::NSKeyDownMask
-			];
+			let _: () = msg_send![button, sendActionOn: NSEventMask::NSLeftMouseDownMask | NSEventMask::NSRightMouseDownMask | NSEventMask::NSKeyDownMask];
 
 			// attach menu only if provided
 			if let Some(menu) = self.system_tray.tray_menu.clone() {

@@ -96,13 +96,7 @@ fn create_csp_meta_tag(csp: &str) -> NodeRef {
 					value: "Content-Security-Policy".into()
 				}
 			),
-			(
-				ExpandedName::new(ns!(), LocalName::from("content")),
-				Attribute {
-					prefix: None,
-					value: csp.into()
-				}
-			),
+			(ExpandedName::new(ns!(), LocalName::from("content")), Attribute { prefix: None, value: csp.into() }),
 		]
 	)
 }
@@ -125,9 +119,7 @@ impl From<&PatternKind> for PatternObject {
 		match pattern_kind {
 			PatternKind::Brownfield => Self::Brownfield,
 			#[cfg(any(feature = "isolation", feature = "__isolation-docs"))]
-			PatternKind::Isolation { .. } => Self::Isolation {
-				side: IsolationSide::default()
-			}
+			PatternKind::Isolation { .. } => Self::Isolation { side: IsolationSide::default() }
 		}
 	}
 }
@@ -174,18 +166,12 @@ pub fn inline_isolation(document: &mut NodeRef, dir: &Path) {
 	for script in document.select("script[src]").expect("unable to parse document for scripts") {
 		let src = {
 			let attributes = script.attributes.borrow();
-			attributes
-				.get(LocalName::from("src"))
-				.expect("script with src attribute has no src value")
-				.to_string()
+			attributes.get(LocalName::from("src")).expect("script with src attribute has no src value").to_string()
 		};
 
 		let mut path = PathBuf::from(src);
 		if path.has_root() {
-			path = path
-				.strip_prefix("/")
-				.expect("Millennium isolation pattern only supports relative or absolute (`/`) paths.")
-				.into();
+			path = path.strip_prefix("/").expect("Millennium isolation pattern only supports relative or absolute (`/`) paths.").into();
 		}
 
 		let file = std::fs::read_to_string(dir.join(path)).expect("unable to find isolation file");
@@ -208,10 +194,7 @@ mod tests {
 			super::inject_csp_token(&mut document);
 			assert_eq!(
 				document.to_string(),
-				format!(
-					r#"<html><head><meta content="{}" http-equiv="Content-Security-Policy"></head><body></body></html>"#,
-					super::CSP_TOKEN
-				)
+				format!(r#"<html><head><meta content="{}" http-equiv="Content-Security-Policy"></head><body></body></html>"#, super::CSP_TOKEN)
 			);
 		}
 	}

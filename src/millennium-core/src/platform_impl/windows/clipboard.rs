@@ -78,11 +78,7 @@ impl Clipboard {
 				let result = SetClipboardData(format_id, handle);
 				if result.0 == 0 {
 					#[cfg(debug_assertions)]
-					println!(
-						"failed to set clipboard for fmt {}, error: {}",
-						&format.identifier,
-						windows::core::Error::from_win32().code().0
-					);
+					println!("failed to set clipboard for fmt {}, error: {}", &format.identifier, windows::core::Error::from_win32().code().0);
 				}
 			}
 		});
@@ -104,11 +100,7 @@ fn register_identifier(ident: &str) -> Option<u32> {
 		let pb_format = RegisterClipboardFormatA(ident);
 		if pb_format == 0 {
 			#[cfg(debug_assertions)]
-			println!(
-				"failed to register clipboard format '{}'; error {}.",
-				ident,
-				windows::core::Error::from_win32().code().0
-			);
+			println!("failed to register clipboard format '{}'; error {}.", ident, windows::core::Error::from_win32().code().0);
 			return None;
 		}
 		Some(pb_format)

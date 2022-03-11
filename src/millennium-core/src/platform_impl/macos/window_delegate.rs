@@ -163,27 +163,18 @@ lazy_static! {
 		let mut decl = ClassDecl::new("MillenniumWindowDelegate", superclass).unwrap();
 
 		decl.add_method(sel!(dealloc), dealloc as extern "C" fn(&Object, Sel));
-		decl.add_method(
-			sel!(initWithMillennium:),
-			init_with_millennium as extern "C" fn(&Object, Sel, *mut c_void) -> id
-		);
+		decl.add_method(sel!(initWithMillennium:), init_with_millennium as extern "C" fn(&Object, Sel, *mut c_void) -> id);
 
 		decl.add_method(sel!(windowShouldClose:), window_should_close as extern "C" fn(&Object, Sel, id) -> BOOL);
 		decl.add_method(sel!(windowWillClose:), window_will_close as extern "C" fn(&Object, Sel, id));
 		decl.add_method(sel!(windowDidResize:), window_did_resize as extern "C" fn(&Object, Sel, id));
 		decl.add_method(sel!(windowDidMove:), window_did_move as extern "C" fn(&Object, Sel, id));
-		decl.add_method(
-			sel!(windowDidChangeBackingProperties:),
-			window_did_change_backing_properties as extern "C" fn(&Object, Sel, id)
-		);
+		decl.add_method(sel!(windowDidChangeBackingProperties:), window_did_change_backing_properties as extern "C" fn(&Object, Sel, id));
 		decl.add_method(sel!(windowDidBecomeKey:), window_did_become_key as extern "C" fn(&Object, Sel, id));
 		decl.add_method(sel!(windowDidResignKey:), window_did_resign_key as extern "C" fn(&Object, Sel, id));
 
 		decl.add_method(sel!(draggingEntered:), dragging_entered as extern "C" fn(&Object, Sel, id) -> BOOL);
-		decl.add_method(
-			sel!(prepareForDragOperation:),
-			prepare_for_drag_operation as extern "C" fn(&Object, Sel, id) -> BOOL
-		);
+		decl.add_method(sel!(prepareForDragOperation:), prepare_for_drag_operation as extern "C" fn(&Object, Sel, id) -> BOOL);
 		decl.add_method(sel!(performDragOperation:), perform_drag_operation as extern "C" fn(&Object, Sel, id) -> BOOL);
 		decl.add_method(sel!(concludeDragOperation:), conclude_drag_operation as extern "C" fn(&Object, Sel, id));
 		decl.add_method(sel!(draggingExited:), dragging_exited as extern "C" fn(&Object, Sel, id));
@@ -193,16 +184,10 @@ lazy_static! {
 			window_will_use_fullscreen_presentation_options as extern "C" fn(&Object, Sel, id, NSUInteger) -> NSUInteger
 		);
 		decl.add_method(sel!(windowDidEnterFullScreen:), window_did_enter_fullscreen as extern "C" fn(&Object, Sel, id));
-		decl.add_method(
-			sel!(windowWillEnterFullScreen:),
-			window_will_enter_fullscreen as extern "C" fn(&Object, Sel, id)
-		);
+		decl.add_method(sel!(windowWillEnterFullScreen:), window_will_enter_fullscreen as extern "C" fn(&Object, Sel, id));
 		decl.add_method(sel!(windowDidExitFullScreen:), window_did_exit_fullscreen as extern "C" fn(&Object, Sel, id));
 		decl.add_method(sel!(windowWillExitFullScreen:), window_will_exit_fullscreen as extern "C" fn(&Object, Sel, id));
-		decl.add_method(
-			sel!(windowDidFailToEnterFullScreen:),
-			window_did_fail_to_enter_fullscreen as extern "C" fn(&Object, Sel, id)
-		);
+		decl.add_method(sel!(windowDidFailToEnterFullScreen:), window_did_fail_to_enter_fullscreen as extern "C" fn(&Object, Sel, id));
 
 		decl.add_ivar::<*mut c_void>("millenniumState");
 		WindowDelegateClass(decl.register())
@@ -300,10 +285,10 @@ extern "C" fn window_did_resign_key(this: &Object, _: Sel, _: id) {
 	with_state(this, |state| {
 		// It happens rather often, e.g. when the user is Cmd+Tabbing, that the
 		// NSWindowDelegate will receive a didResignKey event despite no event
-		// being received when the modifiers are released.  This is because
+		// being received when the modifiers are released. This is because
 		// flagsChanged events are received by the NSView instead of the
 		// NSWindowDelegate, and as a result a tracked modifiers state can quite
-		// easily fall out of synchrony with reality.  This requires us to emit
+		// easily fall out of synchrony with reality. This requires us to emit
 		// a synthetic ModifiersChanged event when we lose focus.
 		//
 		// Here we (very unsafely) acquire the millenniumState (a ViewState) from the

@@ -112,13 +112,7 @@ bitflags! {
 }
 
 impl WindowState {
-	pub fn new(
-		attributes: &WindowAttributes,
-		taskbar_icon: Option<Icon>,
-		scale_factor: f64,
-		current_theme: Theme,
-		preferred_theme: Option<Theme>
-	) -> WindowState {
+	pub fn new(attributes: &WindowAttributes, taskbar_icon: Option<Icon>, scale_factor: f64, current_theme: Theme, preferred_theme: Option<Theme>) -> WindowState {
 		WindowState {
 			mouse: MouseProperties {
 				cursor: CursorIcon::default(),
@@ -230,8 +224,7 @@ impl WindowFlags {
 			style_ex |= WS_EX_NOREDIRECTIONBITMAP;
 		}
 		if self.contains(WindowFlags::CHILD) {
-			style |= WS_CHILD; // This is incompatible with WS_POPUP if that gets added
-			       // eventually.
+			style |= WS_CHILD; // This is incompatible with WS_POPUP.
 		}
 		if self.contains(WindowFlags::POPUP) {
 			style |= WS_POPUP;

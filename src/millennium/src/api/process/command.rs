@@ -236,22 +236,19 @@ impl Command {
 	/// ```rust,no_run
 	/// use millennium::api::process::{Command, CommandEvent};
 	/// millennium::async_runtime::spawn(async move {
-	///   let (mut rx, mut child) = Command::new("cargo")
-	///     .args(["millennium", "dev"])
-	///     .spawn()
-	///     .expect("Failed to spawn cargo");
+	/// 	let (mut rx, mut child) = Command::new("cargo").args(["millennium", "dev"]).spawn().expect("Failed to spawn cargo");
 	///
-	///   let mut i = 0;
-	///   while let Some(event) = rx.recv().await {
-	///     if let CommandEvent::Stdout(line) = event {
-	///       println!("got: {}", line);
-	///       i += 1;
-	///       if i == 4 {
-	///         child.write("message from Rust\n".as_bytes()).unwrap();
-	///         i = 0;
-	///       }
-	///     }
-	///   }
+	/// 	let mut i = 0;
+	/// 	while let Some(event) = rx.recv().await {
+	/// 		if let CommandEvent::Stdout(line) = event {
+	/// 			println!("got: {}", line);
+	/// 			i += 1;
+	/// 			if i == 4 {
+	/// 				child.write("message from Rust\n".as_bytes()).unwrap();
+	/// 				i = 0;
+	/// 			}
+	/// 		}
+	/// 	}
 	/// });
 	/// ```
 	pub fn spawn(self) -> crate::api::Result<(Receiver<CommandEvent>, CommandChild)> {
@@ -370,12 +367,7 @@ impl Command {
 	}
 }
 
-fn spawn_pipe_reader<F: Fn(String) -> CommandEvent + Send + Copy + 'static>(
-	tx: Sender<CommandEvent>,
-	guard: Arc<RwLock<()>>,
-	pipe_reader: PipeReader,
-	wrapper: F
-) {
+fn spawn_pipe_reader<F: Fn(String) -> CommandEvent + Send + Copy + 'static>(tx: Sender<CommandEvent>, guard: Arc<RwLock<()>>, pipe_reader: PipeReader, wrapper: F) {
 	spawn(move || {
 		let _lock = guard.read().unwrap();
 		let mut reader = BufReader::new(pipe_reader);

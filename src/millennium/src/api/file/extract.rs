@@ -257,14 +257,7 @@ impl<R: Read + Seek> Extract<R> {
 }
 
 fn set_perms(dst: &Path, f: Option<&mut std::fs::File>, mode: u32, preserve: bool) -> crate::api::Result<()> {
-	_set_perms(dst, f, mode, preserve).map_err(|_| {
-		crate::api::Error::Extract(format!(
-			"failed to set permissions to {:o} \
-               for `{}`",
-			mode,
-			dst.display()
-		))
-	})
+	_set_perms(dst, f, mode, preserve).map_err(|_| crate::api::Error::Extract(format!("failed to set permissions to {:o} for `{}`", mode, dst.display())))
 }
 
 #[cfg(unix)]

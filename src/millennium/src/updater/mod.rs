@@ -41,12 +41,12 @@
 //! Add this in `.millenniumrc`:
 //! ```json
 //! "updater": {
-//!     "active": true,
-//!     "endpoints": [
-//!         "https://releases.myapp.com/{target}}/{current_version}}"
-//!     ],
-//!     "dialog": true,
-//!     "pubkey": ""
+//! 	"active": true,
+//! 	"endpoints": [
+//! 		"https://releases.myapp.com/{target}}/{current_version}}"
+//! 	],
+//! 	"dialog": true,
+//! 	"pubkey": ""
 //! }
 //! ```
 //!
@@ -111,18 +111,17 @@
 //!
 //!
 //! ```javascript
-//! import { checkUpdate, installUpdate } from "@pyke/millennium-api";
+//! import { checkUpdate, installUpdate } from '@pyke/millennium-api/updater';
 //!
 //! try {
-//!     const {shouldUpdate, manifest} = await checkUpdate();
-//!
-//!     if (shouldUpdate) {
-//!         // display dialog
-//!         await installUpdate();
-//!         // install complete, ask to restart
-//!     }
+//! 	const { shouldUpdate, manifest } = await checkUpdate();
+//! 	if (shouldUpdate) {
+//! 		// display dialog
+//! 		await installUpdate();
+//! 		// install complete, ask to restart
+//! 	}
 //! } catch(error) {
-//!     console.log(error);
+//! 	console.log(error);
 //! }
 //! ```
 //!
@@ -166,15 +165,15 @@
 //! ### Rust
 //! ```ignore
 //! dispatcher.listen("millennium://update-available", move |msg| {
-//!     println("New version available: {:?}", msg);
+//! 	println("New version available: {:?}", msg);
 //! })
 //! ```
 //!
-//! ### Javascript
+//! ### JavaScript
 //! ```js
-//! import { listen } from "@pyke/millennium-api/event";
-//! listen("millennium://update-available", function (res) {
-//!     console.log("New version available: ", res);
+//! import { listen } from '@pyke/millennium-api/event';
+//! listen('millennium://update-available', res => {
+//! 	console.log('New version available: ', res);
 //! });
 //! ```
 //!
@@ -190,10 +189,10 @@
 //! dispatcher.emit("millennium://update-install", None);
 //! ```
 //!
-//! ### Javascript
+//! ### JavaScript
 //! ```js
-//! import { emit } from "@pyke/millennium-api/event";
-//! emit("millennium://update-install");
+//! import { emit } from '@pyke/millennium-api/event';
+//! emit('millennium://update-install');
 //! ```
 //!
 //! ### Listen Install Progress
@@ -215,15 +214,15 @@
 //! ### Rust
 //! ```ignore
 //! dispatcher.listen("millennium://update-status", move |msg| {
-//!     println("New status: {:?}", msg);
+//! 	println("New status: {:?}", msg);
 //! })
 //! ```
 //!
-//! ### Javascript
+//! ### JavaScript
 //! ```js
-//! import { listen } from "@pyke/millennium-api/event";
-//! listen("millennium://update-status", function (res) {
-//!     console.log("New status: ", res);
+//! import { listen } from '@pyke/millennium-api/event';
+//! listen('millennium://update-status', res => {
+//! 	console.log('New status: ', res);
 //! });
 //! ```
 //!
@@ -243,11 +242,11 @@
 //!
 //! ```json
 //! {
-//!     "url": "https://mycompany.example.com/myapp/releases/myrelease.tar.gz",
-//!     "version": "0.0.1",
-//!     "notes": "Theses are some release notes",
-//!     "pub_date": "2020-09-18T12:29:53+01:00",
-//!     "signature": ""
+//! 	"url": "https://mycompany.example.com/myapp/releases/myrelease.tar.gz",
+//! 	"version": "0.0.1",
+//! 	"notes": "Theses are some release notes",
+//! 	"pub_date": "2020-09-18T12:29:53+01:00",
+//! 	"signature": ""
 //! }
 //! ```
 //!
@@ -268,23 +267,23 @@
 //!
 //! ```json
 //! {
-//!   "name":"v1.0.0",
-//!   "notes":"Test version",
-//!   "pub_date":"2020-06-22T19:25:57Z",
-//!   "platforms": {
-//!     "darwin": {
-//!       "signature":"",
-//!       "url":"https://github.com/lemarier/tauri-test/releases/download/v1.0.0/app.app.tar.gz"
-//!     },
-//!      "linux": {
-//!       "signature":"",
-//!       "url":"https://github.com/lemarier/tauri-test/releases/download/v1.0.0/app.AppImage.tar.gz"
-//!     },
-//!     "win64": {
-//!       "signature":"",
-//!       "url":"https://github.com/lemarier/tauri-test/releases/download/v1.0.0/app.x64.msi.zip"
-//!     }
-//!   }
+//! 	"name": "v1.0.0",
+//! 	"notes": "Test version",
+//! 	"pub_date": "2020-06-22T19:25:57Z",
+//! 	"platforms": {
+//! 		"darwin": {
+//! 			"signature": "",
+//! 			"url": "https://github.com/lemarier/tauri-test/releases/download/v1.0.0/app.app.tar.gz"
+//! 		},
+//! 		"linux": {
+//! 			"signature": "",
+//! 			"url": "https://github.com/lemarier/tauri-test/releases/download/v1.0.0/app.AppImage.tar.gz"
+//! 		},
+//! 		"win64": {
+//! 			"signature": "",
+//! 			"url": "https://github.com/lemarier/tauri-test/releases/download/v1.0.0/app.x64.msi.zip"
+//! 		}
+//! 	}
 //! }
 //! ```
 //!
@@ -364,21 +363,21 @@
 //! Millennium updates signer.
 //!
 //! USAGE:
-//!     millennium signer sign [FLAGS] [OPTIONS]
+//! 	millennium signer sign [FLAGS] [OPTIONS]
 //!
 //! FLAGS:
-//!         --force          Overwrite private key even if it exists on the specified path
-//!     -g, --generate       Generate keypair to sign files
-//!     -h, --help           Prints help information
-//!         --no-password    Set empty password for your private key
-//!     -V, --version        Prints version information
+//! 		--force          Overwrite private key even if it exists on the specified path
+//! 	-g, --generate       Generate keypair to sign files
+//! 	-h, --help           Prints help information
+//! 		--no-password    Set empty password for your private key
+//! 	-V, --version        Prints version information
 //!
 //! OPTIONS:
-//!     -p, --password <password>                    Set private key password when signing
-//!     -k, --private-key <private-key>              Load the private key from a string
-//!     -f, --private-key-path <private-key-path>    Load the private key from a file
-//!         --sign-file <sign-file>                  Sign the specified file
-//!     -w, --write-keys <write-keys>                Write private key to a file
+//! 	-p, --password <password>                    Set private key password when signing
+//! 	-k, --private-key <private-key>              Load the private key from a string
+//! 	-f, --private-key-path <private-key-path>    Load the private key from a file
+//! 		--sign-file <sign-file>                  Sign the specified file
+//! 	-w, --write-keys <write-keys>                Write private key to a file
 //! ```
 //!
 //! ***
@@ -387,9 +386,9 @@
 //! If they are set, and `.millenniumrc` expose the public key, the bundler will
 //! automatically generate and sign the updater artifacts.
 //!
-//! `MILLENNIUM_PRIVATE_KEY`  Path or String of your private key
+//! `MILLENNIUM_PRIVATE_KEY`: Path or String of your private key
 //!
-//! `MILLENNIUM_KEY_PASSWORD`  Your private key password (optional)
+//! `MILLENNIUM_KEY_PASSWORD`: Your private key password (optional)
 
 mod core;
 mod error;
@@ -438,12 +437,7 @@ pub(crate) async fn check_update_with_dialog<R: Runtime>(updater_config: Updater
 		let endpoints = endpoints.iter().map(|e| e.to_string()).collect::<Vec<String>>();
 		let env = window.state::<Env>().inner().clone();
 		// check updates
-		match self::core::builder(env)
-			.urls(&endpoints[..])
-			.current_version(&package_info.version)
-			.build()
-			.await
-		{
+		match self::core::builder(env).urls(&endpoints[..]).current_version(&package_info.version).build().await {
 			Ok(updater) => {
 				let pubkey = updater_config.pubkey.clone();
 
@@ -493,12 +487,7 @@ pub(crate) fn listener<R: Runtime>(updater_config: UpdaterConfig, package_info: 
 			let pubkey = pubkey.clone();
 			let env = window.state::<Env>().inner().clone();
 
-			match self::core::builder(env)
-				.urls(&endpoints[..])
-				.current_version(&package_info.version)
-				.build()
-				.await
-			{
+			match self::core::builder(env).urls(&endpoints[..]).current_version(&package_info.version).build().await {
 				Ok(updater) => {
 					// send notification if we need to update
 					if updater.should_update {
@@ -555,13 +544,7 @@ pub(crate) fn listener<R: Runtime>(updater_config: UpdaterConfig, package_info: 
 
 // Send a status update via `millennium://update-status` event.
 fn send_status_update<R: Runtime>(window: Window<R>, status: &str, error: Option<String>) {
-	let _ = window.emit_and_trigger(
-		EVENT_STATUS_UPDATE,
-		StatusEvent {
-			error,
-			status: String::from(status)
-		}
-	);
+	let _ = window.emit_and_trigger(EVENT_STATUS_UPDATE, StatusEvent { error, status: String::from(status) });
 }
 
 // Prompt a dialog asking if the user want to install the new version
@@ -596,11 +579,7 @@ Release Notes:
 		updater.download_and_install(pubkey.clone()).await?;
 
 		// Ask user if we need to restart the application
-		let should_exit = ask(
-			Some(&window),
-			"Ready to Restart",
-			"The installation was successful, do you want to restart the application now?"
-		);
+		let should_exit = ask(Some(&window), "Ready to Restart", "The installation was successful, do you want to restart the application now?");
 		if should_exit {
 			window.app_handle().restart();
 		}

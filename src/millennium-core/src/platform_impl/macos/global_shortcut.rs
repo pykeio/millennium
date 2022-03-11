@@ -35,10 +35,7 @@ impl ShortcutManager {
 	pub(crate) fn new<T>(_window_target: &EventLoopWindowTarget<T>) -> Self {
 		let saved_callback = Box::into_raw(Box::new(global_accelerator_handler));
 		let event_handler = make_accelerator_callback(saved_callback);
-		ShortcutManager {
-			event_handler,
-			shortcuts: Vec::new()
-		}
+		ShortcutManager { event_handler, shortcuts: Vec::new() }
 	}
 
 	pub(crate) fn unregister_all(&self) -> Result<(), ShortcutManagerError> {

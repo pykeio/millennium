@@ -31,10 +31,7 @@ pub fn is_event_name_valid(event: &str) -> bool {
 }
 
 pub fn assert_event_name_is_valid(event: &str) {
-	assert!(
-		is_event_name_valid(event),
-		"Event name must include only alphanumeric characters, `-`, `/`, `:` and `_`."
-	);
+	assert!(is_event_name_valid(event), "Event name must include only alphanumeric characters, `-`, `/`, `:` and `_`.");
 }
 
 /// Represents an event handler.
@@ -159,10 +156,7 @@ impl Listeners {
 	/// Adds an event listener for JS events.
 	pub(crate) fn listen<F: Fn(Event) + Send + 'static>(&self, event: String, window: Option<String>, handler: F) -> EventHandler {
 		let id = EventHandler(Uuid::new_v4());
-		let handler = Handler {
-			window,
-			callback: Box::new(handler)
-		};
+		let handler = Handler { window, callback: Box::new(handler) };
 
 		self.listen_(id, event, handler);
 
@@ -226,83 +220,81 @@ mod test {
 	}
 
 	proptest! {
-	  #![proptest_config(ProptestConfig::with_cases(10000))]
+		#![proptest_config(ProptestConfig::with_cases(10000))]
 
-	  // check to see if listen() is properly passing keys into the LISTENERS map
-	  #[test]
-	  fn listeners_check_key(e in "[a-z]+") {
-		let listeners: Listeners = Default::default();
-		// clone e as the key
-		let key = e.clone();
-		// pass e and an dummy func into listen
-		listeners.listen(e, None, event_fn);
+		// check to see if listen() is properly passing keys into the LISTENERS map
+		#[test]
+		fn listeners_check_key(e in "[a-z]+") {
+			let listeners: Listeners = Default::default();
+			// clone e as the key
+			let key = e.clone();
+			// pass e and an dummy func into listen
+			listeners.listen(e, None, event_fn);
 
-		// lock mutex
-		let l = listeners.inner.handlers.lock().unwrap();
+			// lock mutex
+			let l = listeners.inner.handlers.lock().unwrap();
 
-		// check if the generated key is in the map
-		assert!(l.contains_key(&key));
-	  }
-
-	  // check to see if listen inputs a handler function properly into the LISTENERS map.
-	  #[test]
-	  fn listeners_check_fn(e in "[a-z]+") {
-		 let listeners: Listeners = Default::default();
-		 // clone e as the key
-		 let key = e.clone();
-		 // pass e and an dummy func into listen
-		 listeners.listen(e, None, event_fn);
-
-		 // lock mutex
-		 let mut l = listeners.inner.handlers.lock().unwrap();
-
-		 // check if l contains key
-		 if l.contains_key(&key) {
-		  // grab key if it exists
-		  let handler = l.get_mut(&key);
-		  // check to see if we get back a handler or not
-		  match handler {
-			// pass on Some(handler)
-			Some(_) => {},
-			// Fail on None
-			None => panic!("handler is None")
-		  }
+			// check if the generated key is in the map
+			assert!(l.contains_key(&key));
 		}
-	  }
 
-	  // check to see if on_event properly grabs the stored function from listen.
-	  #[test]
-	  fn check_on_event(e in "[a-z]+", d in "[a-z]+") {
-		let listeners: Listeners = Default::default();
-		// clone e as the key
-		let key = e.clone();
-		// call listen with e and the event_fn dummy func
-		listeners.listen(e.clone(), None, event_fn);
-		// call on event with e and d.
-		listeners.trigger(&e, None, Some(d));
+		// check to see if listen inputs a handler function properly into the LISTENERS map.
+		#[test]
+		fn listeners_check_fn(e in "[a-z]+") {
+			let listeners: Listeners = Default::default();
+			// clone e as the key
+			let key = e.clone();
+			// pass e and an dummy func into listen
+			listeners.listen(e, None, event_fn);
 
-		// lock the mutex
-		let l = listeners.inner.handlers.lock().unwrap();
+			// lock mutex
+			let mut l = listeners.inner.handlers.lock().unwrap();
 
-		// assert that the key is contained in the listeners map
-		assert!(l.contains_key(&key));
-	  }
+			// check if l contains key
+			if l.contains_key(&key) {
+				// grab key if it exists
+				let handler = l.get_mut(&key);
+				// check to see if we get back a handler or not
+				match handler {
+					// pass on Some(handler)
+					Some(_) => {},
+					// Fail on None
+					None => panic!("handler is None")
+				}
+			}
+		}
+
+		// check to see if on_event properly grabs the stored function from listen.
+		#[test]
+		fn check_on_event(e in "[a-z]+", d in "[a-z]+") {
+			let listeners: Listeners = Default::default();
+			// clone e as the key
+			let key = e.clone();
+			// call listen with e and the event_fn dummy func
+			listeners.listen(e.clone(), None, event_fn);
+			// call on event with e and d.
+			listeners.trigger(&e, None, Some(d));
+
+			// lock the mutex
+			let l = listeners.inner.handlers.lock().unwrap();
+
+			// assert that the key is contained in the listeners map
+			assert!(l.contains_key(&key));
+		}
 	}
 }
 
 pub fn unlisten_js(listeners_object_name: String, event_name: String, event_id: u64) -> String {
 	format!(
-		"
-	  (function() {{
-		const listeners = (window['{listeners}'] || {{}})['{event_name}'];
-        if (listeners) {{
-		  const index = window['{listeners}']['{event_name}'].findIndex(e => e.id === {event_id});
-		  if (index > -1) {{
-			window['{listeners}']['{event_name}'].splice(index, 1);
-		  }}
-        }}
-      }})()
-    ",
+		"(function() {{
+			const listeners = (window['{listeners}'] || {{}})['{event_name}'];
+			if (listeners) {{
+				const index = window['{listeners}']['{event_name}'].findIndex(e => e.id === {event_id});
+				if (index > -1) {{
+					window['{listeners}']['{event_name}'].splice(index, 1);
+				}}
+			}}
+		}})()",
 		listeners = listeners_object_name,
 		event_name = event_name,
 		event_id = event_id,
@@ -312,17 +304,16 @@ pub fn unlisten_js(listeners_object_name: String, event_name: String, event_id: 
 pub fn listen_js(listeners_object_name: String, event: String, event_id: u64, window_label: Option<String>, handler: String) -> String {
 	format!(
 		"if (window['{listeners}'] === void 0) {{
-      Object.defineProperty(window, '{listeners}', {{ value: Object.create(null) }});
-    }}
-    if (window['{listeners}'][{event}] === void 0) {{
-      Object.defineProperty(window['{listeners}'], {event}, {{ value: [] }});
-    }}
-    window['{listeners}'][{event}].push({{
-      id: {event_id},
-      windowLabel: {window_label},
-      handler: {handler}
-    }});
-  ",
+			Object.defineProperty(window, '{listeners}', {{ value: Object.create(null) }});
+		}}
+		if (window['{listeners}'][{event}] === void 0) {{
+			Object.defineProperty(window['{listeners}'], {event}, {{ value: [] }});
+		}}
+		window['{listeners}'][{event}].push({{
+			id: {event_id},
+			windowLabel: {window_label},
+			handler: {handler}
+		}});",
 		listeners = listeners_object_name,
 		event = event,
 		event_id = event_id,

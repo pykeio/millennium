@@ -127,9 +127,7 @@ impl CodegenContext {
 			.with_context(|| "unable to find OUT_DIR during millennium-build")?;
 
 		// make sure any nested directories in OUT_DIR are created
-		let parent = out
-			.parent()
-			.with_context(|| "`Codegen` could not find the parent to `out_file` while creating the file")?;
+		let parent = out.parent().with_context(|| "`Codegen` could not find the parent to `out_file` while creating the file")?;
 		create_dir_all(parent)?;
 
 		let mut file = File::create(&out)

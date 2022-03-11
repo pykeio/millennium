@@ -214,10 +214,7 @@ impl<P: Pixel> LogicalPosition<P> {
 
 	#[inline]
 	pub fn cast<X: Pixel>(&self) -> LogicalPosition<X> {
-		LogicalPosition {
-			x: self.x.cast(),
-			y: self.y.cast()
-		}
+		LogicalPosition { x: self.x.cast(), y: self.y.cast() }
 	}
 }
 
@@ -276,10 +273,7 @@ impl<P: Pixel> PhysicalPosition<P> {
 
 	#[inline]
 	pub fn cast<X: Pixel>(&self) -> PhysicalPosition<X> {
-		PhysicalPosition {
-			x: self.x.cast(),
-			y: self.y.cast()
-		}
+		PhysicalPosition { x: self.x.cast(), y: self.y.cast() }
 	}
 }
 

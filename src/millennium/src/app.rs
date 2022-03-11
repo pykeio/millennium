@@ -221,22 +221,13 @@ pub struct AppHandle<R: Runtime> {
 impl AppHandle<crate::MillenniumWebview> {
 	/// Create a new Millennium Core window using a callback. The event loop
 	/// must be running at this point.
-	pub fn create_core_window<F: FnOnce() -> (String, millennium_runtime_webview::MillenniumWindowBuilder) + Send + 'static>(
-		&self,
-		f: F
-	) -> crate::Result<Weak<millennium_runtime_webview::Window>> {
+	pub fn create_core_window<F: FnOnce() -> (String, millennium_runtime_webview::MillenniumWindowBuilder) + Send + 'static>(&self, f: F) -> crate::Result<Weak<millennium_runtime_webview::Window>> {
 		self.runtime_handle.create_core_window(f).map_err(Into::into)
 	}
 
 	/// Sends a window message to the event loop.
-	pub fn send_core_window_event(
-		&self,
-		window_id: millennium_runtime_webview::WindowId,
-		message: millennium_runtime_webview::WindowMessage
-	) -> crate::Result<()> {
-		self.runtime_handle
-			.send_event(millennium_runtime_webview::Message::Window(window_id, message))
-			.map_err(Into::into)
+	pub fn send_core_window_event(&self, window_id: millennium_runtime_webview::WindowId, message: millennium_runtime_webview::WindowMessage) -> crate::Result<()> {
+		self.runtime_handle.send_event(millennium_runtime_webview::Message::Window(window_id, message)).map_err(Into::into)
 	}
 }
 
@@ -365,10 +356,7 @@ macro_rules! shared_app_impl {
 			///
 			/// See [`crate::window::WindowBuilder::new`] for an API with extended
 			/// functionality.
-			#[deprecated(
-				since = "1.0.0-rc.4",
-				note = "The `window_builder` function offers an easier API with extended functionality"
-			)]
+			#[deprecated(since = "1.0.0-rc.4", note = "The `window_builder` function offers an easier API with extended functionality")]
 			pub fn create_window<F>(&self, label: impl Into<String>, url: WindowUrl, setup: F) -> crate::Result<Window<R>>
 			where
 				F: FnOnce(<R::Dispatcher as Dispatch>::WindowBuilder, WebviewAttributes) -> (<R::Dispatcher as Dispatch>::WindowBuilder, WebviewAttributes)
@@ -384,9 +372,7 @@ macro_rules! shared_app_impl {
 			#[cfg_attr(doc_cfg, doc(cfg(feature = "system-tray")))]
 			/// Gets a handle handle to the system tray.
 			pub fn tray_handle(&self) -> tray::SystemTrayHandle<R> {
-				self.tray_handle
-					.clone()
-					.expect("tray not configured; use the `Builder#system_tray` API first.")
+				self.tray_handle.clone().expect("tray not configured; use the `Builder#system_tray` API first.")
 			}
 
 			/// The path resolver for the application.
@@ -420,9 +406,7 @@ macro_rules! shared_app_impl {
 
 			/// The application's asset resolver.
 			pub fn asset_resolver(&self) -> AssetResolver<R> {
-				AssetResolver {
-					manager: self.manager.clone()
-				}
+				AssetResolver { manager: self.manager.clone() }
 			}
 		}
 	};
@@ -443,9 +427,9 @@ impl<R: Runtime> App<R> {
 	/// # Examples
 	/// ```rust,no_run
 	/// let mut app = millennium::Builder::default()
-	///   // on an actual app, remove the string argument
-	///   .build(millennium::generate_context!("test/fixture/.millenniumrc"))
-	///   .expect("error while building Millennium application");
+	/// 	// on an actual app, remove the string argument
+	/// 	.build(millennium::generate_context!("test/fixture/.millenniumrc"))
+	/// 	.expect("error while building Millennium application");
 	/// #[cfg(target_os = "macos")]
 	/// app.set_activation_policy(millennium::ActivationPolicy::Accessory);
 	/// app.run(|_app_handle, _event| {});
@@ -461,14 +445,14 @@ impl<R: Runtime> App<R> {
 	/// # Examples
 	/// ```rust,no_run
 	/// let app = millennium::Builder::default()
-	///   // on an actual app, remove the string argument
-	///   .build(millennium::generate_context!("test/fixture/.millenniumrc"))
-	///   .expect("error while building Millennium application");
+	/// 	// on an actual app, remove the string argument
+	/// 	.build(millennium::generate_context!("test/fixture/.millenniumrc"))
+	/// 	.expect("error while building Millennium application");
 	/// app.run(|_app_handle, event| match event {
-	///   millennium::RunEvent::ExitRequested { api, .. } => {
-	///     api.prevent_exit();
-	///   }
-	///   _ => {}
+	/// 	millennium::RunEvent::ExitRequested { api, .. } => {
+	/// 		api.prevent_exit();
+	/// 	}
+	/// 	_ => {}
 	/// });
 	/// ```
 	pub fn run<F: FnMut(&AppHandle<R>, RunEvent) + 'static>(mut self, mut callback: F) {
@@ -497,14 +481,14 @@ impl<R: Runtime> App<R> {
 	/// # Examples
 	/// ```rust,no_run
 	/// let mut app = millennium::Builder::default()
-	///   // on an actual app, remove the string argument
-	///   .build(millennium::generate_context!("test/fixture/.millenniumrc"))
-	///   .expect("error while building Millennium application");
+	/// 	// on an actual app, remove the string argument
+	/// 	.build(millennium::generate_context!("test/fixture/.millenniumrc"))
+	/// 	.expect("error while building Millennium application");
 	/// loop {
-	///   let iteration = app.run_iteration();
-	///   if iteration.window_count == 0 {
-	///     break;
-	///   }
+	/// 	let iteration = app.run_iteration();
+	/// 	if iteration.window_count == 0 {
+	/// 		break;
+	/// 	}
 	/// }
 	/// ```
 	pub fn run_iteration(&mut self) -> crate::runtime::RunIteration {
@@ -574,9 +558,9 @@ impl<R: Runtime> App<R> {
 /// # Examples
 /// ```rust,no_run
 /// millennium::Builder::default()
-///   // on an actual app, remove the string argument
-///   .run(millennium::generate_context!("test/fixture/.millenniumrc"))
-///   .expect("error while running Millennium application");
+/// 	// on an actual app, remove the string argument
+/// 	.run(millennium::generate_context!("test/fixture/.millenniumrc"))
+/// 	.expect("error while running Millennium application");
 /// ```
 #[allow(clippy::type_complexity)]
 pub struct Builder<R: Runtime> {
@@ -641,8 +625,7 @@ impl<R: Runtime> Builder<R> {
 			setup: Box::new(|_| Ok(())),
 			invoke_handler: Box::new(|_| ()),
 			invoke_responder: Arc::new(window_invoke_responder),
-			invoke_initialization_script:
-				"Object.defineProperty(window, '__MILLENNIUM_POST_MESSAGE__', { value: message => window.ipc.postMessage(JSON.stringify(message)) })".into(),
+			invoke_initialization_script: "Object.defineProperty(window, '__MILLENNIUM_POST_MESSAGE__', { value: message => window.ipc.postMessage(JSON.stringify(message)) })".into(),
 			on_page_load: Box::new(|_, _| ()),
 			pending_windows: Default::default(),
 			plugins: PluginStore::default(),
@@ -679,13 +662,12 @@ impl<R: Runtime> Builder<R> {
 	/// ```rust,no_run
 	/// #[millennium::command]
 	/// fn command_1() -> String {
-	///   return "hello world".to_string();
+	/// 	return "hello world".to_string();
 	/// }
-	/// millennium::Builder::default()
-	///   .invoke_handler(millennium::generate_handler![
-	///     command_1,
-	///     // etc...
-	///   ]);
+	/// millennium::Builder::default().invoke_handler(millennium::generate_handler![
+	/// 	command_1,
+	/// 	// etc...
+	/// ]);
 	/// ```
 	#[must_use]
 	pub fn invoke_handler<F>(mut self, invoke_handler: F) -> Self
@@ -720,14 +702,11 @@ impl<R: Runtime> Builder<R> {
 	/// ```rust,no_run
 	/// use millennium::Manager;
 	/// millennium::Builder::default()
-	///   .setup(|app| {
-	///     let main_window = app.get_window("main").unwrap();
-	#[cfg_attr(
-		feature = "dialog",
-		doc = r#"     millennium::api::dialog::blocking::message(Some(&main_window), "Hello", "Welcome back!");"#
-	)]
-	///     Ok(())
-	///   });
+	/// 	.setup(|app| {
+	/// 		let main_window = app.get_window("main").unwrap();
+	#[cfg_attr(feature = "dialog", doc = r#"		millennium::api::dialog::blocking::message(Some(&main_window), "Hello", "Welcome back!");"#)]
+	/// 		Ok(())
+	/// 	});
 	/// ```
 	#[must_use]
 	pub fn setup<F>(mut self, setup: F) -> Self
@@ -776,6 +755,7 @@ impl<R: Runtime> Builder<R> {
 	///
 	/// ```rust,no_run
 	/// use std::{collections::HashMap, sync::Mutex};
+	///
 	/// use millennium::State;
 	/// // here we use Mutex to achieve interior mutability
 	/// struct Storage(Mutex<HashMap<u64, String>>);
@@ -784,23 +764,23 @@ impl<R: Runtime> Builder<R> {
 	///
 	/// #[millennium::command]
 	/// fn connect(connection: State<DbConnection>) {
-	///   // initialize the connection, mutating the state with interior mutability
-	///   *connection.0.lock().unwrap() = Some(Connection {});
+	/// 	// initialize the connection, mutating the state with interior mutability
+	/// 	*connection.0.lock().unwrap() = Some(Connection {});
 	/// }
 	///
 	/// #[millennium::command]
 	/// fn storage_insert(key: u64, value: String, storage: State<Storage>) {
-	///   // mutate the storage behind the Mutex
-	///   storage.0.lock().unwrap().insert(key, value);
+	/// 	// mutate the storage behind the Mutex
+	/// 	storage.0.lock().unwrap().insert(key, value);
 	/// }
 	///
 	/// millennium::Builder::default()
-	///   .manage(Storage(Default::default()))
-	///   .manage(DbConnection(Default::default()))
-	///   .invoke_handler(millennium::generate_handler![connect, storage_insert])
-	///   // on an actual app, remove the string argument
-	///   .run(millennium::generate_context!("test/fixture/.millenniumrc"))
-	///   .expect("error while running millennium application");
+	/// 	.manage(Storage(Default::default()))
+	/// 	.manage(DbConnection(Default::default()))
+	/// 	.invoke_handler(millennium::generate_handler![connect, storage_insert])
+	/// 	// on an actual app, remove the string argument
+	/// 	.run(millennium::generate_context!("test/fixture/.millenniumrc"))
+	/// 	.expect("error while running millennium application");
 	/// ```
 	///
 	/// # Examples
@@ -813,21 +793,21 @@ impl<R: Runtime> Builder<R> {
 	///
 	/// #[millennium::command]
 	/// fn int_command(state: State<MyInt>) -> String {
-	///     format!("The stateful int is: {}", state.0)
+	/// 	format!("The stateful int is: {}", state.0)
 	/// }
 	///
 	/// #[millennium::command]
 	/// fn string_command<'r>(state: State<'r, MyString>) {
-	///     println!("state: {}", state.inner().0);
+	/// 	println!("state: {}", state.inner().0);
 	/// }
 	///
 	/// millennium::Builder::default()
-	///   .manage(MyInt(10))
-	///   .manage(MyString("Hello, managed state!".to_string()))
-	///   .invoke_handler(millennium::generate_handler![int_command, string_command])
-	///   // on an actual app, remove the string argument
-	///   .run(millennium::generate_context!("test/fixture/.millenniumrc"))
-	///   .expect("error while running Millennium application");
+	/// 	.manage(MyInt(10))
+	/// 	.manage(MyString("Hello, managed state!".to_string()))
+	/// 	.invoke_handler(millennium::generate_handler![int_command, string_command])
+	/// 	// on an actual app, remove the string argument
+	/// 	.run(millennium::generate_context!("test/fixture/.millenniumrc"))
+	/// 	.expect("error while running Millennium application");
 	/// ```
 	#[must_use]
 	pub fn manage<T>(self, state: T) -> Self
@@ -844,15 +824,10 @@ impl<R: Runtime> Builder<R> {
 	/// # Examples
 	/// ```rust,no_run
 	/// use millennium::WindowBuilder;
-	/// millennium::Builder::default()
-	///   .create_window("main", millennium::WindowUrl::default(), |win, webview| {
-	///     let win = win
-	///       .title("My Main Window")
-	///       .resizable(true)
-	///       .set_inner_size(800.0, 550.0)
-	///       .min_inner_size(400.0, 200.0);
-	///     return (win, webview);
-	///   });
+	/// millennium::Builder::default().create_window("main", millennium::WindowUrl::default(), |win, webview| {
+	/// 	let win = win.title("My Main Window").resizable(true).set_inner_size(800.0, 550.0).min_inner_size(400.0, 200.0);
+	/// 	return (win, webview);
+	/// });
 	/// ```
 	pub fn create_window<F>(mut self, label: impl Into<String>, url: WindowUrl, setup: F) -> crate::Result<Self>
 	where
@@ -877,19 +852,16 @@ impl<R: Runtime> Builder<R> {
 	///
 	/// # Examples
 	/// ```rust,no_run
-	/// use millennium::{MenuEntry, Submenu, MenuItem, Menu, CustomMenuItem};
+	/// use millennium::{CustomMenuItem, Menu, MenuEntry, MenuItem, Submenu};
 	///
-	/// millennium::Builder::default()
-	///   .menu(Menu::with_items([
-	///     MenuEntry::Submenu(Submenu::new(
-	///       "File",
-	///       Menu::with_items([
-	///         MenuItem::CloseWindow.into(),
-	///         #[cfg(target_os = "macos")]
-	///         CustomMenuItem::new("hello", "Hello").into(),
-	///       ]),
-	///     )),
-	///   ]));
+	/// millennium::Builder::default().menu(Menu::with_items([MenuEntry::Submenu(Submenu::new(
+	/// 	"File",
+	/// 	Menu::with_items([
+	/// 		MenuItem::CloseWindow.into(),
+	/// 		#[cfg(target_os = "macos")]
+	/// 		CustomMenuItem::new("hello", "Hello").into()
+	/// 	])
+	/// ))]));
 	/// ```
 	#[must_use]
 	pub fn menu(mut self, menu: Menu) -> Self {
@@ -903,30 +875,30 @@ impl<R: Runtime> Builder<R> {
 	/// ```rust,no_run
 	/// use millennium::{Menu, MenuEntry, Submenu, CustomMenuItem, api, Manager};
 	/// millennium::Builder::default()
-	///   .menu(Menu::with_items([
-	///     MenuEntry::Submenu(Submenu::new(
-	///       "File",
-	///       Menu::with_items([
-	///         CustomMenuItem::new("New", "New").into(),
-	///         CustomMenuItem::new("Learn More", "Learn More").into(),
-	///       ]),
-	///     )),
-	///   ]))
-	///   .on_menu_event(|event| {
-	///     match event.menu_item_id() {
-	///       "Learn More" => {
-	///         // open in browser (requires the `shell-open-api` feature)
+	/// 	.menu(Menu::with_items([
+	/// 		MenuEntry::Submenu(Submenu::new(
+	/// 			"File",
+	/// 			Menu::with_items([
+	/// 				CustomMenuItem::new("New", "New").into(),
+	/// 				CustomMenuItem::new("Learn More", "Learn More").into(),
+	/// 			]),
+	/// 		)),
+	/// 	]))
+	/// 	.on_menu_event(|event| {
+	/// 		match event.menu_item_id() {
+	/// 			"Learn More" => {
+	/// 				// open in browser (requires the `shell-open-api` feature)
 	#[cfg_attr(
 		feature = "shell-open-api",
-		doc = r#"         api::shell::open(&event.window().shell_scope(), "https://github.com/pykeio/millennium".to_string(), None).unwrap();"#
+		doc = r#"				api::shell::open(&event.window().shell_scope(), "https://github.com/pykeio/millennium".to_string(), None).unwrap();"#
 	)]
-	///       }
-	///       id => {
-	///         // do something with other events
-	///         println!("got menu event: {}", id);
-	///       }
-	///     }
-	///   });
+	/// 			}
+	/// 			id => {
+	/// 				// do something with other events
+	/// 				println!("got menu event: {}", id);
+	/// 			}
+	/// 		}
+	/// 	});
 	/// ```
 	#[must_use]
 	pub fn on_menu_event<F: Fn(WindowMenuEvent<R>) + Send + Sync + 'static>(mut self, handler: F) -> Self {
@@ -938,16 +910,15 @@ impl<R: Runtime> Builder<R> {
 	///
 	/// # Examples
 	/// ```rust,no_run
-	/// millennium::Builder::default()
-	///   .on_window_event(|event| match event.event() {
-	///     millennium::WindowEvent::Focused(focused) => {
-	///       // hide window whenever it loses focus
-	///       if !focused {
-	///         event.window().hide().unwrap();
-	///       }
-	///     }
-	///     _ => {}
-	///   });
+	/// millennium::Builder::default().on_window_event(|event| match event.event() {
+	/// 	millennium::WindowEvent::Focused(focused) => {
+	/// 		// hide window whenever it loses focus
+	/// 		if !focused {
+	/// 			event.window().hide().unwrap();
+	/// 		}
+	/// 	}
+	/// 	_ => {}
+	/// });
 	/// ```
 	#[must_use]
 	pub fn on_window_event<F: Fn(GlobalWindowEvent<R>) + Send + Sync + 'static>(mut self, handler: F) -> Self {
@@ -960,16 +931,15 @@ impl<R: Runtime> Builder<R> {
 	/// # Examples
 	/// ```rust,no_run
 	/// use millennium::Manager;
-	/// millennium::Builder::default()
-	///   .on_system_tray_event(|app, event| match event {
-	///     // show window with id "main" when the tray is left clicked
-	///     millennium::SystemTrayEvent::LeftClick { .. } => {
-	///       let window = app.get_window("main").unwrap();
-	///       window.show().unwrap();
-	///       window.set_focus().unwrap();
-	///     }
-	///     _ => {}
-	///   });
+	/// millennium::Builder::default().on_system_tray_event(|app, event| match event {
+	/// 	// show window with id "main" when the tray is left clicked
+	/// 	millennium::SystemTrayEvent::LeftClick { .. } => {
+	/// 		let window = app.get_window("main").unwrap();
+	/// 		window.show().unwrap();
+	/// 		window.set_focus().unwrap();
+	/// 	}
+	/// 	_ => {}
+	/// });
 	/// ```
 	#[cfg(feature = "system-tray")]
 	#[cfg_attr(doc_cfg, doc(cfg(feature = "system-tray")))]
@@ -990,16 +960,12 @@ impl<R: Runtime> Builder<R> {
 	/// * `protocol` the protocol associated with the given URI scheme. It's a
 	///   function that takes an URL such as `example://localhost/asset.css`.
 	#[must_use]
-	pub fn register_uri_scheme_protocol<
-		N: Into<String>,
-		H: Fn(&AppHandle<R>, &HttpRequest) -> Result<HttpResponse, Box<dyn std::error::Error>> + Send + Sync + 'static
-	>(
+	pub fn register_uri_scheme_protocol<N: Into<String>, H: Fn(&AppHandle<R>, &HttpRequest) -> Result<HttpResponse, Box<dyn std::error::Error>> + Send + Sync + 'static>(
 		mut self,
 		uri_scheme: N,
 		protocol: H
 	) -> Self {
-		self.uri_scheme_protocols
-			.insert(uri_scheme.into(), Arc::new(CustomProtocol { protocol: Box::new(protocol) }));
+		self.uri_scheme_protocols.insert(uri_scheme.into(), Arc::new(CustomProtocol { protocol: Box::new(protocol) }));
 		self
 	}
 
@@ -1095,12 +1061,7 @@ impl<R: Runtime> Builder<R> {
 		app.manage(Scopes {
 			fs: FsScope::for_fs_api(&app.manager.config(), app.package_info(), &env, &app.config().millennium.allowlist.fs.scope)?,
 			#[cfg(protocol_asset)]
-			asset_protocol: FsScope::for_fs_api(
-				&app.manager.config(),
-				app.package_info(),
-				&env,
-				&app.config().millennium.allowlist.protocol.asset_scope
-			)?,
+			asset_protocol: FsScope::for_fs_api(&app.manager.config(), app.package_info(), &env, &app.config().millennium.allowlist.protocol.asset_scope)?,
 			#[cfg(http_request)]
 			http: crate::scope::HttpScope::for_http_api(&app.config().millennium.allowlist.http.scope),
 			#[cfg(shell_scope)]
@@ -1136,14 +1097,7 @@ impl<R: Runtime> Builder<R> {
 				.runtime
 				.as_ref()
 				.unwrap()
-				.system_tray(
-					tray.with_icon(
-						system_tray
-							.icon
-							.or(system_tray_icon)
-							.expect("tray icon not found; please configure it in .millenniumrc")
-					)
-				)
+				.system_tray(tray.with_icon(system_tray.icon.or(system_tray_icon).expect("tray icon not found; please configure it in .millenniumrc")))
 				.expect("failed to run tray");
 
 			#[cfg(target_os = "macos")]
@@ -1152,13 +1106,8 @@ impl<R: Runtime> Builder<R> {
 				.as_ref()
 				.unwrap()
 				.system_tray(
-					tray.with_icon(
-						system_tray
-							.icon
-							.or(system_tray_icon)
-							.expect("tray icon not found; please configure it in .millenniumrc")
-					)
-					.with_icon_as_template(system_tray_icon_as_template)
+					tray.with_icon(system_tray.icon.or(system_tray_icon).expect("tray icon not found; please configure it in .millenniumrc"))
+						.with_icon_as_template(system_tray_icon_as_template)
 				)
 				.expect("failed to run tray");
 
@@ -1179,18 +1128,9 @@ impl<R: Runtime> Builder<R> {
 						RuntimeSystemTrayEvent::MenuItemClick(id) => tray::SystemTrayEvent::MenuItemClick {
 							id: ids.lock().unwrap().get(id).unwrap().clone()
 						},
-						RuntimeSystemTrayEvent::LeftClick { position, size } => tray::SystemTrayEvent::LeftClick {
-							position: *position,
-							size: *size
-						},
-						RuntimeSystemTrayEvent::RightClick { position, size } => tray::SystemTrayEvent::RightClick {
-							position: *position,
-							size: *size
-						},
-						RuntimeSystemTrayEvent::DoubleClick { position, size } => tray::SystemTrayEvent::DoubleClick {
-							position: *position,
-							size: *size
-						}
+						RuntimeSystemTrayEvent::LeftClick { position, size } => tray::SystemTrayEvent::LeftClick { position: *position, size: *size },
+						RuntimeSystemTrayEvent::RightClick { position, size } => tray::SystemTrayEvent::RightClick { position: *position, size: *size },
+						RuntimeSystemTrayEvent::DoubleClick { position, size } => tray::SystemTrayEvent::DoubleClick { position: *position, size: *size }
 					};
 					let listener = listener.clone();
 					listener.lock().unwrap()(&app_handle, event);
@@ -1230,12 +1170,7 @@ impl<R: Runtime> Builder<R> {
 	}
 }
 
-fn on_event_loop_event<R: Runtime, F: FnMut(&AppHandle<R>, RunEvent) + 'static>(
-	app_handle: &AppHandle<R>,
-	event: RuntimeRunEvent,
-	manager: &WindowManager<R>,
-	callback: Option<&mut F>
-) {
+fn on_event_loop_event<R: Runtime, F: FnMut(&AppHandle<R>, RunEvent) + 'static>(app_handle: &AppHandle<R>, event: RuntimeRunEvent, manager: &WindowManager<R>, callback: Option<&mut F>) {
 	if let RuntimeRunEvent::WindowClose(label) = &event {
 		manager.on_window_close(label);
 	}

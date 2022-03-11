@@ -57,11 +57,7 @@ pub enum EventWrapper {
 #[derive(Debug, PartialEq)]
 pub enum EventProxy {
 	#[non_exhaustive]
-	DpiChangedProxy {
-		ns_window: IdRef,
-		suggested_size: LogicalSize<f64>,
-		scale_factor: f64
-	}
+	DpiChangedProxy { ns_window: IdRef, suggested_size: LogicalSize<f64>, scale_factor: f64 }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

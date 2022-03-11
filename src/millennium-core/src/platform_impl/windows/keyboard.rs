@@ -132,10 +132,7 @@ impl KeyEventBuilder {
 				if has_next_key_message {
 					let next_msg = unsafe { next_msg.assume_init() };
 					let next_msg_kind = next_msg.message;
-					let next_belongs_to_this = !matches!(
-						next_msg_kind,
-						win32wm::WM_KEYDOWN | win32wm::WM_SYSKEYDOWN | win32wm::WM_KEYUP | win32wm::WM_SYSKEYUP
-					);
+					let next_belongs_to_this = !matches!(next_msg_kind, win32wm::WM_KEYDOWN | win32wm::WM_SYSKEYDOWN | win32wm::WM_KEYUP | win32wm::WM_SYSKEYUP);
 					if next_belongs_to_this {
 						self.event_info = finished_event_info.take();
 					} else {
@@ -151,10 +148,7 @@ impl KeyEventBuilder {
 				}
 				if let Some(event_info) = finished_event_info {
 					let ev = event_info.finalize(&mut layouts.strings);
-					return vec![MessageAsKeyEvent {
-						event: ev,
-						is_synthetic: false
-					}];
+					return vec![MessageAsKeyEvent { event: ev, is_synthetic: false }];
 				}
 			}
 			win32wm::WM_DEADCHAR | win32wm::WM_SYSDEADCHAR => {
@@ -164,10 +158,7 @@ impl KeyEventBuilder {
 				let event_info = self.event_info.take().unwrap();
 				let mut layouts = LAYOUT_CACHE.lock();
 				let ev = event_info.finalize(&mut layouts.strings);
-				return vec![MessageAsKeyEvent {
-					event: ev,
-					is_synthetic: false
-				}];
+				return vec![MessageAsKeyEvent { event: ev, is_synthetic: false }];
 			}
 			win32wm::WM_CHAR | win32wm::WM_SYSCHAR => {
 				if self.event_info.is_none() {
@@ -257,10 +248,7 @@ impl KeyEventBuilder {
 						event_info.text = PartialText::Text(key.to_text());
 					}
 					let ev = event_info.finalize(&mut layouts.strings);
-					return vec![MessageAsKeyEvent {
-						event: ev,
-						is_synthetic: false
-					}];
+					return vec![MessageAsKeyEvent { event: ev, is_synthetic: false }];
 				}
 			}
 			win32wm::WM_KEYUP | win32wm::WM_SYSKEYUP => {
@@ -308,7 +296,9 @@ impl KeyEventBuilder {
 		let num_lock_on = kbd_state[usize::from(VK_NUMLOCK)] & 1 != 0;
 
 		// We are synthesizing the press event for caps-lock first for the following
-		// reasons: 1. If caps-lock is *not* held down but *is* active, then we have to
+		// reasons:
+		//
+		// 1. If caps-lock is *not* held down but *is* active, then we have to
 		//    synthesize all printable keys, respecting the caps-lock state.
 		// 2. If caps-lock is held down, we could choose to sythesize its
 		//    keypress after every other key, in which case all other keys *must*
@@ -392,11 +382,7 @@ impl KeyEventBuilder {
 		}
 		let scancode = scancode as ExScancode;
 		let code = KeyCode::from_scancode(scancode as u32);
-		let mods = if caps_lock_on {
-			WindowsModifiers::CAPS_LOCK
-		} else {
-			WindowsModifiers::empty()
-		};
+		let mods = if caps_lock_on { WindowsModifiers::CAPS_LOCK } else { WindowsModifiers::empty() };
 		let layout = layouts.layouts.get(&locale_id.0).unwrap();
 		let logical_key = layout.get_key(mods, num_lock_on, vk, scancode, code);
 		let key_without_modifiers = layout.get_key(WindowsModifiers::empty(), false, vk, scancode, code);

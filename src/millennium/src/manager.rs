@@ -81,13 +81,7 @@ struct CspHashStrings {
 /// Sets the CSP value to the asset HTML if needed (on Linux).
 /// Returns the CSP string for access on the response header (on Windows and
 /// macOS).
-fn set_csp<R: Runtime>(
-	asset: &mut String,
-	assets: Arc<dyn Assets>,
-	asset_path: &AssetKey,
-	#[allow(unused_variables)] manager: &WindowManager<R>,
-	csp: Csp
-) -> String {
+fn set_csp<R: Runtime>(asset: &mut String, assets: Arc<dyn Assets>, asset_path: &AssetKey, #[allow(unused_variables)] manager: &WindowManager<R>, csp: Csp) -> String {
 	let mut csp = csp.into();
 	let hash_strings = assets.csp_hashes(asset_path).fold(CspHashStrings::default(), |mut acc, hash| {
 		match hash {
@@ -343,13 +337,7 @@ impl<R: Runtime> WindowManager<R> {
 		if cfg!(feature = "custom-protocol") {
 			self.inner.config.millennium.security.csp.clone()
 		} else {
-			self.inner
-				.config
-				.millennium
-				.security
-				.dev_csp
-				.clone()
-				.or_else(|| self.inner.config.millennium.security.csp.clone())
+			self.inner.config.millennium.security.dev_csp.clone().or_else(|| self.inner.config.millennium.security.csp.clone())
 		}
 	}
 
@@ -364,10 +352,7 @@ impl<R: Runtime> WindowManager<R> {
 		let is_init_global = self.inner.config.build.with_global_millennium;
 		let plugin_init = self.inner.plugins.lock().expect("poisoned plugin store").initialization_script();
 
-		let pattern_init = PatternJavascript {
-			pattern: self.pattern().into()
-		}
-		.render_default(&Default::default())?;
+		let pattern_init = PatternJavascript { pattern: self.pattern().into() }.render_default(&Default::default())?;
 
 		let ipc_init = IpcJavascript {
 			isolation_origin: &match self.pattern() {
@@ -388,14 +373,12 @@ impl<R: Runtime> WindowManager<R> {
 		webview_attributes = webview_attributes
 			.initialization_script(&self.inner.invoke_initialization_script)
 			.initialization_script(&format!(
-				r#"
-          Object.defineProperty(window, '__MILLENNIUM_METADATA__', {{
-            value: {{
-              __windows: {window_labels_array}.map(function (label) {{ return {{ label: label }} }}),
-              __currentWindow: {{ label: {current_window_label} }}
-            }}
-          }})
-        "#,
+				r#"Object.defineProperty(window, '__MILLENNIUM_METADATA__', {{
+					value: {{
+						__windows: {window_labels_array}.map(function (label) {{ return {{ label: label }} }}),
+						__currentWindow: {{ label: {current_window_label} }}
+					}}
+				}})"#,
 				window_labels_array = serde_json::to_string(&window_labels)?,
 				current_window_label = serde_json::to_string(&label)?,
 			))
@@ -454,11 +437,7 @@ impl<R: Runtime> WindowManager<R> {
 					"{}://{}{}",
 					window_url.scheme(),
 					window_url.host().unwrap(),
-					if let Some(port) = window_url.port() {
-						format!(":{}", port)
-					} else {
-						"".into()
-					}
+					if let Some(port) = window_url.port() { format!(":{}", port) } else { "".into() }
 				)
 			};
 			pending.register_uri_scheme_protocol("asset", move |request| {
@@ -584,13 +563,7 @@ impl<R: Runtime> WindowManager<R> {
 		}
 
 		#[cfg(feature = "isolation")]
-		if let Pattern::Isolation {
-			assets,
-			schema,
-			key: _,
-			crypto_keys
-		} = &self.inner.pattern
-		{
+		if let Pattern::Isolation { assets, schema, key: _, crypto_keys } = &self.inner.pattern {
 			let assets = assets.clone();
 			let schema_ = schema.clone();
 			let url_base = format!("{}://localhost", schema_);
@@ -600,9 +573,7 @@ impl<R: Runtime> WindowManager<R> {
 				"index.html" => match assets.get(&"index.html".into()) {
 					Some(asset) => {
 						let asset = String::from_utf8_lossy(asset.as_ref());
-						let template = millennium_utils::pattern::isolation::IsolationJavascriptRuntime {
-							runtime_aes_gcm_key: &aes_gcm_key
-						};
+						let template = millennium_utils::pattern::isolation::IsolationJavascriptRuntime { runtime_aes_gcm_key: &aes_gcm_key };
 						match template.render(asset.as_ref(), &Default::default()) {
 							Ok(asset) => HttpResponseBuilder::new().mimetype("text/html").body(asset.into_string().as_bytes().to_vec()),
 							Err(_) => HttpResponseBuilder::new().status(500).mimetype("text/plain").body(Vec::new())
@@ -780,13 +751,7 @@ impl<R: Runtime> WindowManager<R> {
 		})
 	}
 
-	fn initialization_script(
-		&self,
-		ipc_script: &str,
-		pattern_script: &str,
-		plugin_initialization_script: &str,
-		with_global_millennium: bool
-	) -> crate::Result<String> {
+	fn initialization_script(&self, ipc_script: &str, pattern_script: &str, plugin_initialization_script: &str, with_global_millennium: bool) -> crate::Result<String> {
 		#[derive(Template)]
 		#[default_template("../scripts/init.js")]
 		struct InitJavascript<'a> {
@@ -830,7 +795,7 @@ impl<R: Runtime> WindowManager<R> {
 					"eventName".into(),
 					0,
 					None,
-					"window['_' + window.__MILLENNIUM__.transformCallback(cb) ]".into()
+					"window['_' + window.__MILLENNIUM__.transformCallback(cb)]".into()
 				)
 			),
 			core_script: include_str!("../scripts/core.js"),
@@ -845,21 +810,18 @@ impl<R: Runtime> WindowManager<R> {
 
 	fn event_initialization_script(&self) -> String {
 		return format!(
-			"
-      Object.defineProperty(window, '{function}', {{
-        value: function (eventData) {{
-          const listeners = (window['{listeners}'] && window['{listeners}'][eventData.event]) || []
-
-          for (let i = listeners.length - 1; i >= 0; i--) {{
-            const listener = listeners[i]
-            if (listener.windowLabel === null || listener.windowLabel === eventData.windowLabel) {{
-              eventData.id = listener.id
-              listener.handler(eventData)
-            }}
-          }}
-        }}
-      }});
-    ",
+			"Object.defineProperty(window, '{function}', {{
+				value: function (eventData) {{
+					const listeners = (window['{listeners}'] && window['{listeners}'][eventData.event]) || [];
+					for (let i = listeners.length - 1; i >= 0; i--) {{
+						const listener = listeners[i];
+						if (listener.windowLabel === null || listener.windowLabel === eventData.windowLabel) {{
+							eventData.id = listener.id;
+							listener.handler(eventData);
+						}}
+					}}
+				}}
+			}});",
 			function = self.event_emit_function_name(),
 			listeners = self.event_listeners_object_name()
 		);
@@ -909,11 +871,7 @@ impl<R: Runtime> WindowManager<R> {
 	}
 
 	pub fn initialize_plugins(&self, app: &AppHandle<R>) -> crate::Result<()> {
-		self.inner
-			.plugins
-			.lock()
-			.expect("poisoned plugin store")
-			.initialize(app, &self.inner.config.plugins)
+		self.inner.plugins.lock().expect("poisoned plugin store").initialize(app, &self.inner.config.plugins)
 	}
 
 	pub fn prepare_window(
@@ -949,9 +907,7 @@ impl<R: Runtime> WindowManager<R> {
 
 		#[cfg(not(feature = "window-data-url"))]
 		if url.scheme() == "data" {
-			return Err(crate::Error::InvalidWindowUrl(
-				"data URLs are not supported without the `window-data-url` feature."
-			));
+			return Err(crate::Error::InvalidWindowUrl("data URLs are not supported without the `window-data-url` feature."));
 		}
 
 		#[cfg(feature = "window-data-url")]
@@ -1135,9 +1091,7 @@ fn on_window_event<R: Runtime>(window: &Window<R>, manager: &WindowManager<R>, e
 			}
 		}
 		WindowEvent::Focused(focused) => window.emit_and_trigger(if *focused { WINDOW_FOCUS_EVENT } else { WINDOW_BLUR_EVENT }, ())?,
-		WindowEvent::ScaleFactorChanged {
-			scale_factor, new_inner_size, ..
-		} => window.emit_and_trigger(
+		WindowEvent::ScaleFactorChanged { scale_factor, new_inner_size, .. } => window.emit_and_trigger(
 			WINDOW_SCALE_FACTOR_CHANGED_EVENT,
 			ScaleFactorChanged {
 				scale_factor: *scale_factor,

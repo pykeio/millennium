@@ -189,33 +189,33 @@ impl<R: Runtime> WindowBuilder<R> {
 	/// # Examples
 	///
 	/// ```rust,no_run
-	/// use millennium::{
-	///   utils::config::{Csp, CspDirectiveSources, WindowUrl},
-	///   runtime::http::header::HeaderValue,
-	///   window::WindowBuilder,
-	/// };
 	/// use std::collections::HashMap;
-	/// millennium::Builder::default()
-	///   .setup(|app| {
-	///     WindowBuilder::new(app, "core", WindowUrl::App("index.html".into()))
-	///       .on_web_resource_request(|request, response| {
-	///         if request.uri().starts_with("millennium://") {
-	///           // if we have a CSP header, Millennium> is loading an HTML file
-	///           // for this example, let's dynamically change the CSP
-	///           if let Some(csp) = response.headers_mut().get_mut("Content-Security-Policy") {
-	///             // use the Millennium helper to parse the CSP policy to a map
-	///             let mut csp_map: HashMap<String, CspDirectiveSources> = Csp::Policy(csp.to_str().unwrap().to_string()).into();
-	///             csp_map.entry("script-src".to_string()).or_insert_with(Default::default).push("'unsafe-inline'");
-	///             // use the Millennium helper to get a CSP string from the map
-	///             let csp_string = Csp::from(csp_map).to_string();
-	///             *csp = HeaderValue::from_str(&csp_string).unwrap();
-	///           }
-	///         }
-	///       })
-	///       .build()
-	///       .unwrap();
-	///     Ok(())
-	///   });
+	///
+	/// use millennium::{
+	/// 	runtime::http::header::HeaderValue,
+	/// 	utils::config::{Csp, CspDirectiveSources, WindowUrl},
+	/// 	window::WindowBuilder
+	/// };
+	/// millennium::Builder::default().setup(|app| {
+	/// 	WindowBuilder::new(app, "core", WindowUrl::App("index.html".into()))
+	/// 		.on_web_resource_request(|request, response| {
+	/// 			if request.uri().starts_with("millennium://") {
+	/// 				// if we have a CSP header, Millennium> is loading an HTML file
+	/// 				// for this example, let's dynamically change the CSP
+	/// 				if let Some(csp) = response.headers_mut().get_mut("Content-Security-Policy") {
+	/// 					// use the Millennium helper to parse the CSP policy to a map
+	/// 					let mut csp_map: HashMap<String, CspDirectiveSources> = Csp::Policy(csp.to_str().unwrap().to_string()).into();
+	/// 					csp_map.entry("script-src".to_string()).or_insert_with(Default::default).push("'unsafe-inline'");
+	/// 					// use the Millennium helper to get a CSP string from the map
+	/// 					let csp_string = Csp::from(csp_map).to_string();
+	/// 					*csp = HeaderValue::from_str(&csp_string).unwrap();
+	/// 				}
+	/// 			}
+	/// 		})
+	/// 		.build()
+	/// 		.unwrap();
+	/// 	Ok(())
+	/// });
 	/// ```
 	pub fn on_web_resource_request<F: Fn(&HttpRequest, &mut HttpResponse) + Send + Sync + 'static>(mut self, f: F) -> Self {
 		self.web_resource_request_handler.replace(Box::new(f));
@@ -227,9 +227,7 @@ impl<R: Runtime> WindowBuilder<R> {
 		let web_resource_request_handler = self.web_resource_request_handler.take();
 		let pending = PendingWindow::new(self.window_builder.clone(), self.webview_attributes.clone(), self.label.clone())?;
 		let labels = self.manager.labels().into_iter().collect::<Vec<_>>();
-		let pending = self
-			.manager()
-			.prepare_window(self.managed_app_handle(), pending, &labels, web_resource_request_handler)?;
+		let pending = self.manager().prepare_window(self.managed_app_handle(), pending, &labels, web_resource_request_handler)?;
 		let window = match self.runtime() {
 			RuntimeOrDispatch::Runtime(runtime) => runtime.create_window(pending),
 			RuntimeOrDispatch::RuntimeHandle(handle) => handle.create_window(pending),
@@ -237,12 +235,8 @@ impl<R: Runtime> WindowBuilder<R> {
 		}
 		.map(|window| self.manager().attach_window(self.managed_app_handle(), window))?;
 
-		self.manager().emit_filter(
-			"millennium://window-created",
-			None,
-			Some(WindowCreatedEvent { label: window.label().into() }),
-			|w| w != &window
-		)?;
+		self.manager()
+			.emit_filter("millennium://window-created", None, Some(WindowCreatedEvent { label: window.label().into() }), |w| w != &window)?;
 
 		Ok(window)
 	}
@@ -707,10 +701,7 @@ impl<R: Runtime> Window<R> {
 	/// Whether this window registered a listener to an event from the given
 	/// window and event name.
 	pub(crate) fn has_js_listener(&self, window_label: Option<String>, event: &str) -> bool {
-		self.window.js_event_listeners.lock().unwrap().contains_key(&JsEventListenerKey {
-			window_label,
-			event: event.into()
-		})
+		self.window.js_event_listeners.lock().unwrap().contains_key(&JsEventListenerKey { window_label, event: event.into() })
 	}
 
 	/// Opens the developer tools window (Web Inspector).
@@ -727,12 +718,11 @@ impl<R: Runtime> Window<R> {
 	///
 	/// ```rust,no_run
 	/// use millennium::Manager;
-	/// millennium::Builder::default()
-	///   .setup(|app| {
-	///     #[cfg(debug_assertions)]
-	///     app.get_window("main").unwrap().open_devtools();
-	///     Ok(())
-	///   });
+	/// millennium::Builder::default().setup(|app| {
+	/// 	#[cfg(debug_assertions)]
+	/// 	app.get_window("main").unwrap().open_devtools();
+	/// 	Ok(())
+	/// });
 	/// ```
 	#[cfg(any(debug_assertions, feature = "devtools"))]
 	#[cfg_attr(doc_cfg, doc(cfg(any(debug_assertions, feature = "devtools"))))]
@@ -825,11 +815,7 @@ impl<R: Runtime> Window<R> {
 
 	/// Returns the list of all the monitors available on the system.
 	pub fn available_monitors(&self) -> crate::Result<Vec<Monitor>> {
-		self.window
-			.dispatcher
-			.available_monitors()
-			.map(|m| m.into_iter().map(Into::into).collect())
-			.map_err(Into::into)
+		self.window.dispatcher.available_monitors().map(|m| m.into_iter().map(Into::into).collect()).map_err(Into::into)
 	}
 
 	/// Returns the native handle that is used by this window.

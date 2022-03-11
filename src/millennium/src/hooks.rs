@@ -240,12 +240,7 @@ impl<R: Runtime> InvokeResolver<R> {
 		Self::return_closure(window, || result, success_callback, error_callback)
 	}
 
-	pub(crate) fn return_closure<T: Serialize, F: FnOnce() -> Result<T, InvokeError>>(
-		window: Window<R>,
-		f: F,
-		success_callback: CallbackFn,
-		error_callback: CallbackFn
-	) {
+	pub(crate) fn return_closure<T: Serialize, F: FnOnce() -> Result<T, InvokeError>>(window: Window<R>, f: F, success_callback: CallbackFn, error_callback: CallbackFn) {
 		Self::return_result(window, f().into(), success_callback, error_callback)
 	}
 
@@ -280,12 +275,7 @@ pub struct InvokeMessage<R: Runtime> {
 impl<R: Runtime> InvokeMessage<R> {
 	/// Create an new [`InvokeMessage`] from a payload send to a window.
 	pub(crate) fn new(window: Window<R>, state: Arc<StateManager>, command: String, payload: JsonValue) -> Self {
-		Self {
-			window,
-			state,
-			command,
-			payload
-		}
+		Self { window, state, command, payload }
 	}
 
 	/// The invoke command.

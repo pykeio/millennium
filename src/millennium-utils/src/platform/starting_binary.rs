@@ -44,10 +44,7 @@ impl StartingBinary {
 		if let Some(symlink) = Self::has_symlink(&dangerous_path) {
 			return Self(Err(Error::new(
 				ErrorKind::InvalidData,
-				format!(
-					"StartingBinary found current_exe() that contains a symlink on a non-allowed platform: {}",
-					symlink.display()
-				)
+				format!("StartingBinary found current_exe() that contains a symlink on a non-allowed platform: {}", symlink.display())
 			)));
 		}
 
@@ -75,12 +72,7 @@ impl StartingBinary {
 	fn has_symlink(path: &Path) -> Option<&Path> {
 		path.ancestors().find(|ancestor| {
 			matches!(
-				ancestor
-					.symlink_metadata()
-					.as_ref()
-					.map(std::fs::Metadata::file_type)
-					.as_ref()
-					.map(std::fs::FileType::is_symlink),
+				ancestor.symlink_metadata().as_ref().map(std::fs::Metadata::file_type).as_ref().map(std::fs::FileType::is_symlink),
 				Ok(true)
 			)
 		})

@@ -1589,12 +1589,7 @@ impl Allowlist for ProcessAllowlistConfig {
 		} else {
 			let mut features = Vec::new();
 			check_feature!(self, features, relaunch, "process-relaunch");
-			check_feature!(
-				self,
-				features,
-				relaunch_dangerous_allow_symlink_macos,
-				"process-relaunch-dangerous-allow-symlink-macos"
-			);
+			check_feature!(self, features, relaunch_dangerous_allow_symlink_macos, "process-relaunch-dangerous-allow-symlink-macos");
 			check_feature!(self, features, exit, "process-exit");
 			features
 		}
@@ -2030,8 +2025,7 @@ impl<'d> serde::Deserialize<'d> for PackageVersion {
 				let path = PathBuf::from(value);
 				if path.exists() {
 					let json_str = read_to_string(&path).map_err(|e| DeError::custom(format!("failed to read version JSON file: {}", e)))?;
-					let package_json: serde_json::Value =
-						serde_json::from_str(&json_str).map_err(|e| DeError::custom(format!("failed to read version JSON file: {}", e)))?;
+					let package_json: serde_json::Value = serde_json::from_str(&json_str).map_err(|e| DeError::custom(format!("failed to read version JSON file: {}", e)))?;
 					if let Some(obj) = package_json.as_object() {
 						let version = obj
 							.get("version")
@@ -2199,12 +2193,7 @@ mod build {
 	///
 	/// This function is pretty generic because the types of keys AND values get
 	/// transformed.
-	fn map_lit<Map, Key, Value, TokenStreamKey, TokenStreamValue, FuncKey, FuncValue>(
-		map_type: TokenStream,
-		map: Map,
-		map_key: FuncKey,
-		map_value: FuncValue
-	) -> TokenStream
+	fn map_lit<Map, Key, Value, TokenStreamKey, TokenStreamValue, FuncKey, FuncValue>(map_type: TokenStream, map: Map, map_key: FuncKey, map_value: FuncValue) -> TokenStream
 	where
 		<Map as IntoIterator>::IntoIter: ExactSizeIterator,
 		Map: IntoIterator<Item = (Key, Value)>,
@@ -2224,9 +2213,9 @@ mod build {
 			});
 
 			quote! {{
-			  let mut #ident = #map_type::new();
-			  #(#items)*
-			  #ident
+				let mut #ident = #map_type::new();
+				#(#items)*
+				#ident
 			}}
 		} else {
 			quote! { #map_type::new() }
@@ -2283,14 +2272,14 @@ mod build {
 	/// All fields must represent a binding of the same name that implements
 	/// `ToTokens`.
 	macro_rules! literal_struct {
-    ($tokens:ident, $struct:ident, $($field:ident),+) => {
-      $tokens.append_all(quote! {
-        ::millennium::utils::config::$struct {
-          $($field: #$field),+
-        }
-      });
-    };
-  }
+		($tokens:ident, $struct:ident, $($field:ident),+) => {
+			$tokens.append_all(quote! {
+				::millennium::utils::config::$struct {
+					$($field: #$field),+
+				}
+			});
+		};
+	}
 
 	impl ToTokens for WindowUrl {
 		fn to_tokens(&self, tokens: &mut TokenStream) {
@@ -2432,12 +2421,7 @@ mod build {
 				});
 				opt_lit(args.as_ref())
 			};
-			let subcommands = opt_lit(
-				self.subcommands
-					.as_ref()
-					.map(|map| map_lit(quote! { ::std::collections::HashMap }, map, str_lit, identity))
-					.as_ref()
-			);
+			let subcommands = opt_lit(self.subcommands.as_ref().map(|map| map_lit(quote! { ::std::collections::HashMap }, map, str_lit, identity)).as_ref());
 
 			literal_struct!(tokens, CliConfig, description, long_description, before_help, after_help, args, subcommands);
 		}
@@ -2462,8 +2446,8 @@ mod build {
 		fn to_tokens(&self, tokens: &mut TokenStream) {
 			let webview_fixed_runtime_path = opt_lit(self.webview_fixed_runtime_path.as_ref().map(path_buf_lit).as_ref());
 			tokens.append_all(quote! { ::millennium::utils::config::WindowsConfig {
-			  webview_fixed_runtime_path: #webview_fixed_runtime_path,
-			  ..Default::default()
+				webview_fixed_runtime_path: #webview_fixed_runtime_path,
+				..Default::default()
 			}})
 		}
 	}
@@ -2737,9 +2721,7 @@ mod build {
 			let protocol = &self.protocol;
 			let http = &self.http;
 			let shell = &self.shell;
-			tokens.append_all(
-				quote! { ::millennium::utils::config::AllowlistConfig { fs: #fs, protocol: #protocol, http: #http, shell: #shell, ..Default::default() } }
-			)
+			tokens.append_all(quote! { ::millennium::utils::config::AllowlistConfig { fs: #fs, protocol: #protocol, http: #http, shell: #shell, ..Default::default() } })
 		}
 	}
 
@@ -2755,19 +2737,7 @@ mod build {
 			let allowlist = &self.allowlist;
 			let macos_private_api = self.macos_private_api;
 
-			literal_struct!(
-				tokens,
-				MillenniumConfig,
-				pattern,
-				windows,
-				cli,
-				bundle,
-				updater,
-				security,
-				system_tray,
-				allowlist,
-				macos_private_api
-			);
+			literal_struct!(tokens, MillenniumConfig, pattern, windows, cli, bundle, updater, security, system_tray, allowlist, macos_private_api);
 		}
 	}
 

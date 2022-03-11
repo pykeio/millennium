@@ -27,7 +27,7 @@ pub trait EventLoopExtRunReturn {
 	/// `Event::UserEvent`.
 	type UserEvent;
 
-	/// Initializes the  event loop.
+	/// Initializes the event loop.
 	///
 	/// Unlike `run`, this function accepts non-`'static` (i.e. non-`move`)
 	/// closures and returns control flow to the caller when `control_flow` is

@@ -68,7 +68,7 @@ const MIN_JSON_PARSE_LEN: usize = 10_240;
 ///
 /// 1. `serde_json`'s ability to correctly escape and format json into a string.
 /// 2. JavaScript engines not accepting anything except another unescaped,
-/// literal single quote     character to end a string that was opened with it.
+/// literal single quote character to end a string that was opened with it.
 ///
 /// # Examples
 ///
@@ -76,7 +76,7 @@ const MIN_JSON_PARSE_LEN: usize = 10_240;
 /// use millennium::api::ipc::{serialize_js_with, SerializeOptions};
 /// #[derive(serde::Serialize)]
 /// struct Foo {
-///   bar: String,
+/// 	bar: String
 /// }
 /// let foo = Foo { bar: "x".repeat(20_000).into() };
 /// let value = serialize_js_with(&foo, SerializeOptions::default(), |v| format!("console.log({})", v)).unwrap();
@@ -94,10 +94,7 @@ pub fn serialize_js_with<T: Serialize, F: FnOnce(&str) -> String>(value: &T, opt
 
 	#[cfg(debug_assertions)]
 	if first == b'"' {
-		assert!(
-			json.len() < MAX_JSON_STR_LEN,
-			"passing a string larger than the max JavaScript literal string size"
-		)
+		assert!(json.len() < MAX_JSON_STR_LEN, "passing a string larger than the max JavaScript literal string size")
 	}
 
 	let return_val = if json.len() > MIN_JSON_PARSE_LEN && (first == b'{' || first == b'[') {
@@ -126,29 +123,30 @@ pub fn serialize_js_with<T: Serialize, F: FnOnce(&str) -> String>(value: &T, opt
 ///
 /// # Examples
 /// ```rust,no_run
-/// use millennium::{Manager, api::ipc::serialize_js};
+/// use millennium::{api::ipc::serialize_js, Manager};
 /// use serde::Serialize;
 ///
 /// #[derive(Serialize)]
 /// struct Foo {
-///   bar: String,
+/// 	bar: String
 /// }
 ///
 /// #[derive(Serialize)]
 /// struct Bar {
-///   baz: u32,
+/// 	baz: u32
 /// }
 ///
-/// millennium::Builder::default()
-///   .setup(|app| {
-///     let window = app.get_window("main").unwrap();
-///     window.eval(&format!(
-///       "console.log({}, {})",
-///       serialize_js(&Foo { bar: "bar".to_string() }).unwrap(),
-///       serialize_js(&Bar { baz: 0 }).unwrap()),
-///     ).unwrap();
-///     Ok(())
-///   });
+/// millennium::Builder::default().setup(|app| {
+/// 	let window = app.get_window("main").unwrap();
+/// 	window
+/// 		.eval(&format!(
+/// 			"console.log({}, {})",
+/// 			serialize_js(&Foo { bar: "bar".to_string() }).unwrap(),
+/// 			serialize_js(&Bar { baz: 0 }).unwrap()
+/// 		))
+/// 		.unwrap();
+/// 	Ok(())
+/// });
 /// ```
 pub fn serialize_js<T: Serialize>(value: &T) -> crate::api::Result<String> {
 	serialize_js_with(value, Default::default(), |v| v.into())
@@ -164,7 +162,7 @@ pub fn serialize_js<T: Serialize>(value: &T) -> crate::api::Result<String> {
 /// # Examples
 /// - With string literals:
 /// ```
-/// use millennium::api::ipc::{CallbackFn, format_callback};
+/// use millennium::api::ipc::{format_callback, CallbackFn};
 /// // callback with a string argument
 /// let cb = format_callback(CallbackFn(12345), &"the string response").unwrap();
 /// assert!(cb.contains(r#"window["_12345"]("the string response")"#));
@@ -172,33 +170,35 @@ pub fn serialize_js<T: Serialize>(value: &T) -> crate::api::Result<String> {
 ///
 /// - With types implement [`serde::Serialize`]:
 /// ```
-/// use millennium::api::ipc::{CallbackFn, format_callback};
+/// use millennium::api::ipc::{format_callback, CallbackFn};
 /// use serde::Serialize;
 ///
 /// // callback with large JSON argument
 /// #[derive(Serialize)]
 /// struct MyResponse {
-///   value: String
+/// 	value: String
 /// }
 ///
 /// let cb = format_callback(
-///   CallbackFn(6789),
-///   &MyResponse { value: String::from_utf8(vec![b'X'; 10_240]).unwrap()
-/// }).expect("failed to serialize");
+/// 	CallbackFn(6789),
+/// 	&MyResponse {
+/// 		value: String::from_utf8(vec![b'X'; 10_240]).unwrap()
+/// 	}
+/// )
+/// .expect("failed to serialize");
 ///
 /// assert!(cb.contains(r#"window["_6789"](JSON.parse('{"value":"XXXXXXXXX"#));
 /// ```
 pub fn format_callback<T: Serialize>(function_name: CallbackFn, arg: &T) -> crate::api::Result<String> {
 	serialize_js_with(arg, Default::default(), |arg| {
-		format!(
-		  r#"
-    if (window["_{fn}"]) {{
-      window["_{fn}"]({arg})
-    }} else {{
-      console.warn("[Millennium] Couldn't find callback id {fn} in window. This happens when the app is reloaded while Rust is running an asynchronous operation.")
-    }}"#,
-		  fn = function_name.0,
-		  arg = arg
+		format!(r#"
+		if (window['_{fn}']) {{
+			window['_{fn}']({arg});
+		}} else {{
+			console.warn('[Millennium] Couldn't find callback id {fn} in window. This happens when the app is reloaded while Rust is running an asynchronous operation.');
+		}}"#,
+			fn = function_name.0,
+			arg = arg
 		)
 	})
 }
@@ -221,7 +221,7 @@ pub fn format_callback<T: Serialize>(function_name: CallbackFn, arg: &T) -> crat
 ///
 /// # Examples
 /// ```
-/// use millennium::api::ipc::{CallbackFn, format_callback_result};
+/// use millennium::api::ipc::{format_callback_result, CallbackFn};
 /// let res: Result<u8, &str> = Ok(5);
 /// let cb = format_callback_result(res, CallbackFn(145), CallbackFn(0)).expect("failed to format");
 /// assert!(cb.contains(r#"window["_145"](5)"#));
@@ -231,11 +231,7 @@ pub fn format_callback<T: Serialize>(function_name: CallbackFn, arg: &T) -> crat
 /// assert!(cb.contains(r#"window["_1"]("error message here")"#));
 /// ```
 // TODO: better example to explain
-pub fn format_callback_result<T: Serialize, E: Serialize>(
-	result: Result<T, E>,
-	success_callback: CallbackFn,
-	error_callback: CallbackFn
-) -> crate::api::Result<String> {
+pub fn format_callback_result<T: Serialize, E: Serialize>(result: Result<T, E>, success_callback: CallbackFn, error_callback: CallbackFn) -> crate::api::Result<String> {
 	match result {
 		Ok(res) => format_callback(success_callback, &res),
 		Err(err) => format_callback(error_callback, &err)
@@ -268,22 +264,16 @@ mod test {
 		let raw_str = "T".repeat(MIN_JSON_PARSE_LEN);
 		assert_eq!(serialize_js(&raw_str).unwrap(), format!("\"{}\"", raw_str));
 
-		assert_eq!(
-			serialize_js(&JsonObj { value: raw_str.clone() }).unwrap(),
-			format!("JSON.parse('{{\"value\":\"{}\"}}')", raw_str)
-		);
+		assert_eq!(serialize_js(&JsonObj { value: raw_str.clone() }).unwrap(), format!("JSON.parse('{{\"value\":\"{}\"}}')", raw_str));
 
 		assert_eq!(
-			serialize_js(&JsonObj {
-				value: format!("\"{}\"", raw_str)
-			})
-			.unwrap(),
+			serialize_js(&JsonObj { value: format!("\"{}\"", raw_str) }).unwrap(),
 			format!("JSON.parse('{{\"value\":\"\\\\\"{}\\\\\"\"}}')", raw_str)
 		);
 
-		let dangerous_json = RawValue::from_string(
-      r#"{"test":"don\\🚀🐱‍👤\\'t forget to escape me!🚀🐱‍👤","te🚀🐱‍👤st2":"don't forget to escape me!","test3":"\\🚀🐱‍👤\\\\'''\\\\🚀🐱‍👤\\\\🚀🐱‍👤\\'''''"}"#.into()
-    ).unwrap();
+		let dangerous_json =
+			RawValue::from_string(r#"{"test":"don\\🚀🐱‍👤\\'t forget to escape me!🚀🐱‍👤","te🚀🐱‍👤st2":"don't forget to escape me!","test3":"\\🚀🐱‍👤\\\\'''\\\\🚀🐱‍👤\\\\🚀🐱‍👤\\'''''"}"#.into())
+				.unwrap();
 
 		let definitely_escaped_dangerous_json = format!("JSON.parse('{}')", dangerous_json.get().replace('\\', "\\\\").replace('\'', "\\'"));
 		let escape_single_quoted_json_test = serialize_to_javascript::Serialized::new(&dangerous_json, &Default::default()).into_string();
@@ -298,8 +288,7 @@ mod test {
 	fn qc_formating(f: CallbackFn, a: String) -> bool {
 		// call format callback
 		let fc = format_callback(f, &a).unwrap();
-		fc.contains(&format!(r#"window["_{}"](JSON.parse('{}'))"#, f.0, serde_json::Value::String(a.clone()),))
-			|| fc.contains(&format!(r#"window["_{}"]({})"#, f.0, serde_json::Value::String(a),))
+		fc.contains(&format!(r#"window["_{}"](JSON.parse('{}'))"#, f.0, serde_json::Value::String(a.clone()),)) || fc.contains(&format!(r#"window["_{}"]({})"#, f.0, serde_json::Value::String(a),))
 	}
 
 	// check arbitrary strings in format_callback_result

@@ -28,8 +28,8 @@
 //! tray_menu.add_item(MenuItemAttributes::new("My menu item"));
 //!
 //! let mut system_tray = SystemTrayBuilder::new(icon, Some(tray_menu))
-//!   .build(&event_loop)
-//!   .unwrap();
+//! 	.build(&event_loop)
+//! 	.unwrap();
 //! ```
 //!
 //! # Linux

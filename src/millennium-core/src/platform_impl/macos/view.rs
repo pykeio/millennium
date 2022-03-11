@@ -143,10 +143,7 @@ lazy_static! {
 		let superclass = class!(NSView);
 		let mut decl = ClassDecl::new("MillenniumView", superclass).unwrap();
 		decl.add_method(sel!(dealloc), dealloc as extern "C" fn(&Object, Sel));
-		decl.add_method(
-			sel!(initWithMillennium:),
-			init_with_millennium as extern "C" fn(&Object, Sel, *mut c_void) -> id
-		);
+		decl.add_method(sel!(initWithMillennium:), init_with_millennium as extern "C" fn(&Object, Sel, *mut c_void) -> id);
 		decl.add_method(sel!(viewDidMoveToWindow), view_did_move_to_window as extern "C" fn(&Object, Sel));
 		decl.add_method(sel!(drawRect:), draw_rect as extern "C" fn(&Object, Sel, NSRect));
 		decl.add_method(sel!(acceptsFirstResponder), accepts_first_responder as extern "C" fn(&Object, Sel) -> BOOL);
@@ -160,19 +157,13 @@ lazy_static! {
 			set_marked_text as extern "C" fn(&mut Object, Sel, id, NSRange, NSRange)
 		);
 		decl.add_method(sel!(unmarkText), unmark_text as extern "C" fn(&mut Object, Sel));
-		decl.add_method(
-			sel!(validAttributesForMarkedText),
-			valid_attributes_for_marked_text as extern "C" fn(&Object, Sel) -> id
-		);
+		decl.add_method(sel!(validAttributesForMarkedText), valid_attributes_for_marked_text as extern "C" fn(&Object, Sel) -> id);
 		decl.add_method(
 			sel!(attributedSubstringForProposedRange:actualRange:),
 			attributed_substring_for_proposed_range as extern "C" fn(&Object, Sel, NSRange, *mut c_void) -> id
 		);
 		decl.add_method(sel!(insertText:replacementRange:), insert_text as extern "C" fn(&Object, Sel, id, NSRange));
-		decl.add_method(
-			sel!(characterIndexForPoint:),
-			character_index_for_point as extern "C" fn(&Object, Sel, NSPoint) -> NSUInteger
-		);
+		decl.add_method(sel!(characterIndexForPoint:), character_index_for_point as extern "C" fn(&Object, Sel, NSPoint) -> NSUInteger);
 		decl.add_method(
 			sel!(firstRectForCharacterRange:actualRange:),
 			first_rect_for_character_range as extern "C" fn(&Object, Sel, NSRange, *mut c_void) -> NSRect
@@ -197,10 +188,7 @@ lazy_static! {
 		decl.add_method(sel!(mouseExited:), mouse_exited as extern "C" fn(&Object, Sel, id));
 		decl.add_method(sel!(scrollWheel:), scroll_wheel as extern "C" fn(&Object, Sel, id));
 		decl.add_method(sel!(pressureChangeWithEvent:), pressure_change_with_event as extern "C" fn(&Object, Sel, id));
-		decl.add_method(
-			sel!(_wantsKeyDownForEvent:),
-			wants_key_down_for_event as extern "C" fn(&Object, Sel, id) -> BOOL
-		);
+		decl.add_method(sel!(_wantsKeyDownForEvent:), wants_key_down_for_event as extern "C" fn(&Object, Sel, id) -> BOOL);
 		decl.add_method(sel!(cancelOperation:), cancel_operation as extern "C" fn(&Object, Sel, id));
 		decl.add_method(sel!(frameDidChange:), frame_did_change as extern "C" fn(&Object, Sel, id));
 		decl.add_method(sel!(acceptsFirstMouse:), accepts_first_mouse as extern "C" fn(&Object, Sel, id) -> BOOL);
@@ -323,11 +311,7 @@ extern "C" fn reset_cursor_rects(this: &Object, _sel: Sel) {
 
 		let bounds: NSRect = msg_send![this, bounds];
 		let cursor_state = state.cursor_state.lock().unwrap();
-		let cursor = if cursor_state.visible {
-			cursor_state.cursor.load()
-		} else {
-			util::invisible_cursor()
-		};
+		let cursor = if cursor_state.visible { cursor_state.cursor.load() } else { util::invisible_cursor() };
 		let _: () = msg_send![this,
 			addCursorRect:bounds
 			cursor:cursor
@@ -483,96 +467,17 @@ extern "C" fn do_command_by_selector(_this: &Object, _sel: Sel, _command: Sel) {
 	// generate a "human readable" character happens, i.e. newlines, tabs, and
 	// Ctrl+C.
 
-	// unsafe {
-	//     let state_ptr: *mut c_void = *this.get_ivar("millenniumState");
-	//     let state = &mut *(state_ptr as *mut ViewState);
-
-	//     let mut events = VecDeque::with_capacity(1);
-	//     if command == sel!(insertNewline:) {
-	//         // The `else` condition would emit the same character, but I'm
-	// keeping this here both...         // 1) as a reminder for how
-	// `doCommandBySelector` works         // 2) to make our use of carriage return
-	// explicit         events.push_back(EventWrapper::StaticEvent(Event::
-	// WindowEvent {             window_id:
-	// WindowId(get_window_id(state.ns_window)),             event:
-	// WindowEvent::ReceivedCharacter('\r'),         }));
-	//     } else {
-	//         let raw_characters = state.raw_characters.take();
-	//         if let Some(raw_characters) = raw_characters {
-	//             for character in raw_characters
-	//                 .chars()
-	//                 .filter(|c| !is_corporate_character(*c))
-	//             {
-	//                 events.push_back(EventWrapper::StaticEvent(Event::WindowEvent
-	// {                     window_id: WindowId(get_window_id(state.ns_window)),
-	//                     event: WindowEvent::ReceivedCharacter(character),
-	//                 }));
-	//             }
-	//         }
-	//     };
-	//     AppState::queue_events(events);
-	// }
 	trace!("Completed `doCommandBySelector`");
 }
-
-// Get characters
-// fn get_characters(event: id, ignore_modifiers: bool) -> String {
-//   unsafe {
-//     let characters: id = if ignore_modifiers {
-//       msg_send![event, charactersIgnoringModifiers]
-//     } else {
-//       msg_send![event, characters]
-//     };
-
-//     assert_ne!(characters, nil);
-//     let slice = slice::from_raw_parts(characters.UTF8String() as *const
-// c_uchar, characters.len());
-
-//     let string = str::from_utf8_unchecked(slice);
-//     string.to_owned()
-//   }
-// }
 
 // As defined in: https://www.unicode.org/Public/MAPPINGS/VENDORS/APPLE/CORPCHAR.TXT
 fn is_corporate_character(c: char) -> bool {
 	#[allow(clippy::match_like_matches_macro)]
 	match c {
-		'\u{F700}'..='\u{F747}'
-		| '\u{F802}'..='\u{F84F}'
-		| '\u{F850}'
-		| '\u{F85C}'
-		| '\u{F85D}'
-		| '\u{F85F}'
-		| '\u{F860}'..='\u{F86B}'
-		| '\u{F870}'..='\u{F8FF}' => true,
+		'\u{F700}'..='\u{F747}' | '\u{F802}'..='\u{F84F}' | '\u{F850}' | '\u{F85C}' | '\u{F85D}' | '\u{F85F}' | '\u{F860}'..='\u{F86B}' | '\u{F870}'..='\u{F8FF}' => true,
 		_ => false
 	}
 }
-
-// // Retrieves a layout-independent keycode given an event.
-// fn retrieve_keycode(event: id) -> Option<VirtualKeyCode> {
-//     #[inline]
-//     fn get_code(ev: id, raw: bool) -> Option<VirtualKeyCode> {
-//         let characters = get_characters(ev, raw);
-//         characters.chars().next().and_then(|c| char_to_keycode(c))
-//     }
-
-//     // Cmd switches Roman letters for Dvorak-QWERTY layout, so we try
-// modified characters first.     // If we don't get a match, then we fall back
-// to unmodified characters.     let code = get_code(event, false).or_else(||
-// get_code(event, true));
-
-//     // We've checked all layout related keys, so fall through to scancode.
-//     // Reaching this code means that the key is layout-independent (e.g.
-// Backspace, Return).     //
-//     // We're additionally checking here for F21-F24 keys, since their keycode
-//     // can vary, but we know that they are encoded
-//     // in characters property.
-//     code.or_else(|| {
-//         let scancode = get_scancode(event);
-//         scancode_to_keycode(scancode).or_else(||
-// check_function_keys(&get_characters(event, true)))     })
-// }
 
 // Update `state.modifiers` if `event` has something different
 fn update_potentially_stale_modifiers(state: &mut ViewState, event: id) {

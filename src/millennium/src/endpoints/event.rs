@@ -38,9 +38,7 @@ impl<'de> Deserialize<'de> for EventId {
 		if is_event_name_valid(&event_id) {
 			Ok(EventId(event_id))
 		} else {
-			Err(serde::de::Error::custom(
-				"Event name must include only alphanumeric characters, `-`, `/`, `:` and `_`."
-			))
+			Err(serde::de::Error::custom("Event name must include only alphanumeric characters, `-`, `/`, `:` and `_`."))
 		}
 	}
 }
@@ -56,9 +54,7 @@ impl<'de> Deserialize<'de> for WindowLabel {
 		if is_label_valid(&event_id) {
 			Ok(WindowLabel(event_id))
 		} else {
-			Err(serde::de::Error::custom(
-				"Window label must include only alphanumeric characters, `-`, `/`, `:` and `_`."
-			))
+			Err(serde::de::Error::custom("Window label must include only alphanumeric characters, `-`, `/`, `:` and `_`."))
 		}
 	}
 }
@@ -69,11 +65,7 @@ impl<'de> Deserialize<'de> for WindowLabel {
 pub enum Cmd {
 	/// Listen to an event.
 	#[serde(rename_all = "camelCase")]
-	Listen {
-		event: EventId,
-		window_label: Option<WindowLabel>,
-		handler: CallbackFn
-	},
+	Listen { event: EventId, window_label: Option<WindowLabel>, handler: CallbackFn },
 	/// Unlisten to an event.
 	#[serde(rename_all = "camelCase")]
 	Unlisten { event: EventId, event_id: u64 },

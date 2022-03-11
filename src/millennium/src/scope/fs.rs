@@ -52,14 +52,8 @@ pub struct Scope {
 impl fmt::Debug for Scope {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		f.debug_struct("Scope")
-			.field(
-				"allowed_patterns",
-				&self.allowed_patterns.lock().unwrap().iter().map(|p| p.as_str()).collect::<Vec<&str>>()
-			)
-			.field(
-				"forbidden_patterns",
-				&self.forbidden_patterns.lock().unwrap().iter().map(|p| p.as_str()).collect::<Vec<&str>>()
-			)
+			.field("allowed_patterns", &self.allowed_patterns.lock().unwrap().iter().map(|p| p.as_str()).collect::<Vec<&str>>())
+			.field("forbidden_patterns", &self.forbidden_patterns.lock().unwrap().iter().map(|p| p.as_str()).collect::<Vec<&str>>())
 			.finish()
 	}
 }

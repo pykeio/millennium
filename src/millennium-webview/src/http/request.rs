@@ -63,10 +63,7 @@ impl Request {
 	/// Creates a new blank `Request` with the body
 	#[inline]
 	pub fn new(body: Vec<u8>) -> Request {
-		Request {
-			head: RequestParts::new(),
-			body
-		}
+		Request { head: RequestParts::new(), body }
 	}
 
 	/// Returns a reference to the associated HTTP method.
@@ -130,11 +127,7 @@ impl RequestParts {
 
 impl fmt::Debug for RequestParts {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		f.debug_struct("Parts")
-			.field("method", &self.method)
-			.field("uri", &self.uri)
-			.field("headers", &self.headers)
-			.finish()
+		f.debug_struct("Parts").field("method", &self.method).field("uri", &self.uri).field("headers", &self.headers).finish()
 	}
 }
 
@@ -217,17 +210,13 @@ impl Builder {
 	where
 		F: FnOnce(RequestParts) -> Result<RequestParts>
 	{
-		Builder {
-			inner: self.inner.and_then(func)
-		}
+		Builder { inner: self.inner.and_then(func) }
 	}
 }
 
 impl Default for Builder {
 	#[inline]
 	fn default() -> Builder {
-		Builder {
-			inner: Ok(RequestParts::new())
-		}
+		Builder { inner: Ok(RequestParts::new()) }
 	}
 }

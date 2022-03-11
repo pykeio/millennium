@@ -86,10 +86,7 @@ impl<T> EventLoopHandler<T> {
 			let callback = callback.borrow_mut();
 			(f)(self, callback);
 		} else {
-			panic!(
-				"Tried to dispatch an event, but the event loop that \
-                owned the event handler callback seems to be destroyed"
-			);
+			panic!("Tried to dispatch an event, but the event loop that owned the event handler callback seems to be destroyed");
 		}
 	}
 }
@@ -219,13 +216,7 @@ impl Handler {
 		}
 	}
 
-	fn handle_scale_factor_changed_event(
-		&self,
-		callback: &mut Box<dyn EventHandler + 'static>,
-		ns_window: IdRef,
-		suggested_size: LogicalSize<f64>,
-		scale_factor: f64
-	) {
+	fn handle_scale_factor_changed_event(&self, callback: &mut Box<dyn EventHandler + 'static>, ns_window: IdRef, suggested_size: LogicalSize<f64>, scale_factor: f64) {
 		let mut size = suggested_size.to_physical(scale_factor);
 		let new_inner_size = &mut size;
 		let event = Event::WindowEvent {
@@ -290,9 +281,7 @@ impl AppState {
 	}
 
 	pub fn wakeup(panic_info: Weak<PanicInfo>) {
-		let panic_info = panic_info
-			.upgrade()
-			.expect("The panic info must exist here. This failure indicates a developer error.");
+		let panic_info = panic_info.upgrade().expect("The panic info must exist here. This failure indicates a developer error.");
 		if panic_info.is_panicking() || !HANDLER.is_ready() {
 			return;
 		}
@@ -350,9 +339,7 @@ impl AppState {
 	}
 
 	pub fn cleared(panic_info: Weak<PanicInfo>) {
-		let panic_info = panic_info
-			.upgrade()
-			.expect("The panic info must exist here. This failure indicates a developer error.");
+		let panic_info = panic_info.upgrade().expect("The panic info must exist here. This failure indicates a developer error.");
 		if panic_info.is_panicking() || !HANDLER.is_ready() {
 			return;
 		}

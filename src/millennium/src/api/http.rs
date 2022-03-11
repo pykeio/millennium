@@ -97,15 +97,13 @@ impl Client {
 	/// ```rust,no_run
 	/// use millennium::api::http::{ClientBuilder, HttpRequestBuilder, ResponseType};
 	/// async fn run_request() {
-	///   let client = ClientBuilder::new().build().unwrap();
-	///   let response = client.send(
-	///     HttpRequestBuilder::new("GET", "https://www.rust-lang.org")
-	///       .unwrap()
-	///       .response_type(ResponseType::Binary)
-	///   ).await;
-	///   if let Ok(response) = response {
-	///     let bytes = response.bytes();
-	///   }
+	/// 	let client = ClientBuilder::new().build().unwrap();
+	/// 	let response = client
+	/// 		.send(HttpRequestBuilder::new("GET", "https://www.rust-lang.org").unwrap().response_type(ResponseType::Binary))
+	/// 		.await;
+	/// 	if let Ok(response) = response {
+	/// 		let bytes = response.bytes();
+	/// 	}
 	/// }
 	/// ```
 	pub async fn send(&self, request: HttpRequestBuilder) -> crate::api::Result<Response> {
@@ -192,10 +190,9 @@ impl Client {
 		let mut http_request = request_builder.build()?;
 		if let Some(headers) = request.headers {
 			for (header, value) in headers.iter() {
-				http_request.headers_mut().insert(
-					HeaderName::from_bytes(header.as_bytes())?,
-					http::header::HeaderValue::from_bytes(value.as_bytes())?
-				);
+				http_request
+					.headers_mut()
+					.insert(HeaderName::from_bytes(header.as_bytes())?, http::header::HeaderValue::from_bytes(value.as_bytes())?);
 			}
 		}
 
@@ -261,19 +258,15 @@ pub enum Body {
 ///
 /// # Examples
 /// ```rust,no_run
-/// use millennium::api::http::{HttpRequestBuilder, ResponseType, ClientBuilder};
+/// use millennium::api::http::{ClientBuilder, HttpRequestBuilder, ResponseType};
 /// async fn run() {
-///   let client = ClientBuilder::new()
-///     .max_redirections(3)
-///     .build()
-///     .unwrap();
-///   let request = HttpRequestBuilder::new("GET", "http://example.com").unwrap()
-///     .response_type(ResponseType::Text);
-///   if let Ok(response) = client.send(request).await {
-///     println!("got response");
-///   } else {
-///     println!("Something Happened!");
-///   }
+/// 	let client = ClientBuilder::new().max_redirections(3).build().unwrap();
+/// 	let request = HttpRequestBuilder::new("GET", "http://example.com").unwrap().response_type(ResponseType::Text);
+/// 	if let Ok(response) = client.send(request).await {
+/// 		println!("got response");
+/// 	} else {
+/// 		println!("Something Happened!");
+/// 	}
 /// }
 /// ```
 #[derive(Debug, Deserialize)]

@@ -90,15 +90,7 @@ impl Menu {
 	pub fn new_popup_menu() -> Self {
 		Self::new()
 	}
-	pub fn add_item(
-		&mut self,
-		_menu_id: MenuId,
-		_title: &str,
-		_accelerator: Option<Accelerator>,
-		_enabled: bool,
-		_selected: bool,
-		_menu_type: MenuType
-	) -> CustomMenuItem {
+	pub fn add_item(&mut self, _menu_id: MenuId, _title: &str, _accelerator: Option<Accelerator>, _enabled: bool, _selected: bool, _menu_type: MenuType) -> CustomMenuItem {
 		CustomMenuItem(MenuItemAttributes {})
 	}
 	pub fn add_submenu(&mut self, _title: &str, _enabled: bool, _submenu: Menu) {}
@@ -140,9 +132,7 @@ impl<T: 'static> EventLoop<T> {
 	pub fn new() -> Self {
 		Self {
 			window_target: event_loop::EventLoopWindowTarget {
-				p: EventLoopWindowTarget {
-					_marker: std::marker::PhantomData
-				},
+				p: EventLoopWindowTarget { _marker: std::marker::PhantomData },
 				_marker: std::marker::PhantomData
 			},
 			user_queue: Default::default(),
@@ -248,9 +238,7 @@ impl<T: 'static> EventLoop<T> {
 										};
 										if let Some(phase) = phase {
 											let pointers: Box<dyn Iterator<Item = ndk::event::Pointer<'_>>> = match phase {
-												event::TouchPhase::Started | event::TouchPhase::Ended => {
-													Box::new(std::iter::once(motion_event.pointer_at_index(motion_event.pointer_index())))
-												}
+												event::TouchPhase::Started | event::TouchPhase::Ended => Box::new(std::iter::once(motion_event.pointer_at_index(motion_event.pointer_index()))),
 												event::TouchPhase::Moved | event::TouchPhase::Cancelled => Box::new(motion_event.pointers())
 											};
 
@@ -370,10 +358,7 @@ impl<T: 'static> EventLoop<T> {
 							requested_resume: Some(instant)
 						}
 					} else {
-						event::StartCause::ResumeTimeReached {
-							start,
-							requested_resume: instant
-						}
+						event::StartCause::ResumeTimeReached { start, requested_resume: instant }
 					};
 				}
 			}
@@ -455,11 +440,7 @@ pub struct PlatformSpecificWindowBuilderAttributes;
 pub struct Window;
 
 impl Window {
-	pub fn new<T: 'static>(
-		_el: &EventLoopWindowTarget<T>,
-		_window_attrs: window::WindowAttributes,
-		_: PlatformSpecificWindowBuilderAttributes
-	) -> Result<Self, error::OsError> {
+	pub fn new<T: 'static>(_el: &EventLoopWindowTarget<T>, _window_attrs: window::WindowAttributes, _: PlatformSpecificWindowBuilderAttributes) -> Result<Self, error::OsError> {
 		// FIXME this ignores requested window attributes
 		Ok(Self)
 	}

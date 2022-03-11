@@ -59,11 +59,10 @@ pub use command::*;
 /// use millennium::{api::process::current_binary, Env, Manager};
 /// let current_binary_path = current_binary(&Env::default()).unwrap();
 ///
-/// millennium::Builder::default()
-///   .setup(|app| {
-///     let current_binary_path = current_binary(&app.env()).unwrap();
-///     Ok(())
-///   });
+/// millennium::Builder::default().setup(|app| {
+/// 	let current_binary_path = current_binary(&app.env()).unwrap();
+/// 	Ok(())
+/// });
 /// ```
 ///
 /// [AppImage]: https://appimage.org/
@@ -88,11 +87,10 @@ pub fn current_binary(_env: &Env) -> std::io::Result<PathBuf> {
 /// ```rust,no_run
 /// use millennium::{api::process::restart, Env, Manager};
 ///
-/// millennium::Builder::default()
-///   .setup(|app| {
-///     restart(&app.env());
-///     Ok(())
-///   });
+/// millennium::Builder::default().setup(|app| {
+/// 	restart(&app.env());
+/// 	Ok(())
+/// });
 /// ```
 pub fn restart(env: &Env) {
 	use std::process::{exit, Command};

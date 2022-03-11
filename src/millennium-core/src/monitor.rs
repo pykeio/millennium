@@ -104,14 +104,7 @@ impl VideoMode {
 
 impl std::fmt::Display for VideoMode {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		write!(
-			f,
-			"{}x{} @ {} Hz ({} bpp)",
-			self.size().width,
-			self.size().height,
-			self.refresh_rate(),
-			self.bit_depth()
-		)
+		write!(f, "{}x{} @ {} Hz ({} bpp)", self.size().width, self.size().height, self.refresh_rate(), self.bit_depth())
 	}
 }
 

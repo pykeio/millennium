@@ -78,26 +78,22 @@ pub fn generate_run_fn(input: DeriveInput) -> TokenStream {
 				variant_execute_function_name.set_span(variant_name.span());
 
 				matcher.extend(quote_spanned! {
-				  variant.span() => #name::#variant_name #fields_in_variant => #name::#variant_execute_function_name(context, #variables)#maybe_await.map(Into::into),
+					variant.span() => #name::#variant_name #fields_in_variant => #name::#variant_execute_function_name(context, #variables)#maybe_await.map(Into::into),
 				});
 			}
 		}
-		_ => {
-			return Error::new(Span::call_site(), "CommandModule is only implemented for enums")
-				.to_compile_error()
-				.into()
-		}
+		_ => return Error::new(Span::call_site(), "CommandModule is only implemented for enums").to_compile_error().into()
 	};
 
 	let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
 	let expanded = quote! {
 		impl #impl_generics #name #ty_generics #where_clause {
-		  pub #maybe_async fn run<R: crate::Runtime>(self, context: crate::endpoints::InvokeContext<R>) -> super::Result<crate::endpoints::InvokeResponse> {
-			match self {
-			  #matcher
+			pub #maybe_async fn run<R: crate::Runtime>(self, context: crate::endpoints::InvokeContext<R>) -> super::Result<crate::endpoints::InvokeResponse> {
+				match self {
+					#matcher
+				}
 			}
-		  }
 		}
 	};
 
@@ -135,11 +131,7 @@ impl Parse for HandlerTestAttributes {
 		let _ = input.parse::<Token![,]>();
 		let is_async = input.parse::<Ident>().map(|i| i == "async").unwrap_or_default();
 
-		Ok(Self {
-			allowlist,
-			error_message,
-			is_async
-		})
+		Ok(Self { allowlist, error_message, is_async })
 	}
 }
 
@@ -149,15 +141,15 @@ pub fn command_handler(attributes: HandlerAttributes, function: ItemFn) -> Token
 	let signature = function.sig.clone();
 
 	quote!(
-	  #[cfg(#allowlist)]
-	  #function
+		#[cfg(#allowlist)]
+		#function
 
-	  #[cfg(not(#allowlist))]
-	  #[allow(unused_variables)]
-	  #[allow(unused_mut)]
-	  #signature {
-		Err(anyhow::anyhow!(crate::Error::ApiNotAllowlisted(#error_message.to_string()).to_string()))
-	  }
+		#[cfg(not(#allowlist))]
+		#[allow(unused_variables)]
+		#[allow(unused_mut)]
+		#signature {
+			Err(anyhow::anyhow!(crate::Error::ApiNotAllowlisted(#error_message.to_string()).to_string()))
+		}
 	)
 }
 
@@ -179,24 +171,24 @@ pub fn command_test(attributes: HandlerTestAttributes, function: ItemFn) -> Toke
 
 	let response = if is_async {
 		quote!(crate::async_runtime::block_on(
-		  super::Cmd::#test_name(crate::test::mock_invoke_context(), #args)
+			super::Cmd::#test_name(crate::test::mock_invoke_context(), #args)
 		))
 	} else {
 		quote!(super::Cmd::#test_name(crate::test::mock_invoke_context(), #args))
 	};
 
 	quote!(
-	  #[cfg(#allowlist)]
-	  #function
+		#[cfg(#allowlist)]
+		#function
 
-	  #[cfg(not(#allowlist))]
-	  #[quickcheck_macros::quickcheck]
-	  #signature {
-		if let Err(e) = #response {
-		  assert!(e.to_string().contains(#error_message));
-		} else {
-		  panic!("unexpected response");
+		#[cfg(not(#allowlist))]
+		#[quickcheck_macros::quickcheck]
+		#signature {
+			if let Err(e) = #response {
+				assert!(e.to_string().contains(#error_message));
+			} else {
+				panic!("unexpected response");
+			}
 		}
-	  }
 	)
 }

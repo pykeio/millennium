@@ -73,8 +73,7 @@ use crate::{
 	window::{Fullscreen, WindowId as RootWindowId}
 };
 
-type GetPointerFrameInfoHistory =
-	unsafe extern "system" fn(pointerId: u32, entriesCount: *mut u32, pointerCount: *mut u32, pointerInfo: *mut POINTER_INFO) -> BOOL;
+type GetPointerFrameInfoHistory = unsafe extern "system" fn(pointerId: u32, entriesCount: *mut u32, pointerCount: *mut u32, pointerInfo: *mut POINTER_INFO) -> BOOL;
 
 type SkipPointerFrameMessages = unsafe extern "system" fn(pointerId: u32) -> BOOL;
 
@@ -359,13 +358,7 @@ fn wait_thread(parent_thread_id: u32, msg_window_id: HWND) {
 					// MsgWaitForMultipleObjects tends to overshoot just a little bit. We subtract
 					// 1 millisecond from the requested time and spinlock for the remainder to
 					// compensate for that.
-					let resume_reason = MsgWaitForMultipleObjectsEx(
-						0,
-						ptr::null(),
-						dur2timeout(wait_until - now).saturating_sub(1),
-						QS_ALLEVENTS,
-						MWMO_INPUTAVAILABLE
-					);
+					let resume_reason = MsgWaitForMultipleObjectsEx(0, ptr::null(), dur2timeout(wait_until - now).saturating_sub(1), QS_ALLEVENTS, MWMO_INPUTAVAILABLE);
 					if resume_reason == WAIT_TIMEOUT {
 						PostMessageW(msg_window_id, *PROCESS_NEW_EVENTS_MSG_ID, WPARAM(0), LPARAM(0));
 						wait_until_opt = None;
@@ -600,12 +593,7 @@ fn subclass_event_target_window<T>(window: HWND, event_loop_runner: EventLoopRun
 			user_event_receiver: rx
 		};
 		let input_ptr = Box::into_raw(Box::new(subclass_input));
-		let subclass_result = SetWindowSubclass(
-			window,
-			Some(thread_event_target_callback::<T>),
-			THREAD_EVENT_TARGET_SUBCLASS_ID,
-			input_ptr as usize
-		);
+		let subclass_result = SetWindowSubclass(window, Some(thread_event_target_callback::<T>), THREAD_EVENT_TARGET_SUBCLASS_ID, input_ptr as usize);
 		assert!(subclass_result.as_bool());
 
 		tx
@@ -701,12 +689,7 @@ unsafe fn process_control_flow<T: 'static>(runner: &EventLoopRunner<T>) {
 		}
 		ControlFlow::Wait => (),
 		ControlFlow::WaitUntil(until) => {
-			PostThreadMessageW(
-				runner.wait_thread_id(),
-				*WAIT_UNTIL_MSG_ID,
-				WPARAM(0),
-				LPARAM(Box::into_raw(WaitUntilInstantBox::new(until)) as _)
-			);
+			PostThreadMessageW(runner.wait_thread_id(), *WAIT_UNTIL_MSG_ID, WPARAM(0), LPARAM(Box::into_raw(WaitUntilInstantBox::new(until)) as _));
 		}
 		ControlFlow::ExitWithCode(_) => ()
 	}
@@ -743,14 +726,7 @@ fn update_modifiers<T>(window: HWND, subclass_input: &SubclassInput<T>) -> Modif
 // Returning 0 tells the Win32 API that the message has been processed.
 // FIXME: detect WM_DWMCOMPOSITIONCHANGED and call DwmEnableBlurBehindWindow if
 // necessary
-unsafe extern "system" fn public_window_callback<T: 'static>(
-	window: HWND,
-	msg: u32,
-	wparam: WPARAM,
-	lparam: LPARAM,
-	uidsubclass: usize,
-	subclass_input_ptr: usize
-) -> LRESULT {
+unsafe extern "system" fn public_window_callback<T: 'static>(window: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM, uidsubclass: usize, subclass_input_ptr: usize) -> LRESULT {
 	let subclass_input_ptr = subclass_input_ptr as *mut SubclassInput<T>;
 	let (result, subclass_removed, recurse_depth) = {
 		let subclass_input = &*subclass_input_ptr;
@@ -775,20 +751,8 @@ unsafe extern "system" fn public_window_callback<T: 'static>(
 	result
 }
 
-unsafe fn public_window_callback_inner<T: 'static>(
-	window: HWND,
-	msg: u32,
-	wparam: WPARAM,
-	lparam: LPARAM,
-	_: usize,
-	subclass_input: &SubclassInput<T>
-) -> LRESULT {
-	RedrawWindow(
-		subclass_input.event_loop_runner.thread_msg_target(),
-		ptr::null(),
-		HRGN::default(),
-		RDW_INTERNALPAINT
-	);
+unsafe fn public_window_callback_inner<T: 'static>(window: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM, _: usize, subclass_input: &SubclassInput<T>) -> LRESULT {
+	RedrawWindow(subclass_input.event_loop_runner.thread_msg_target(), ptr::null(), HRGN::default(), RDW_INTERNALPAINT);
 
 	let mut result = ProcResult::DefSubclassProc;
 
@@ -854,10 +818,7 @@ unsafe fn public_window_callback_inner<T: 'static>(
 			});
 		}
 	};
-	subclass_input
-		.event_loop_runner
-		.catch_unwind(ime_callback)
-		.unwrap_or_else(|| result = ProcResult::Value(LRESULT(-1)));
+	subclass_input.event_loop_runner.catch_unwind(ime_callback).unwrap_or_else(|| result = ProcResult::Value(LRESULT(-1)));
 
 	// I decided to bind the closure to `callback` and pass it to catch_unwind
 	// rather than passing the closure to catch_unwind directly so that the match
@@ -865,18 +826,12 @@ unsafe fn public_window_callback_inner<T: 'static>(
 	// preserved.
 	let callback = || match msg {
 		win32wm::WM_ENTERSIZEMOVE => {
-			subclass_input
-				.window_state
-				.lock()
-				.set_window_flags_in_place(|f| f.insert(WindowFlags::MARKER_IN_SIZE_MOVE));
+			subclass_input.window_state.lock().set_window_flags_in_place(|f| f.insert(WindowFlags::MARKER_IN_SIZE_MOVE));
 			result = ProcResult::Value(LRESULT(0));
 		}
 
 		win32wm::WM_EXITSIZEMOVE => {
-			subclass_input
-				.window_state
-				.lock()
-				.set_window_flags_in_place(|f| f.remove(WindowFlags::MARKER_IN_SIZE_MOVE));
+			subclass_input.window_state.lock().set_window_flags_in_place(|f| f.remove(WindowFlags::MARKER_IN_SIZE_MOVE));
 			result = ProcResult::Value(LRESULT(0));
 		}
 
@@ -943,12 +898,7 @@ unsafe fn public_window_callback_inner<T: 'static>(
 				let new_monitor = MonitorFromRect(&new_rect, MONITOR_DEFAULTTONULL);
 				match fullscreen {
 					Fullscreen::Borderless(ref mut fullscreen_monitor) => {
-						if !new_monitor.is_invalid()
-							&& fullscreen_monitor
-								.as_ref()
-								.map(|monitor| new_monitor != monitor.inner.hmonitor())
-								.unwrap_or(true)
-						{
+						if !new_monitor.is_invalid() && fullscreen_monitor.as_ref().map(|monitor| new_monitor != monitor.inner.hmonitor()).unwrap_or(true) {
 							if let Ok(new_monitor_info) = monitor::get_monitor_info(new_monitor) {
 								let new_monitor_rect = new_monitor_info.monitorInfo.rcMonitor;
 								window_pos.x = new_monitor_rect.left;
@@ -1329,10 +1279,7 @@ unsafe fn public_window_callback_inner<T: 'static>(
 			let htouch = HTOUCHINPUT(lparam.0);
 			if GetTouchInputInfo(htouch, pcount as u32, inputs.as_mut_ptr(), mem::size_of::<TOUCHINPUT>() as i32).as_bool() {
 				for input in &inputs {
-					let mut location = POINT {
-						x: input.x / 100,
-						y: input.y / 100
-					};
+					let mut location = POINT { x: input.x / 100, y: input.y / 100 };
 
 					if !ScreenToClient(window, &mut location as *mut _).as_bool() {
 						continue;
@@ -1380,14 +1327,7 @@ unsafe fn public_window_callback_inner<T: 'static>(
 				let pointer_info_count = (entries_count * pointers_count) as usize;
 				let mut pointer_infos = Vec::with_capacity(pointer_info_count);
 				pointer_infos.set_len(pointer_info_count);
-				if !GetPointerFrameInfoHistory(
-					pointer_id,
-					&mut entries_count as *mut _,
-					&mut pointers_count as *mut _,
-					pointer_infos.as_mut_ptr()
-				)
-				.as_bool()
-				{
+				if !GetPointerFrameInfoHistory(pointer_id, &mut entries_count as *mut _, &mut pointers_count as *mut _, pointer_infos.as_mut_ptr()).as_bool() {
 					result = ProcResult::Value(LRESULT(0));
 					return;
 				}
@@ -1542,18 +1482,12 @@ unsafe fn public_window_callback_inner<T: 'static>(
 				if let Some(min_size) = window_state.min_size {
 					let min_size = min_size.to_physical(window_state.scale_factor);
 					let (width, height): (u32, u32) = util::adjust_size(window, min_size).into();
-					(*mmi).ptMinTrackSize = POINT {
-						x: width as i32,
-						y: height as i32
-					};
+					(*mmi).ptMinTrackSize = POINT { x: width as i32, y: height as i32 };
 				}
 				if let Some(max_size) = window_state.max_size {
 					let max_size = max_size.to_physical(window_state.scale_factor);
 					let (width, height): (u32, u32) = util::adjust_size(window, max_size).into();
-					(*mmi).ptMaxTrackSize = POINT {
-						x: width as i32,
-						y: height as i32
-					};
+					(*mmi).ptMaxTrackSize = POINT { x: width as i32, y: height as i32 };
 				}
 			}
 
@@ -1676,11 +1610,9 @@ unsafe fn public_window_callback_inner<T: 'static>(
 							GetCursorPos(&mut pos);
 							pos
 						};
-						let suggested_cursor_horizontal_ratio =
-							(cursor_pos.x - suggested_rect.left) as f64 / (suggested_rect.right - suggested_rect.left) as f64;
+						let suggested_cursor_horizontal_ratio = (cursor_pos.x - suggested_rect.left) as f64 / (suggested_rect.right - suggested_rect.left) as f64;
 
-						(cursor_pos.x - (suggested_cursor_horizontal_ratio * (conservative_rect.right - conservative_rect.left) as f64) as i32)
-							- conservative_rect.left
+						(cursor_pos.x - (suggested_cursor_horizontal_ratio * (conservative_rect.right - conservative_rect.left) as f64) as i32) - conservative_rect.left
 					};
 					conservative_rect.left += bias;
 					conservative_rect.right += bias;
@@ -1786,8 +1718,7 @@ unsafe fn public_window_callback_inner<T: 'static>(
 						params.rgrc[0] = monitor_info.monitorInfo.rcWork;
 					}
 				}
-				result = ProcResult::Value(LRESULT(0)); // return 0 here to make the windowo
-				                        // borderless
+				result = ProcResult::Value(LRESULT(0));
 			} else {
 				result = ProcResult::DefSubclassProc;
 			}
@@ -1821,10 +1752,7 @@ unsafe fn public_window_callback_inner<T: 'static>(
 		}
 	};
 
-	subclass_input
-		.event_loop_runner
-		.catch_unwind(callback)
-		.unwrap_or_else(|| result = ProcResult::Value(LRESULT(-1)));
+	subclass_input.event_loop_runner.catch_unwind(callback).unwrap_or_else(|| result = ProcResult::Value(LRESULT(-1)));
 
 	match result {
 		ProcResult::DefSubclassProc => DefSubclassProc(window, msg, wparam, lparam),
@@ -1833,14 +1761,7 @@ unsafe fn public_window_callback_inner<T: 'static>(
 	}
 }
 
-unsafe extern "system" fn thread_event_target_callback<T: 'static>(
-	window: HWND,
-	msg: u32,
-	wparam: WPARAM,
-	lparam: LPARAM,
-	_: usize,
-	subclass_input_ptr: usize
-) -> LRESULT {
+unsafe extern "system" fn thread_event_target_callback<T: 'static>(window: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM, _: usize, subclass_input_ptr: usize) -> LRESULT {
 	let subclass_input = Box::from_raw(subclass_input_ptr as *mut ThreadMsgTargetSubclassInput<T>);
 
 	if msg != WM_PAINT {
@@ -1920,12 +1841,7 @@ unsafe extern "system" fn thread_event_target_callback<T: 'static>(
 			LRESULT(0)
 		}
 		_ if msg == *PROCESS_NEW_EVENTS_MSG_ID => {
-			PostThreadMessageW(
-				subclass_input.event_loop_runner.wait_thread_id(),
-				*CANCEL_WAIT_UNTIL_MSG_ID,
-				WPARAM(0),
-				LPARAM(0)
-			);
+			PostThreadMessageW(subclass_input.event_loop_runner.wait_thread_id(), *CANCEL_WAIT_UNTIL_MSG_ID, WPARAM(0), LPARAM(0));
 
 			// if the control_flow is WaitUntil, make sure the given moment has actually
 			// passed before emitting NewEvents
@@ -2068,7 +1984,7 @@ unsafe fn handle_raw_input<T: 'static>(subclass_input: &ThreadMsgTargetSubclassI
 			// PrtSc (print screen) produces the following sequence:
 			// 1, 0xE02A - Which is a left shift (0x2A) with an extension flag (0xE000)
 			// 2, 0xE037 - Which is a numpad multiply (0x37) with an exteion flag (0xE000).
-			// This on             its own it can be interpreted as PrtSc
+			// This on its own it can be interpreted as PrtSc
 			//
 			// For this reason, if we encounter the first keypress, we simply ignore it,
 			// trusting that there's going to be another event coming, from which we can

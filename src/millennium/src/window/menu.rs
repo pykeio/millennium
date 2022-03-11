@@ -120,9 +120,7 @@ impl<R: Runtime> MenuItemHandle<R> {
 
 	/// Modifies the title (label) of the menu item.
 	pub fn set_title<S: Into<String>>(&self, title: S) -> crate::Result<()> {
-		self.dispatcher
-			.update_menu_item(self.id, MenuUpdate::SetTitle(title.into()))
-			.map_err(Into::into)
+		self.dispatcher.update_menu_item(self.id, MenuUpdate::SetTitle(title.into())).map_err(Into::into)
 	}
 
 	/// Modifies the selected state of the menu item.

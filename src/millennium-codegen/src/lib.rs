@@ -70,10 +70,7 @@ pub fn get_config(path: &Path) -> Result<(Config, PathBuf), CodegenConfigError> 
 
 	// this should be impossible because of the use of `current_dir()` above, but
 	// handle it anyways
-	let parent = path
-		.parent()
-		.map(ToOwned::to_owned)
-		.ok_or_else(|| CodegenConfigError::Parent(path.into_owned()))?;
+	let parent = path.parent().map(ToOwned::to_owned).ok_or_else(|| CodegenConfigError::Parent(path.into_owned()))?;
 
 	Ok((config, parent))
 }

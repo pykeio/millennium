@@ -57,19 +57,16 @@ pub(crate) fn write_settings(config: &Config, package_info: &PackageInfo, env: &
 	if !settings_folder.exists() {
 		std::fs::create_dir(settings_folder)?;
 	}
-	File::create(settings_path).map_err(Into::into).and_then(|mut f| {
-		f.write_all(&bincode::serialize(&settings).map_err(crate::api::Error::Bincode)?)
-			.map_err(Into::into)
-	})
+	File::create(settings_path)
+		.map_err(Into::into)
+		.and_then(|mut f| f.write_all(&bincode::serialize(&settings).map_err(crate::api::Error::Bincode)?).map_err(Into::into))
 }
 
 /// Reads the settings from the file system.
 pub fn read_settings(config: &Config, package_info: &PackageInfo, env: &Env) -> Settings {
 	if let Ok(settings_path) = get_settings_path(config, package_info, env) {
 		if settings_path.exists() {
-			read_binary(settings_path)
-				.and_then(|settings| bincode::deserialize(&settings).map_err(Into::into))
-				.unwrap_or_default()
+			read_binary(settings_path).and_then(|settings| bincode::deserialize(&settings).map_err(Into::into)).unwrap_or_default()
 		} else {
 			Settings::default()
 		}

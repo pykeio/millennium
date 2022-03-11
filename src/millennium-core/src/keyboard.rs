@@ -128,8 +128,8 @@ bitflags! {
 		// const RALT = 0b001 << 6;
 		/// This is the "windows" key on PC and "command" key on Mac.
 		const SUPER = 0b100 << 9;
-		// const LSUPER  = 0b010 << 9;
-		// const RSUPER  = 0b001 << 9;
+		// const LSUPER = 0b010 << 9;
+		// const RSUPER = 0b001 << 9;
 	}
 }
 

@@ -85,23 +85,23 @@ pub fn wrapper(attributes: TokenStream, item: TokenStream) -> TokenStream {
 
 	// Rely on rust 2018 edition to allow importing a macro from a path.
 	quote!(
-	  #function
+		#function
 
-	  #maybe_macro_export
-	  macro_rules! #wrapper {
-		  // double braces because the item is expected to be a block expression
-		  ($path:path, $invoke:ident) => {{
-			// prevent warnings when the body is a `compile_error!` or if the command has no arguments
-			#[allow(unused_variables)]
-			let ::millennium::Invoke { message: #message, resolver: #resolver } = $invoke;
+		#maybe_macro_export
+		macro_rules! #wrapper {
+			// double braces because the item is expected to be a block expression
+			($path:path, $invoke:ident) => {{
+				// prevent warnings when the body is a `compile_error!` or if the command has no arguments
+				#[allow(unused_variables)]
+				let ::millennium::Invoke { message: #message, resolver: #resolver } = $invoke;
 
-			#body
-		}};
-	  }
+				#body
+			}};
+		}
 
-	  // allow the macro to be resolved with the same path as the command function
-	  #[allow(unused_imports)]
-	  #visibility use #wrapper;
+		// allow the macro to be resolved with the same path as the command function
+		#[allow(unused_imports)]
+		#visibility use #wrapper;
 	)
 	.into()
 }
@@ -115,14 +115,14 @@ fn body_async(function: &ItemFn, invoke: &Invoke) -> syn::Result<TokenStream2> {
 	let Invoke { message, resolver } = invoke;
 	parse_args(function, message).map(|args| {
 		quote! {
-		  #[allow(unused_imports)]
-		  use ::millennium::command::private::*;
+			#[allow(unused_imports)]
+			use ::millennium::command::private::*;
 
-		  #resolver.respond_async_serialized(async move {
-			let result = $path(#(#args?),*);
-			let kind = (&result).async_kind();
-			kind.future(result).await
-		  });
+			#resolver.respond_async_serialized(async move {
+				let result = $path(#(#args?),*);
+				let kind = (&result).async_kind();
+				kind.future(result).await
+			});
 		}
 	})
 }
@@ -139,8 +139,8 @@ fn body_blocking(function: &ItemFn, invoke: &Invoke) -> syn::Result<TokenStream2
 	// the body of a `match` to early return any argument that wasn't successful in
 	// parsing.
 	let match_body = quote!({
-	  Ok(arg) => arg,
-	  Err(err) => return #resolver.invoke_error(err),
+		Ok(arg) => arg,
+		Err(err) => return #resolver.invoke_error(err),
 	});
 
 	Ok(quote! {

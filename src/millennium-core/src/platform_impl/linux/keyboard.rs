@@ -125,9 +125,8 @@ pub(crate) fn raw_key_to_location(raw: RawKey) -> KeyLocation {
 	match raw {
 		Control_L | Shift_L | Alt_L | Super_L | Meta_L => KeyLocation::Left,
 		Control_R | Shift_R | Alt_R | Super_R | Meta_R => KeyLocation::Right,
-		KP_0 | KP_1 | KP_2 | KP_3 | KP_4 | KP_5 | KP_6 | KP_7 | KP_8 | KP_9 | KP_Add | KP_Begin | KP_Decimal | KP_Delete | KP_Divide | KP_Down | KP_End
-		| KP_Enter | KP_Equal | KP_F1 | KP_F2 | KP_F3 | KP_F4 | KP_Home | KP_Insert | KP_Left | KP_Multiply | KP_Page_Down | KP_Page_Up | KP_Right
-		| KP_Separator | KP_Space | KP_Subtract | KP_Tab | KP_Up => KeyLocation::Numpad,
+		KP_0 | KP_1 | KP_2 | KP_3 | KP_4 | KP_5 | KP_6 | KP_7 | KP_8 | KP_9 | KP_Add | KP_Begin | KP_Decimal | KP_Delete | KP_Divide | KP_Down | KP_End | KP_Enter | KP_Equal | KP_F1 | KP_F2
+		| KP_F3 | KP_F4 | KP_Home | KP_Insert | KP_Left | KP_Multiply | KP_Page_Down | KP_Page_Up | KP_Right | KP_Separator | KP_Space | KP_Subtract | KP_Tab | KP_Up => KeyLocation::Numpad,
 		_ => KeyLocation::Standard
 	}
 }

@@ -81,28 +81,22 @@ impl<'de, D: Deserialize<'de>, R: Runtime> CommandArg<'de, R> for D {
 ///
 /// Returns an error if the [`CommandItem`]'s key does not exist in the value.
 macro_rules! pass {
-  ($fn:ident, $($arg:ident: $argt:ty),+) => {
-    fn $fn<V: Visitor<'de>>(self, $($arg: $argt),*) -> Result<V::Value, Self::Error> {
-      use serde::de::Error;
+	($fn:ident, $($arg:ident: $argt:ty),+) => {
+		fn $fn<V: Visitor<'de>>(self, $($arg: $argt),*) -> Result<V::Value, Self::Error> {
+			use serde::de::Error;
 
-      if self.key.is_empty() {
-        return Err(serde_json::Error::custom(format!(
-            "command {} has an argument with no name with a non-optional value",
-            self.name
-          )))
-      }
+			if self.key.is_empty() {
+				return Err(serde_json::Error::custom(format!("command {} has an argument with no name with a non-optional value", self.name)))
+			}
 
-      match self.message.payload.get(self.key) {
-        Some(value) => value.$fn($($arg),*),
-        None => {
-          Err(serde_json::Error::custom(format!(
-            "command {} missing required key {}",
-            self.name, self.key
-          )))
-        }
-      }
-    }
-  }
+			match self.message.payload.get(self.key) {
+				Some(value) => value.$fn($($arg),*),
+				None => {
+					Err(serde_json::Error::custom(format!("command {} missing required key {}", self.name, self.key)))
+				}
+			}
+		}
+	}
 }
 
 /// A [`Deserializer`] wrapper around [`CommandItem`].
@@ -241,11 +235,7 @@ pub mod private {
 			T: Serialize,
 			E: Into<InvokeError>
 		{
-			std::future::ready(
-				value
-					.map_err(Into::into)
-					.and_then(|value| serde_json::to_value(value).map_err(InvokeError::from_serde_json))
-			)
+			std::future::ready(value.map_err(Into::into).and_then(|value| serde_json::to_value(value).map_err(InvokeError::from_serde_json)))
 		}
 	}
 

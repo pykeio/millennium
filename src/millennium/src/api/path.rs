@@ -140,12 +140,11 @@ impl BaseDirectory {
 ///
 /// ```rust,no_run
 /// use millennium::Manager;
-/// millennium::Builder::default()
-///   .setup(|app| {
-///     let path = millennium::api::path::parse(&app.config(), app.package_info(), &app.env(), "$HOME/.bashrc").unwrap();
-///     assert_eq!(path.to_str().unwrap(), "/home/${whoami}/.bashrc");
-///     Ok(())
-///   });
+/// millennium::Builder::default().setup(|app| {
+/// 	let path = millennium::api::path::parse(&app.config(), app.package_info(), &app.env(), "$HOME/.bashrc").unwrap();
+/// 	assert_eq!(path.to_str().unwrap(), "/home/${whoami}/.bashrc");
+/// 	Ok(())
+/// });
 /// ```
 pub fn parse<P: AsRef<Path>>(config: &Config, package_info: &PackageInfo, env: &Env, path: P) -> crate::api::Result<PathBuf> {
 	let mut p = PathBuf::new();
@@ -182,16 +181,13 @@ pub fn parse<P: AsRef<Path>>(config: &Config, package_info: &PackageInfo, env: &
 /// ## Before initializing the application
 ///
 /// ```rust,no_run
-/// use millennium::{api::path::{BaseDirectory, resolve_path}, Env};
+/// use millennium::{
+/// 	api::path::{resolve_path, BaseDirectory},
+/// 	Env
+/// };
 /// // on an actual app, remove the string argument
 /// let context = millennium::generate_context!("test/fixture/.millenniumrc");
-/// let path = resolve_path(
-///   context.config(),
-///   context.package_info(),
-///   &Env::default(),
-///   "db/millennium.sqlite",
-///   Some(BaseDirectory::App))
-/// .expect("failed to resolve path");
+/// let path = resolve_path(context.config(), context.package_info(), &Env::default(), "db/millennium.sqlite", Some(BaseDirectory::App)).expect("failed to resolve path");
 /// assert_eq!(path.to_str().unwrap(), "/home/${whoami}/.config/com.millennium.app/db/millennium.sqlite");
 ///
 /// millennium::Builder::default().run(context).expect("error while running Millennium application");
@@ -199,27 +195,17 @@ pub fn parse<P: AsRef<Path>>(config: &Config, package_info: &PackageInfo, env: &
 ///
 /// ## With an initialized app
 /// ```rust,no_run
-/// use millennium::{api::path::{BaseDirectory, resolve_path}, Manager};
-/// millennium::Builder::default()
-///   .setup(|app| {
-///     let path = resolve_path(
-///       &app.config(),
-///       app.package_info(),
-///       &app.env(),
-///       "path/to/something",
-///       Some(BaseDirectory::Config)
-///     ).expect("failed to resolve path");
-///     assert_eq!(path.to_str().unwrap(), "/home/${whoami}/.config/path/to/something");
-///     Ok(())
-///   });
+/// use millennium::{
+/// 	api::path::{resolve_path, BaseDirectory},
+/// 	Manager
+/// };
+/// millennium::Builder::default().setup(|app| {
+/// 	let path = resolve_path(&app.config(), app.package_info(), &app.env(), "path/to/something", Some(BaseDirectory::Config)).expect("failed to resolve path");
+/// 	assert_eq!(path.to_str().unwrap(), "/home/${whoami}/.config/path/to/something");
+/// 	Ok(())
+/// });
 /// ```
-pub fn resolve_path<P: AsRef<Path>>(
-	config: &Config,
-	package_info: &PackageInfo,
-	env: &Env,
-	path: P,
-	dir: Option<BaseDirectory>
-) -> crate::api::Result<PathBuf> {
+pub fn resolve_path<P: AsRef<Path>>(config: &Config, package_info: &PackageInfo, env: &Env, path: P, dir: Option<BaseDirectory>) -> crate::api::Result<PathBuf> {
 	if let Some(base_dir) = dir {
 		let resolve_resource = matches!(base_dir, BaseDirectory::Resource);
 		let base_dir_path = match base_dir {

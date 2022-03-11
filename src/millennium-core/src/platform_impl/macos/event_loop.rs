@@ -172,10 +172,9 @@ impl<T> EventLoop<T> {
 		// just can't move everything to event loop, so this is something that they
 		// should care about.
 		let callback = unsafe {
-			mem::transmute::<
-				Rc<RefCell<dyn FnMut(Event<'_, T>, &RootWindowTarget<T>, &mut ControlFlow)>>,
-				Rc<RefCell<dyn FnMut(Event<'_, T>, &RootWindowTarget<T>, &mut ControlFlow)>>
-			>(Rc::new(RefCell::new(callback)))
+			mem::transmute::<Rc<RefCell<dyn FnMut(Event<'_, T>, &RootWindowTarget<T>, &mut ControlFlow)>>, Rc<RefCell<dyn FnMut(Event<'_, T>, &RootWindowTarget<T>, &mut ControlFlow)>>>(Rc::new(
+				RefCell::new(callback)
+			))
 		};
 
 		self._callback = Some(Rc::clone(&callback));

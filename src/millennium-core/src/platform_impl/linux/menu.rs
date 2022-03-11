@@ -117,15 +117,7 @@ impl Menu {
 		Self::new()
 	}
 
-	pub fn add_item(
-		&mut self,
-		menu_id: MenuId,
-		title: &str,
-		accelerators: Option<Accelerator>,
-		enabled: bool,
-		selected: bool,
-		menu_type: MenuType
-	) -> CustomMenuItem {
+	pub fn add_item(&mut self, menu_id: MenuId, title: &str, accelerators: Option<Accelerator>, enabled: bool, selected: bool, menu_type: MenuType) -> CustomMenuItem {
 		let gtk_item = if selected {
 			let item = CheckMenuItem::with_label(title);
 			item.set_active(true);
@@ -181,13 +173,7 @@ impl Menu {
 		menu
 	}
 
-	pub(crate) fn generate_menu<M: gtk::prelude::IsA<gtk::MenuShell>>(
-		self,
-		menu: &mut M,
-		tx: &Sender<(WindowId, WindowRequest)>,
-		accel_group: &AccelGroup,
-		window_id: WindowId
-	) {
+	pub(crate) fn generate_menu<M: gtk::prelude::IsA<gtk::MenuShell>>(self, menu: &mut M, tx: &Sender<(WindowId, WindowRequest)>, accel_group: &AccelGroup, window_id: WindowId) {
 		for menu_item in self.gtk_items {
 			let new_item = match menu_item.clone() {
 				GtkMenuInfo {
@@ -202,9 +188,7 @@ impl Menu {
 				}
 				GtkMenuInfo {
 					menu_type: GtkMenuType::Custom,
-					custom_menu_item: Some(MenuItemAttributes {
-						enabled, gtk_item, id, key, ..
-					}),
+					custom_menu_item: Some(MenuItemAttributes { enabled, gtk_item, id, key, .. }),
 					..
 				} => {
 					if let Some(key) = key {
@@ -330,13 +314,7 @@ fn register_accelerator(item: &GtkMenuItem, accel_group: &AccelGroup, menu_key: 
 		}
 	};
 
-	item.add_accelerator(
-		"activate",
-		accel_group,
-		accel_key,
-		modifiers_to_gdk_modifier_type(menu_key.mods),
-		gtk::AccelFlags::VISIBLE
-	);
+	item.add_accelerator("activate", accel_group, accel_key, modifiers_to_gdk_modifier_type(menu_key.mods), gtk::AccelFlags::VISIBLE);
 }
 
 fn modifiers_to_gdk_modifier_type(modifiers: ModifiersState) -> gdk::ModifierType {

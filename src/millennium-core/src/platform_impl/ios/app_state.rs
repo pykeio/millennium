@@ -34,8 +34,8 @@ use crate::{
 	platform_impl::platform::{
 		event_loop::{EventHandler, EventProxy, EventWrapper, Never},
 		ffi::{
-			id, kCFRunLoopCommonModes, CFAbsoluteTimeGetCurrent, CFRelease, CFRunLoopAddTimer, CFRunLoopGetMain, CFRunLoopRef, CFRunLoopTimerCreate,
-			CFRunLoopTimerInvalidate, CFRunLoopTimerRef, CFRunLoopTimerSetNextFireDate, CGRect, CGSize, NSInteger, NSOperatingSystemVersion, NSUInteger
+			id, kCFRunLoopCommonModes, CFAbsoluteTimeGetCurrent, CFRelease, CFRunLoopAddTimer, CFRunLoopGetMain, CFRunLoopRef, CFRunLoopTimerCreate, CFRunLoopTimerInvalidate, CFRunLoopTimerRef,
+			CFRunLoopTimerSetNextFireDate, CGRect, CGSize, NSInteger, NSOperatingSystemVersion, NSUInteger
 		}
 	},
 	window::WindowId as RootWindowId
@@ -188,11 +188,7 @@ impl AppState {
 	}
 
 	fn set_state(&mut self, new_state: AppStateImpl) {
-		bug_assert!(
-			self.app_state.is_none(),
-			"attempted to set an `AppState` without calling `take_state` first {:?}",
-			self.app_state
-		);
+		bug_assert!(self.app_state.is_none(), "attempted to set an `AppState` without calling `take_state` first {:?}", self.app_state);
 		self.app_state = Some(new_state);
 	}
 
@@ -253,9 +249,7 @@ impl AppState {
 		}
 
 		let (event_handler, event) = match (self.control_flow, self.take_state()) {
-			(ControlFlow::Poll, AppStateImpl::PollFinished { waiting_event_handler }) => {
-				(waiting_event_handler, EventWrapper::StaticEvent(Event::NewEvents(StartCause::Poll)))
-			}
+			(ControlFlow::Poll, AppStateImpl::PollFinished { waiting_event_handler }) => (waiting_event_handler, EventWrapper::StaticEvent(Event::NewEvents(StartCause::Poll))),
 			(ControlFlow::Wait, AppStateImpl::Waiting { waiting_event_handler, start }) => (
 				waiting_event_handler,
 				EventWrapper::StaticEvent(Event::NewEvents(StartCause::WaitCancelled { start, requested_resume: None }))
@@ -292,11 +286,7 @@ impl AppState {
 			| &mut AppStateImpl::InUserCallback { ref mut queued_events, .. } => {
 				// A lifetime cast: early returns are not currently handled well with NLL, but
 				// polonius handles them well. This transmute is a safe workaround.
-				return unsafe {
-					mem::transmute::<UserCallbackTransitionResult<'_>, UserCallbackTransitionResult<'_>>(UserCallbackTransitionResult::ReentrancyPrevented {
-						queued_events
-					})
-				};
+				return unsafe { mem::transmute::<UserCallbackTransitionResult<'_>, UserCallbackTransitionResult<'_>>(UserCallbackTransitionResult::ReentrancyPrevented { queued_events }) };
 			}
 
 			&mut AppStateImpl::ProcessingEvents { .. } | &mut AppStateImpl::ProcessingRedraws { .. } => {}
@@ -314,10 +304,7 @@ impl AppState {
 				queued_gpu_redraws,
 				active_control_flow
 			} => (event_handler, queued_gpu_redraws, active_control_flow, false),
-			AppStateImpl::ProcessingRedraws {
-				event_handler,
-				active_control_flow
-			} => (event_handler, Default::default(), active_control_flow, true),
+			AppStateImpl::ProcessingRedraws { event_handler, active_control_flow } => (event_handler, Default::default(), active_control_flow, true),
 
 			AppStateImpl::PollFinished { .. } | AppStateImpl::Waiting { .. } | AppStateImpl::Terminated => unreachable!()
 		};
@@ -342,10 +329,7 @@ impl AppState {
 			} => (event_handler, queued_gpu_redraws, active_control_flow),
 			s => bug!("unexpected state {:?}", s)
 		};
-		self.set_state(AppStateImpl::ProcessingRedraws {
-			event_handler,
-			active_control_flow
-		});
+		self.set_state(AppStateImpl::ProcessingRedraws { event_handler, active_control_flow });
 		return queued_gpu_redraws;
 	}
 
@@ -355,10 +339,7 @@ impl AppState {
 		}
 
 		let (waiting_event_handler, old) = match self.take_state() {
-			AppStateImpl::ProcessingRedraws {
-				event_handler,
-				active_control_flow
-			} => (event_handler, active_control_flow),
+			AppStateImpl::ProcessingRedraws { event_handler, active_control_flow } => (event_handler, active_control_flow),
 			s => bug!("unexpected state {:?}", s)
 		};
 
@@ -446,18 +427,10 @@ pub unsafe fn queue_gl_or_metal_redraw(window: id) {
 
 	let mut this = AppState::get_mut();
 	match this.state_mut() {
-		&mut AppStateImpl::NotLaunched {
-			ref mut queued_gpu_redraws, ..
-		}
-		| &mut AppStateImpl::Launching {
-			ref mut queued_gpu_redraws, ..
-		}
-		| &mut AppStateImpl::ProcessingEvents {
-			ref mut queued_gpu_redraws, ..
-		}
-		| &mut AppStateImpl::InUserCallback {
-			ref mut queued_gpu_redraws, ..
-		} => drop(queued_gpu_redraws.insert(window)),
+		&mut AppStateImpl::NotLaunched { ref mut queued_gpu_redraws, .. }
+		| &mut AppStateImpl::Launching { ref mut queued_gpu_redraws, .. }
+		| &mut AppStateImpl::ProcessingEvents { ref mut queued_gpu_redraws, .. }
+		| &mut AppStateImpl::InUserCallback { ref mut queued_gpu_redraws, .. } => drop(queued_gpu_redraws.insert(window)),
 
 		s @ &mut AppStateImpl::ProcessingRedraws { .. } | s @ &mut AppStateImpl::Waiting { .. } | s @ &mut AppStateImpl::PollFinished { .. } => {
 			bug!("unexpected state {:?}", s)
@@ -601,19 +574,13 @@ pub unsafe fn handle_nonuser_events<I: IntoIterator<Item = EventWrapper>>(events
 		};
 		if queued_events.is_empty() {
 			let queued_gpu_redraws = match this.take_state() {
-				AppStateImpl::InUserCallback {
-					queued_events: _,
-					queued_gpu_redraws
-				} => queued_gpu_redraws,
+				AppStateImpl::InUserCallback { queued_events: _, queued_gpu_redraws } => queued_gpu_redraws,
 				_ => unreachable!()
 			};
 
 			this.app_state = Some(if processing_redraws {
 				bug_assert!(queued_gpu_redraws.is_empty(), "redraw queued while processing redraws");
-				AppStateImpl::ProcessingRedraws {
-					event_handler,
-					active_control_flow
-				}
+				AppStateImpl::ProcessingRedraws { event_handler, active_control_flow }
 			} else {
 				AppStateImpl::ProcessingEvents {
 					event_handler,
@@ -678,10 +645,7 @@ unsafe fn handle_user_events() {
 		};
 		if queued_events.is_empty() {
 			let queued_gpu_redraws = match this.take_state() {
-				AppStateImpl::InUserCallback {
-					queued_events: _,
-					queued_gpu_redraws
-				} => queued_gpu_redraws,
+				AppStateImpl::InUserCallback { queued_events: _, queued_gpu_redraws } => queued_gpu_redraws,
 				_ => unreachable!()
 			};
 
@@ -767,13 +731,7 @@ fn handle_event_proxy(event_handler: &mut Box<dyn EventHandler>, control_flow: C
 	};
 }
 
-fn handle_hidpi_proxy(
-	event_handler: &mut Box<dyn EventHandler>,
-	mut control_flow: ControlFlow,
-	suggested_size: LogicalSize<f64>,
-	scale_factor: f64,
-	window_id: id
-) {
+fn handle_hidpi_proxy(event_handler: &mut Box<dyn EventHandler>, mut control_flow: ControlFlow, suggested_size: LogicalSize<f64>, scale_factor: f64, window_id: id) {
 	let mut size = suggested_size.to_physical(scale_factor);
 	let new_inner_size = &mut size;
 	let event = Event::WindowEvent {

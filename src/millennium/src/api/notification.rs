@@ -28,15 +28,15 @@ use std::path::MAIN_SEPARATOR;
 /// use millennium::api::notification::Notification;
 /// // first we build the application to access the Millennium configuration
 /// let app = millennium::Builder::default()
-///   // on an actual app, remove the string argument
-///   .build(millennium::generate_context!("test/fixture/.millenniumrc"))
-///   .expect("error while building Millennium application");
+/// 	// on an actual app, remove the string argument
+/// 	.build(millennium::generate_context!("test/fixture/.millenniumrc"))
+/// 	.expect("error while building Millennium application");
 ///
 /// // shows a notification with the given title and body
 /// Notification::new(&app.config().millennium.bundle.identifier)
-///   .title("New message")
-///   .body("You've got a new message.")
-///   .show();
+/// 	.title("New message")
+/// 	.body("You've got a new message.")
+/// 	.show();
 ///
 /// // run the app
 /// app.run(|_app_handle, _event| {});
@@ -103,9 +103,7 @@ impl Notification {
 			let curr_dir = exe_dir.display().to_string();
 			// set the notification's System.AppUserModel.ID only when running the installed
 			// app
-			if !(curr_dir.ends_with(format!("{S}target{S}debug", S = MAIN_SEPARATOR).as_str())
-				|| curr_dir.ends_with(format!("{S}target{S}release", S = MAIN_SEPARATOR).as_str()))
-			{
+			if !(curr_dir.ends_with(format!("{S}target{S}debug", S = MAIN_SEPARATOR).as_str()) || curr_dir.ends_with(format!("{S}target{S}release", S = MAIN_SEPARATOR).as_str())) {
 				notification.app_id(&self.identifier);
 			}
 		}

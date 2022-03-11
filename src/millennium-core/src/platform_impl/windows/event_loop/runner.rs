@@ -312,11 +312,7 @@ impl<T> EventLoopRunner<T> {
 		use RunnerState::{Destroyed, HandlingMainEvents, HandlingRedrawEvents, Idle, Uninitialized};
 
 		match (self.runner_state.replace(new_runner_state), new_runner_state) {
-			(Uninitialized, Uninitialized)
-			| (Idle, Idle)
-			| (HandlingMainEvents, HandlingMainEvents)
-			| (HandlingRedrawEvents, HandlingRedrawEvents)
-			| (Destroyed, Destroyed) => (),
+			(Uninitialized, Uninitialized) | (Idle, Idle) | (HandlingMainEvents, HandlingMainEvents) | (HandlingRedrawEvents, HandlingRedrawEvents) | (Destroyed, Destroyed) => (),
 
 			// State transitions that initialize the event loop.
 			(Uninitialized, HandlingMainEvents) => {

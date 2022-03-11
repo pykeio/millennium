@@ -124,17 +124,13 @@ impl Cmd {
 	#[module_command_handler(fs_read_file, "fs > readFile")]
 	fn read_file<R: Runtime>(context: InvokeContext<R>, path: SafePathBuf, options: Option<FileOperationOptions>) -> super::Result<Vec<u8>> {
 		let resolved_path = resolve_path(&context.config, &context.package_info, &context.window, path, options.and_then(|o| o.dir))?;
-		file::read_binary(&resolved_path)
-			.with_context(|| format!("path: {}", resolved_path.0.display()))
-			.map_err(Into::into)
+		file::read_binary(&resolved_path).with_context(|| format!("path: {}", resolved_path.0.display())).map_err(Into::into)
 	}
 
 	#[module_command_handler(fs_read_file, "fs > readFile")]
 	fn read_text_file<R: Runtime>(context: InvokeContext<R>, path: SafePathBuf, options: Option<FileOperationOptions>) -> super::Result<String> {
 		let resolved_path = resolve_path(&context.config, &context.package_info, &context.window, path, options.and_then(|o| o.dir))?;
-		file::read_string(&resolved_path)
-			.with_context(|| format!("path: {}", resolved_path.0.display()))
-			.map_err(Into::into)
+		file::read_string(&resolved_path).with_context(|| format!("path: {}", resolved_path.0.display())).map_err(Into::into)
 	}
 
 	#[module_command_handler(fs_write_file, "fs > writeFile")]
@@ -160,12 +156,7 @@ impl Cmd {
 	}
 
 	#[module_command_handler(fs_copy_file, "fs > copyFile")]
-	fn copy_file<R: Runtime>(
-		context: InvokeContext<R>,
-		source: SafePathBuf,
-		destination: SafePathBuf,
-		options: Option<FileOperationOptions>
-	) -> super::Result<()> {
+	fn copy_file<R: Runtime>(context: InvokeContext<R>, source: SafePathBuf, destination: SafePathBuf, options: Option<FileOperationOptions>) -> super::Result<()> {
 		let (src, dest) = match options.and_then(|o| o.dir) {
 			Some(dir) => (
 				resolve_path(&context.config, &context.package_info, &context.window, source, Some(dir))?,
@@ -219,12 +210,7 @@ impl Cmd {
 	}
 
 	#[module_command_handler(fs_rename_file, "fs > renameFile")]
-	fn rename_file<R: Runtime>(
-		context: InvokeContext<R>,
-		old_path: SafePathBuf,
-		new_path: SafePathBuf,
-		options: Option<FileOperationOptions>
-	) -> super::Result<()> {
+	fn rename_file<R: Runtime>(context: InvokeContext<R>, old_path: SafePathBuf, new_path: SafePathBuf, options: Option<FileOperationOptions>) -> super::Result<()> {
 		let (old, new) = match options.and_then(|o| o.dir) {
 			Some(dir) => (
 				resolve_path(&context.config, &context.package_info, &context.window, old_path, Some(dir))?,
@@ -239,13 +225,7 @@ impl Cmd {
 }
 
 #[allow(dead_code)]
-fn resolve_path<R: Runtime>(
-	config: &Config,
-	package_info: &PackageInfo,
-	window: &Window<R>,
-	path: SafePathBuf,
-	dir: Option<BaseDirectory>
-) -> super::Result<SafePathBuf> {
+fn resolve_path<R: Runtime>(config: &Config, package_info: &PackageInfo, window: &Window<R>, path: SafePathBuf, dir: Option<BaseDirectory>) -> super::Result<SafePathBuf> {
 	let env = window.state::<Env>().inner();
 	match crate::api::path::resolve_path(config, package_info, env, &path, dir) {
 		Ok(path) => {

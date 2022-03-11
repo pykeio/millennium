@@ -109,8 +109,7 @@ unsafe fn get_view_class(root_view_class: &'static Class) -> &'static Class {
 				let window: id = msg_send![object, window];
 				assert!(!window.is_null());
 				app_state::handle_nonuser_events(
-					std::iter::once(EventWrapper::StaticEvent(Event::RedrawRequested(RootWindowId(window.into()))))
-						.chain(std::iter::once(EventWrapper::StaticEvent(Event::RedrawEventsCleared)))
+					std::iter::once(EventWrapper::StaticEvent(Event::RedrawRequested(RootWindowId(window.into())))).chain(std::iter::once(EventWrapper::StaticEvent(Event::RedrawEventsCleared)))
 				);
 				let superclass: &'static Class = msg_send![object, superclass];
 				let () = msg_send![super(object, superclass), drawRect: rect];
@@ -271,27 +270,12 @@ unsafe fn get_view_class(root_view_class: &'static Class) -> &'static Class {
 		ID += 1;
 		decl.add_method(sel!(drawRect:), draw_rect as extern "C" fn(&Object, Sel, CGRect));
 		decl.add_method(sel!(layoutSubviews), layout_subviews as extern "C" fn(&Object, Sel));
-		decl.add_method(
-			sel!(setContentScaleFactor:),
-			set_content_scale_factor as extern "C" fn(&mut Object, Sel, CGFloat)
-		);
+		decl.add_method(sel!(setContentScaleFactor:), set_content_scale_factor as extern "C" fn(&mut Object, Sel, CGFloat));
 
-		decl.add_method(
-			sel!(touchesBegan:withEvent:),
-			handle_touches as extern "C" fn(this: &Object, _: Sel, _: id, _: id)
-		);
-		decl.add_method(
-			sel!(touchesMoved:withEvent:),
-			handle_touches as extern "C" fn(this: &Object, _: Sel, _: id, _: id)
-		);
-		decl.add_method(
-			sel!(touchesEnded:withEvent:),
-			handle_touches as extern "C" fn(this: &Object, _: Sel, _: id, _: id)
-		);
-		decl.add_method(
-			sel!(touchesCancelled:withEvent:),
-			handle_touches as extern "C" fn(this: &Object, _: Sel, _: id, _: id)
-		);
+		decl.add_method(sel!(touchesBegan:withEvent:), handle_touches as extern "C" fn(this: &Object, _: Sel, _: id, _: id));
+		decl.add_method(sel!(touchesMoved:withEvent:), handle_touches as extern "C" fn(this: &Object, _: Sel, _: id, _: id));
+		decl.add_method(sel!(touchesEnded:withEvent:), handle_touches as extern "C" fn(this: &Object, _: Sel, _: id, _: id));
+		decl.add_method(sel!(touchesCancelled:withEvent:), handle_touches as extern "C" fn(this: &Object, _: Sel, _: id, _: id));
 
 		return decl.register();
 	});
@@ -435,12 +419,7 @@ pub unsafe fn create_view_controller(_window_attributes: &WindowAttributes, plat
 }
 
 // requires main thread
-pub unsafe fn create_window(
-	window_attributes: &WindowAttributes,
-	_platform_attributes: &PlatformSpecificWindowBuilderAttributes,
-	frame: CGRect,
-	view_controller: id
-) -> id {
+pub unsafe fn create_window(window_attributes: &WindowAttributes, _platform_attributes: &PlatformSpecificWindowBuilderAttributes, frame: CGRect, view_controller: id) -> id {
 	let class = get_window_class();
 
 	let window: id = msg_send![class, alloc];

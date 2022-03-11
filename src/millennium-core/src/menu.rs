@@ -133,14 +133,9 @@ impl ContextMenu {
 
 	/// Add new item to this menu.
 	pub fn add_item(&mut self, item: MenuItemAttributes<'_>) -> CustomMenuItem {
-		self.0.menu_platform.add_item(
-			item.id,
-			item.title,
-			item.keyboard_accelerator,
-			item.enabled,
-			item.selected,
-			MenuType::ContextMenu
-		)
+		self.0
+			.menu_platform
+			.add_item(item.id, item.title, item.keyboard_accelerator, item.enabled, item.selected, MenuType::ContextMenu)
 	}
 
 	/// Add new item to this menu.
@@ -352,7 +347,7 @@ impl CustomMenuItem {
 
 	// todo: Add set_icon
 	// pub fn set_icon(&mut self, icon: Vec<u8>) {
-	//   self.0.set_icon(icon)
+	// 	self.0.set_icon(icon)
 	// }
 }
 

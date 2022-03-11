@@ -40,12 +40,7 @@ pub enum BadIcon {
 	/// Produced when the number of pixels (`rgba.len() / 4`) isn't equal to
 	/// `width * height`. At least one of your arguments is incorrect.
 	#[non_exhaustive]
-	DimensionsVsPixelCount {
-		width: u32,
-		height: u32,
-		width_x_height: usize,
-		pixel_count: usize
-	},
+	DimensionsVsPixelCount { width: u32, height: u32, width_x_height: usize, pixel_count: usize },
 	/// Produced when underlying OS functionality failed to create the icon
 	OsError(io::Error)
 }
@@ -53,21 +48,23 @@ pub enum BadIcon {
 impl fmt::Display for BadIcon {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		match self {
-            BadIcon::ByteCountNotDivisibleBy4 { byte_count } => write!(f,
-                "The length of the `rgba` argument ({:?}) isn't divisible by 4, making it impossible to interpret as 32bpp RGBA pixels.",
-                byte_count,
-            ),
-            BadIcon::DimensionsVsPixelCount {
-                width,
-                height,
-                width_x_height,
-                pixel_count,
-            } => write!(f,
-                "The specified dimensions ({:?}x{:?}) don't match the number of pixels supplied by the `rgba` argument ({:?}). For those dimensions, the expected pixel count is {:?}.",
-                width, height, pixel_count, width_x_height,
-            ),
-            BadIcon::OsError(e) => write!(f, "OS error when instantiating the icon: {:?}", e),
-        }
+			BadIcon::ByteCountNotDivisibleBy4 { byte_count } => write!(
+				f,
+				"The length of the `rgba` argument ({:?}) isn't divisible by 4, making it impossible to interpret as 32bpp RGBA pixels.",
+				byte_count,
+			),
+			BadIcon::DimensionsVsPixelCount {
+				width,
+				height,
+				width_x_height,
+				pixel_count
+			} => write!(
+				f,
+				"The specified dimensions ({:?}x{:?}) don't match the number of pixels supplied by the `rgba` argument ({:?}). For those dimensions, the expected pixel count is {:?}.",
+				width, height, pixel_count, width_x_height,
+			),
+			BadIcon::OsError(e) => write!(f, "OS error when instantiating the icon: {:?}", e)
+		}
 	}
 }
 

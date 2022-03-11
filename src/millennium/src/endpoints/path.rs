@@ -118,9 +118,7 @@ impl Cmd {
 	fn extname<R: Runtime>(_context: InvokeContext<R>, path: String) -> super::Result<String> {
 		match Path::new(&path).extension().and_then(std::ffi::OsStr::to_str) {
 			Some(p) => Ok(p.to_string()),
-			None => Err(crate::error::into_anyhow(crate::api::Error::Path(
-				"Couldn't get the extension of the file".into()
-			)))
+			None => Err(crate::error::into_anyhow(crate::api::Error::Path("Couldn't get the extension of the file".into())))
 		}
 	}
 

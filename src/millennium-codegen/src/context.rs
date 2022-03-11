@@ -103,12 +103,7 @@ fn map_isolation(_options: &AssetOptions, dir: PathBuf) -> impl Fn(&AssetKey, &P
 
 /// Build a `millennium::Context` for including in application code.
 pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsError> {
-	let ContextData {
-		dev,
-		config,
-		config_parent,
-		root
-	} = data;
+	let ContextData { dev, config, config_parent, root } = data;
 
 	let mut options = AssetOptions::new(config.millennium.pattern.clone()).freeze_prototype(config.millennium.security.freeze_prototype);
 	let csp = if dev {
@@ -131,11 +126,7 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 				}
 				let assets_path = config_parent.join(path);
 				if !assets_path.exists() {
-					panic!(
-						"The `{}` configuration is set to `{:?}` but this path doesn't exist",
-						if dev { "devPath" } else { "distDir" },
-						path
-					)
+					panic!("The `{}` configuration is set to `{:?}` but this path doesn't exist", if dev { "devPath" } else { "distDir" }, path)
 				}
 				EmbeddedAssets::new(assets_path, map_core_assets(&options))?
 			}
@@ -183,12 +174,12 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 		quote!(env!("CARGO_PKG_VERSION").to_string())
 	};
 	let package_info = quote!(
-	  #root::PackageInfo {
-		name: #package_name,
-		version: #package_version,
-		authors: env!("CARGO_PKG_AUTHORS"),
-		description: env!("CARGO_PKG_DESCRIPTION"),
-	  }
+		#root::PackageInfo {
+			name: #package_name,
+			version: #package_version,
+			authors: env!("CARGO_PKG_AUTHORS"),
+			description: env!("CARGO_PKG_DESCRIPTION")
+		}
 	);
 
 	#[cfg(target_os = "linux")]
@@ -201,17 +192,17 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 		} else {
 			let system_tray_icon_file_path = system_tray_icon_path.to_string_lossy().to_string();
 			quote!(
-			  Some(
-				#root::TrayIcon::File(
-				  #root::api::path::resolve_path(
-					&#config,
-					&#package_info,
-					&Default::default(),
-					#system_tray_icon_file_path,
-					Some(#root::api::path::BaseDirectory::Resource)
-				  ).expect("failed to resolve resource dir")
+				Some(
+					#root::TrayIcon::File(
+						#root::api::path::resolve_path(
+							&#config,
+							&#package_info,
+							&Default::default(),
+							#system_tray_icon_file_path,
+							Some(#root::api::path::BaseDirectory::Resource)
+						).expect("failed to resolve resource dir")
+					)
 				)
-			  )
 			)
 		}
 	} else {
@@ -261,10 +252,10 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 			let schema = options.isolation_schema;
 
 			quote!(#root::Pattern::Isolation {
-			  assets: ::std::sync::Arc::new(#assets),
-			  schema: #schema.into(),
-			  key: #key.into(),
-			  crypto_keys: std::boxed::Box::new(::millennium::utils::pattern::isolation::Keys::new().expect("unable to generate cryptographically secure keys for Millennium isolation pattern")),
+				assets: ::std::sync::Arc::new(#assets),
+				schema: #schema.into(),
+				key: #key.into(),
+				crypto_keys: std::boxed::Box::new(::millennium::utils::pattern::isolation::Keys::new().expect("unable to generate cryptographically secure keys for Millennium isolation pattern")),
 			})
 		}
 	};
@@ -286,8 +277,8 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 				Err(error) => {
 					let error = error.to_string();
 					quote!({
-					  compile_error!(#error);
-					  ::std::option::Option::Some(#root::regex::Regex::new(#regex).unwrap())
+						compile_error!(#error);
+						::std::option::Option::Some(#root::regex::Regex::new(#regex).unwrap())
 					})
 				}
 			},
@@ -295,8 +286,8 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 		};
 
 		quote!(#root::ShellScopeConfig {
-		  open: #shell_scope_open,
-		  scopes: #shell_scopes
+			open: #shell_scope_open,
+			scopes: #shell_scopes
 		})
 	};
 
@@ -304,14 +295,14 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 	let shell_scope_config = quote!();
 
 	Ok(quote!(#root::Context::new(
-	  #config,
-	  ::std::sync::Arc::new(#assets),
-	  #default_window_icon,
-	  #system_tray_icon,
-	  #package_info,
-	  #info_plist,
-	  #pattern,
-	  #shell_scope_config
+		#config,
+		::std::sync::Arc::new(#assets),
+		#default_window_icon,
+		#system_tray_icon,
+		#package_info,
+		#info_plist,
+		#pattern,
+		#shell_scope_config
 	)))
 }
 
@@ -321,24 +312,16 @@ fn ico_icon<P: AsRef<Path>>(root: &TokenStream, out_dir: &Path, path: P) -> Resu
 	use std::io::Write;
 
 	let path = path.as_ref();
-	let bytes = std::fs::read(&path)
-		.unwrap_or_else(|_| panic!("failed to read window icon {}", path.display()))
-		.to_vec();
+	let bytes = std::fs::read(&path).unwrap_or_else(|_| panic!("failed to read window icon {}", path.display())).to_vec();
 	let icon_dir = ico::IconDir::read(std::io::Cursor::new(bytes)).unwrap_or_else(|_| panic!("failed to parse window icon {}", path.display()));
 	let entry = &icon_dir.entries()[0];
-	let rgba = entry
-		.decode()
-		.unwrap_or_else(|_| panic!("failed to decode window icon {}", path.display()))
-		.rgba_data()
-		.to_vec();
+	let rgba = entry.decode().unwrap_or_else(|_| panic!("failed to decode window icon {}", path.display())).rgba_data().to_vec();
 	let width = entry.width();
 	let height = entry.height();
 
 	let out_path = out_dir.join(path.file_name().unwrap());
 	let mut out_file = File::create(&out_path).map_err(|error| EmbeddedAssetsError::AssetWrite { path: out_path.clone(), error })?;
-	out_file
-		.write_all(&rgba)
-		.map_err(|error| EmbeddedAssetsError::AssetWrite { path: path.to_owned(), error })?;
+	out_file.write_all(&rgba).map_err(|error| EmbeddedAssetsError::AssetWrite { path: path.to_owned(), error })?;
 
 	let out_path = out_path.display().to_string();
 	let icon = quote!(Some(#root::Icon::Rgba { rgba: include_bytes!(#out_path).to_vec(), width: #width, height: #height }));
@@ -351,9 +334,7 @@ fn png_icon<P: AsRef<Path>>(root: &TokenStream, out_dir: &Path, path: P) -> Resu
 	use std::io::Write;
 
 	let path = path.as_ref();
-	let bytes = std::fs::read(&path)
-		.unwrap_or_else(|_| panic!("failed to read window icon {}", path.display()))
-		.to_vec();
+	let bytes = std::fs::read(&path).unwrap_or_else(|_| panic!("failed to read window icon {}", path.display())).to_vec();
 	let decoder = png::Decoder::new(std::io::Cursor::new(bytes));
 	let mut reader = decoder.read_info().unwrap_or_else(|_| panic!("failed to read window icon {}", path.display()));
 	let mut buffer: Vec<u8> = Vec::new();
@@ -365,9 +346,7 @@ fn png_icon<P: AsRef<Path>>(root: &TokenStream, out_dir: &Path, path: P) -> Resu
 
 	let out_path = out_dir.join(path.file_name().unwrap());
 	let mut out_file = File::create(&out_path).map_err(|error| EmbeddedAssetsError::AssetWrite { path: out_path.clone(), error })?;
-	out_file
-		.write_all(&buffer)
-		.map_err(|error| EmbeddedAssetsError::AssetWrite { path: path.to_owned(), error })?;
+	out_file.write_all(&buffer).map_err(|error| EmbeddedAssetsError::AssetWrite { path: path.to_owned(), error })?;
 
 	let out_path = out_path.display().to_string();
 	let icon = quote!(Some(#root::Icon::Rgba { rgba: include_bytes!(#out_path).to_vec(), width: #width, height: #height }));
@@ -376,14 +355,7 @@ fn png_icon<P: AsRef<Path>>(root: &TokenStream, out_dir: &Path, path: P) -> Resu
 
 #[cfg(any(windows, target_os = "linux"))]
 fn find_icon<F: Fn(&&String) -> bool>(config: &Config, config_parent: &Path, predicate: F, default: &str) -> String {
-	let icon_path = config
-		.millennium
-		.bundle
-		.icon
-		.iter()
-		.find(|i| predicate(i))
-		.cloned()
-		.unwrap_or_else(|| default.to_string());
+	let icon_path = config.millennium.bundle.icon.iter().find(|i| predicate(i)).cloned().unwrap_or_else(|| default.to_string());
 	config_parent.join(icon_path).display().to_string()
 }
 
@@ -418,8 +390,8 @@ fn get_allowed_clis(root: &TokenStream, scope: &ShellAllowlistScope) -> TokenStr
 								Err(error) => {
 									let error = error.to_string();
 									quote!({
-									  compile_error!(#error);
-									  #root::regex::Regex::new(#validator).unwrap()
+										compile_error!(#error);
+										#root::regex::Regex::new(#validator).unwrap()
 									})
 								}
 							};
@@ -437,11 +409,11 @@ fn get_allowed_clis(root: &TokenStream, scope: &ShellAllowlistScope) -> TokenStr
 			(
 				quote!(#name),
 				quote!(
-				  #root::scope::ShellScopeAllowedCommand {
-					command: #command,
-					args: #args,
-					sidecar: #sidecar,
-				  }
+					#root::scope::ShellScopeAllowedCommand {
+						command: #command,
+						args: #args,
+						sidecar: #sidecar
+					}
 				)
 			)
 		})
@@ -453,9 +425,9 @@ fn get_allowed_clis(root: &TokenStream, scope: &ShellAllowlistScope) -> TokenStr
 		let insertions = commands.iter().map(|(name, value)| quote!(hashmap.insert(#name, #value);));
 
 		quote!({
-		  let mut hashmap = ::std::collections::HashMap::new();
-		  #(#insertions)*
-		  hashmap
+			let mut hashmap = ::std::collections::HashMap::new();
+			#(#insertions)*
+			hashmap
 		})
 	}
 }

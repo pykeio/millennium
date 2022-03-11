@@ -27,8 +27,7 @@ use std::{
 
 use cocoa::{
 	appkit::{
-		self, CGFloat, NSApp, NSApplication, NSApplicationPresentationOptions, NSColor, NSRequestUserAttentionType, NSScreen, NSView, NSWindow, NSWindowButton,
-		NSWindowOrderingMode, NSWindowStyleMask
+		self, CGFloat, NSApp, NSApplication, NSApplicationPresentationOptions, NSColor, NSRequestUserAttentionType, NSScreen, NSView, NSWindow, NSWindowButton, NSWindowOrderingMode, NSWindowStyleMask
 	},
 	base::{id, nil},
 	foundation::{NSAutoreleasePool, NSDictionary, NSPoint, NSRect, NSSize, NSUInteger}
@@ -179,10 +178,7 @@ fn create_window(attrs: &WindowAttributes, pl_attrs: &PlatformSpecificWindowBuil
 			NSWindowStyleMask::NSBorderlessWindowMask | NSWindowStyleMask::NSResizableWindowMask | NSWindowStyleMask::NSMiniaturizableWindowMask
 		} else {
 			// default case, resizable window with titlebar and titlebar buttons
-			NSWindowStyleMask::NSClosableWindowMask
-				| NSWindowStyleMask::NSMiniaturizableWindowMask
-				| NSWindowStyleMask::NSResizableWindowMask
-				| NSWindowStyleMask::NSTitledWindowMask
+			NSWindowStyleMask::NSClosableWindowMask | NSWindowStyleMask::NSMiniaturizableWindowMask | NSWindowStyleMask::NSResizableWindowMask | NSWindowStyleMask::NSTitledWindowMask
 		};
 
 		if !attrs.resizable {
@@ -294,8 +290,7 @@ pub struct SharedState {
 
 impl SharedState {
 	pub fn saved_standard_frame(&self) -> NSRect {
-		self.standard_frame
-			.unwrap_or_else(|| NSRect::new(NSPoint::new(50.0, 50.0), NSSize::new(800.0, 600.0)))
+		self.standard_frame.unwrap_or_else(|| NSRect::new(NSPoint::new(50.0, 50.0), NSSize::new(800.0, 600.0)))
 	}
 }
 
@@ -377,10 +372,7 @@ impl UnownedWindow {
 
 			use cocoa::foundation::NSArray;
 			// register for drag and drop operations.
-			let () = msg_send![
-				*ns_window,
-				registerForDraggedTypes: NSArray::arrayWithObject(nil, appkit::NSFilenamesPboardType)
-			];
+			let () = msg_send![*ns_window, registerForDraggedTypes: NSArray::arrayWithObject(nil, appkit::NSFilenamesPboardType)];
 		}
 
 		// Since `win_attribs` is put into a mutex below, we'll just copy these
@@ -814,16 +806,7 @@ impl UnownedWindow {
 				// Fade to black (and wait for the fade to complete) to hide the
 				// flicker from capturing the display and switching display mode
 				if ffi::CGAcquireDisplayFadeReservation(5.0, &mut fade_token) == ffi::kCGErrorSuccess {
-					ffi::CGDisplayFade(
-						fade_token,
-						0.3,
-						ffi::kCGDisplayBlendNormal,
-						ffi::kCGDisplayBlendSolidColor,
-						0.0,
-						0.0,
-						0.0,
-						ffi::TRUE
-					);
+					ffi::CGDisplayFade(fade_token, 0.3, ffi::kCGDisplayBlendNormal, ffi::kCGDisplayBlendSolidColor, 0.0, 0.0, 0.0, ffi::TRUE);
 				}
 
 				assert_eq!(ffi::CGDisplayCapture(display_id), ffi::kCGErrorSuccess);
@@ -836,16 +819,7 @@ impl UnownedWindow {
 				// After the display has been configured, fade back in
 				// asynchronously
 				if fade_token != ffi::kCGDisplayFadeReservationInvalidToken {
-					ffi::CGDisplayFade(
-						fade_token,
-						0.6,
-						ffi::kCGDisplayBlendSolidColor,
-						ffi::kCGDisplayBlendNormal,
-						0.0,
-						0.0,
-						0.0,
-						ffi::FALSE
-					);
+					ffi::CGDisplayFade(fade_token, 0.6, ffi::kCGDisplayBlendSolidColor, ffi::kCGDisplayBlendNormal, 0.0, 0.0, 0.0, ffi::FALSE);
 					ffi::CGReleaseDisplayFadeReservation(fade_token);
 				}
 			}
@@ -930,10 +904,7 @@ impl UnownedWindow {
 
 			let new_mask = {
 				let mut new_mask = if decorations {
-					NSWindowStyleMask::NSClosableWindowMask
-						| NSWindowStyleMask::NSMiniaturizableWindowMask
-						| NSWindowStyleMask::NSResizableWindowMask
-						| NSWindowStyleMask::NSTitledWindowMask
+					NSWindowStyleMask::NSClosableWindowMask | NSWindowStyleMask::NSMiniaturizableWindowMask | NSWindowStyleMask::NSResizableWindowMask | NSWindowStyleMask::NSTitledWindowMask
 				} else {
 					NSWindowStyleMask::NSBorderlessWindowMask | NSWindowStyleMask::NSResizableWindowMask
 				};
@@ -1084,8 +1055,7 @@ impl WindowExtMacOS for UnownedWindow {
 				shared_state_lock.is_simple_fullscreen = true;
 
 				// Simulate pre-Lion fullscreen by hiding the dock and menu bar
-				let presentation_options = NSApplicationPresentationOptions::NSApplicationPresentationAutoHideDock
-					| NSApplicationPresentationOptions::NSApplicationPresentationAutoHideMenuBar;
+				let presentation_options = NSApplicationPresentationOptions::NSApplicationPresentationAutoHideDock | NSApplicationPresentationOptions::NSApplicationPresentationAutoHideMenuBar;
 				app.setPresentationOptions_(presentation_options);
 
 				// Hide the titlebar

@@ -56,17 +56,13 @@ impl ShortcutManager {
 				Some(vk_code) => {
 					let result = RegisterHotKey(HWND::default(), accelerator.clone().id().0 as i32, converted_modifiers, u32::from(vk_code));
 					if !result.as_bool() {
-						return Err(ShortcutManagerError::InvalidAccelerator(
-							"Unable to register accelerator with `RegisterHotKey`.".into()
-						));
+						return Err(ShortcutManagerError::InvalidAccelerator("Unable to register accelerator with `RegisterHotKey`.".into()));
 					}
 					let shortcut = GlobalShortcut { accelerator };
 					self.shortcuts.push(shortcut.clone());
 					Ok(RootGlobalShortcut(shortcut))
 				}
-				_ => Err(ShortcutManagerError::InvalidAccelerator(
-					"Unable to register accelerator (unknown VKCode for this char).".into()
-				))
+				_ => Err(ShortcutManagerError::InvalidAccelerator("Unable to register accelerator (unknown VKCode for this char).".into()))
 			}
 		}
 	}

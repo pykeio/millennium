@@ -132,12 +132,7 @@ impl SystemTrayBuilder {
 				MenuType::ContextMenu,
 				None
 			);
-			SetWindowSubclass(
-				hwnd,
-				Some(menu_subclass_proc),
-				TRAY_MENU_SUBCLASS_ID,
-				Box::into_raw(Box::new(menu_handler)) as _
-			);
+			SetWindowSubclass(hwnd, Some(menu_subclass_proc), TRAY_MENU_SUBCLASS_ID, Box::into_raw(Box::new(menu_handler)) as _);
 
 			Ok(RootSystemTray(system_tray))
 		}

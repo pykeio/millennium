@@ -129,19 +129,12 @@ pub fn is_label_valid(label: &str) -> bool {
 }
 
 pub fn assert_label_is_valid(label: &str) {
-	assert!(
-		is_label_valid(label),
-		"Window label must include only alphanumeric characters, `-`, `/`, `:` and `_`."
-	);
+	assert!(is_label_valid(label), "Window label must include only alphanumeric characters, `-`, `/`, `:` and `_`.");
 }
 
 impl<R: Runtime> PendingWindow<R> {
 	/// Create a new [`PendingWindow`] with a label and starting url.
-	pub fn new(
-		window_builder: <R::Dispatcher as Dispatch>::WindowBuilder,
-		webview_attributes: WebviewAttributes,
-		label: impl Into<String>
-	) -> crate::Result<Self> {
+	pub fn new(window_builder: <R::Dispatcher as Dispatch>::WindowBuilder, webview_attributes: WebviewAttributes, label: impl Into<String>) -> crate::Result<Self> {
 		let mut menu_ids = HashMap::new();
 		if let Some(menu) = window_builder.get_menu() {
 			get_menu_ids(&mut menu_ids, menu);
@@ -199,11 +192,7 @@ impl<R: Runtime> PendingWindow<R> {
 		self
 	}
 
-	pub fn register_uri_scheme_protocol<N: Into<String>, H: Fn(&HttpRequest) -> Result<HttpResponse, Box<dyn std::error::Error>> + Send + Sync + 'static>(
-		&mut self,
-		uri_scheme: N,
-		protocol: H
-	) {
+	pub fn register_uri_scheme_protocol<N: Into<String>, H: Fn(&HttpRequest) -> Result<HttpResponse, Box<dyn std::error::Error>> + Send + Sync + 'static>(&mut self, uri_scheme: N, protocol: H) {
 		let uri_scheme = uri_scheme.into();
 		self.uri_scheme_protocols.insert(uri_scheme, Box::new(move |data| (protocol)(data)));
 	}

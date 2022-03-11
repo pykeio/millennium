@@ -149,19 +149,13 @@ mod tests {
 	#[cfg(not(notification_all))]
 	#[test]
 	fn request_notification_permission() {
-		assert_eq!(
-			super::Cmd::request_notification_permission(crate::test::mock_invoke_context()).unwrap(),
-			super::PERMISSION_DENIED
-		)
+		assert_eq!(super::Cmd::request_notification_permission(crate::test::mock_invoke_context()).unwrap(), super::PERMISSION_DENIED)
 	}
 
 	#[cfg(not(notification_all))]
 	#[test]
 	fn is_notification_permission_granted() {
-		assert_eq!(
-			super::Cmd::is_notification_permission_granted(crate::test::mock_invoke_context()).unwrap(),
-			Some(false)
-		);
+		assert_eq!(super::Cmd::is_notification_permission_granted(crate::test::mock_invoke_context()).unwrap(), Some(false));
 	}
 
 	#[millennium_macros::module_command_test(notification_all, "notification > all")]

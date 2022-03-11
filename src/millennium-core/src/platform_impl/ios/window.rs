@@ -391,11 +391,7 @@ impl DerefMut for Window {
 }
 
 impl Window {
-	pub fn new<T>(
-		_event_loop: &EventLoopWindowTarget<T>,
-		window_attributes: WindowAttributes,
-		platform_attributes: PlatformSpecificWindowBuilderAttributes
-	) -> Result<Window, RootOsError> {
+	pub fn new<T>(_event_loop: &EventLoopWindowTarget<T>, window_attributes: WindowAttributes, platform_attributes: PlatformSpecificWindowBuilderAttributes) -> Result<Window, RootOsError> {
 		if let Some(_) = window_attributes.min_inner_size {
 			warn!("`WindowAttributes::min_inner_size` is ignored on iOS");
 		}
@@ -499,10 +495,7 @@ impl Inner {
 
 	pub fn set_scale_factor(&self, scale_factor: f64) {
 		unsafe {
-			assert!(
-				dpi::validate_scale_factor(scale_factor),
-				"`WindowExtIOS::set_scale_factor` received an invalid hidpi factor"
-			);
+			assert!(dpi::validate_scale_factor(scale_factor), "`WindowExtIOS::set_scale_factor` received an invalid hidpi factor");
 			let scale_factor = scale_factor as CGFloat;
 			let () = msg_send![self.view, setContentScaleFactor: scale_factor];
 		}
@@ -623,9 +616,7 @@ unsafe impl Sync for WindowId {}
 
 impl From<&Object> for WindowId {
 	fn from(window: &Object) -> WindowId {
-		return WindowId {
-			window: window as *const _ as _
-		};
+		return WindowId { window: window as *const _ as _ };
 	}
 }
 

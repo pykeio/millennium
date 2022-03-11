@@ -85,11 +85,13 @@ type OnPageLoad<R> = dyn FnMut(Window<R>, PageLoadPayload) + Send;
 /// call.
 ///
 /// ```rust
-/// use millennium::{plugin::{Builder, MillenniumPlugin}, runtime::Runtime};
+/// use millennium::{
+/// 	plugin::{Builder, MillenniumPlugin},
+/// 	runtime::Runtime
+/// };
 ///
 /// pub fn init<R: Runtime>() -> MillenniumPlugin<R> {
-///   Builder::new("example")
-///     .build()
+/// 	Builder::new("example").build()
 /// }
 /// ```
 ///
@@ -97,54 +99,56 @@ type OnPageLoad<R> = dyn FnMut(Window<R>, PageLoadPayload) + Send;
 /// provide a Builder instead:
 ///
 /// ```rust
-/// use millennium::{plugin::{Builder as PluginBuilder, MillenniumPlugin}, runtime::Runtime};
+/// use millennium::{
+/// 	plugin::{Builder as PluginBuilder, MillenniumPlugin},
+/// 	runtime::Runtime
+/// };
 ///
 /// pub struct Builder {
-///   option_a: String,
-///   option_b: String,
-///   option_c: bool
+/// 	option_a: String,
+/// 	option_b: String,
+/// 	option_c: bool
 /// }
 ///
 /// impl Default for Builder {
-///   fn default() -> Self {
-///     Self {
-///       option_a: "foo".to_string(),
-///       option_b: "bar".to_string(),
-///       option_c: false
-///     }
-///   }
+/// 	fn default() -> Self {
+/// 		Self {
+/// 			option_a: "foo".to_string(),
+/// 			option_b: "bar".to_string(),
+/// 			option_c: false
+/// 		}
+/// 	}
 /// }
 ///
 /// impl Builder {
-///   pub fn new() -> Self {
-///     Default::default()
-///   }
+/// 	pub fn new() -> Self {
+/// 		Default::default()
+/// 	}
 ///
-///   pub fn option_a(mut self, option_a: String) -> Self {
-///     self.option_a = option_a;
-///     self
-///   }
+/// 	pub fn option_a(mut self, option_a: String) -> Self {
+/// 		self.option_a = option_a;
+/// 		self
+/// 	}
 ///
-///   pub fn option_b(mut self, option_b: String) -> Self {
-///     self.option_b = option_b;
-///     self
-///   }
+/// 	pub fn option_b(mut self, option_b: String) -> Self {
+/// 		self.option_b = option_b;
+/// 		self
+/// 	}
 ///
-///   pub fn option_c(mut self, option_c: bool) -> Self {
-///     self.option_c = option_c;
-///     self
-///   }
+/// 	pub fn option_c(mut self, option_c: bool) -> Self {
+/// 		self.option_c = option_c;
+/// 		self
+/// 	}
 ///
-///   pub fn build<R: Runtime>(self) -> MillenniumPlugin<R> {
-///     PluginBuilder::new("example")
-///       .setup(move |app_handle| {
-///         // use the options here to do stuff
-///         println!("a: {}, b: {}, c: {}", self.option_a, self.option_b, self.option_c);
-///
-///         Ok(())
-///       })
-///       .build()
-///   }
+/// 	pub fn build<R: Runtime>(self) -> MillenniumPlugin<R> {
+/// 		PluginBuilder::new("example")
+/// 			.setup(move |app_handle| {
+/// 				// use the options here to do stuff
+/// 				println!("a: {}, b: {}, c: {}", self.option_a, self.option_b, self.option_c);
+/// 				Ok(())
+/// 			})
+/// 			.build()
+/// 	}
 /// }
 /// ```
 pub struct Builder<R: Runtime, C: DeserializeOwned = ()> {
@@ -181,19 +185,19 @@ impl<R: Runtime, C: DeserializeOwned> Builder<R, C> {
 	/// # Examples
 	///
 	/// ```rust
-	/// use millennium::{plugin::{Builder, MillenniumPlugin}, runtime::Runtime};
+	/// use millennium::{
+	/// 	plugin::{Builder, MillenniumPlugin},
+	/// 	runtime::Runtime
+	/// };
 	///
 	/// #[millennium::command]
 	/// async fn foobar<R: Runtime>(app: millennium::AppHandle<R>, window: millennium::Window<R>) -> Result<(), String> {
-	///   println!("foobar");
-	///
-	///   Ok(())
+	/// 	println!("foobar");
+	/// 	Ok(())
 	/// }
 	///
 	/// fn init<R: Runtime>() -> MillenniumPlugin<R> {
-	///   Builder::new("example")
-	///     .invoke_handler(millennium::generate_handler![foobar])
-	///     .build()
+	/// 	Builder::new("example").invoke_handler(millennium::generate_handler![foobar]).build()
 	/// }
 	/// ```
 	/// [millennium::generate_handler]: ../macro.generate_handler.html
@@ -216,18 +220,18 @@ impl<R: Runtime, C: DeserializeOwned> Builder<R, C> {
 	/// # Examples
 	///
 	/// ```rust
-	/// use millennium::{plugin::{Builder, MillenniumPlugin}, runtime::Runtime};
+	/// use millennium::{
+	/// 	plugin::{Builder, MillenniumPlugin},
+	/// 	runtime::Runtime
+	/// };
 	///
 	/// const INIT_SCRIPT: &str = r#"
-	///    console.log("hello world from js init script");
-	///
-	///   window.__MY_CUSTOM_PROPERTY__ = { foo: 'bar' }
+	/// 	console.log("hello world from js init script");
+	/// 	window.__MY_CUSTOM_PROPERTY__ = { foo: 'bar' };
 	/// "#;
 	///
 	/// fn init<R: Runtime>() -> MillenniumPlugin<R> {
-	///   Builder::new("example")
-	///     .js_init_script(INIT_SCRIPT.to_string())
-	///     .build()
+	/// 	Builder::new("example").js_init_script(INIT_SCRIPT.to_string()).build()
 	/// }
 	/// ```
 	#[must_use]
@@ -246,22 +250,26 @@ impl<R: Runtime, C: DeserializeOwned> Builder<R, C> {
 	/// # Examples
 	///
 	/// ```rust
-	/// use millennium::{plugin::{Builder, MillenniumPlugin}, runtime::Runtime, Manager};
 	/// use std::path::PathBuf;
+	///
+	/// use millennium::{
+	/// 	plugin::{Builder, MillenniumPlugin},
+	/// 	runtime::Runtime,
+	/// 	Manager
+	/// };
 	///
 	/// #[derive(Debug, Default)]
 	/// struct PluginState {
-	///    dir: Option<PathBuf>
+	/// 	dir: Option<PathBuf>
 	/// }
 	///
 	/// fn init<R: Runtime>() -> MillenniumPlugin<R> {
-	/// Builder::new("example")
-	///   .setup(|app_handle| {
-	///     app_handle.manage(PluginState::default());
-	///
-	///     Ok(())
-	///   })
-	///   .build()
+	/// 	Builder::new("example")
+	/// 		.setup(|app_handle| {
+	/// 			app_handle.manage(PluginState::default());
+	/// 			Ok(())
+	/// 		})
+	/// 		.build()
 	/// }
 	/// ```
 	///
@@ -288,16 +296,16 @@ impl<R: Runtime, C: DeserializeOwned> Builder<R, C> {
 	/// ```rust,no_run
 	/// #[derive(serde::Deserialize)]
 	/// struct Config {
-	///   api_url: String,
+	/// 	api_url: String
 	/// }
 	///
 	/// fn init<R: millennium::Runtime>() -> millennium::plugin::MillenniumPlugin<R, Config> {
-	///   millennium::plugin::Builder::<R, Config>::new("api")
-	///     .setup_with_config(|_app_handle, config| {
-	///       println!("config: {:?}", config.api_url);
-	///       Ok(())
-	///     })
-	///     .build()
+	/// 	millennium::plugin::Builder::<R, Config>::new("api")
+	/// 		.setup_with_config(|_app_handle, config| {
+	/// 			println!("config: {:?}", config.api_url);
+	/// 			Ok(())
+	/// 		})
+	/// 		.build()
 	/// }
 	///
 	/// millennium::Builder::default().plugin(init());
@@ -318,14 +326,17 @@ impl<R: Runtime, C: DeserializeOwned> Builder<R, C> {
 	/// # Examples
 	///
 	/// ```rust
-	/// use millennium::{plugin::{Builder, MillenniumPlugin}, runtime::Runtime};
+	/// use millennium::{
+	/// 	plugin::{Builder, MillenniumPlugin},
+	/// 	runtime::Runtime
+	/// };
 	///
 	/// fn init<R: Runtime>() -> MillenniumPlugin<R> {
-	///   Builder::new("example")
-	///     .on_page_load(|window, payload| {
-	///       println!("Loaded URL {} in window {}", payload.url(), window.label());
-	///     })
-	///     .build()
+	/// 	Builder::new("example")
+	/// 		.on_page_load(|window, payload| {
+	/// 			println!("Loaded URL {} in window {}", payload.url(), window.label());
+	/// 		})
+	/// 		.build()
 	/// }
 	/// ```
 	#[must_use]
@@ -342,14 +353,17 @@ impl<R: Runtime, C: DeserializeOwned> Builder<R, C> {
 	/// # Examples
 	///
 	/// ```rust
-	/// use millennium::{plugin::{Builder, MillenniumPlugin}, runtime::Runtime};
+	/// use millennium::{
+	/// 	plugin::{Builder, MillenniumPlugin},
+	/// 	runtime::Runtime
+	/// };
 	///
 	/// fn init<R: Runtime>() -> MillenniumPlugin<R> {
-	///   Builder::new("example")
-	///     .on_webview_ready(|window| {
-	///       println!("created window {}", window.label());
-	///     })
-	///     .build()
+	/// 	Builder::new("example")
+	/// 		.on_webview_ready(|window| {
+	/// 			println!("created window {}", window.label());
+	/// 		})
+	/// 		.build()
 	/// }
 	/// ```
 	#[must_use]
@@ -366,22 +380,26 @@ impl<R: Runtime, C: DeserializeOwned> Builder<R, C> {
 	/// # Examples
 	///
 	/// ```rust
-	/// use millennium::{plugin::{Builder, MillenniumPlugin}, RunEvent, runtime::Runtime};
+	/// use millennium::{
+	/// 	plugin::{Builder, MillenniumPlugin},
+	/// 	runtime::Runtime,
+	/// 	RunEvent
+	/// };
 	///
 	/// fn init<R: Runtime>() -> MillenniumPlugin<R> {
-	///   Builder::new("example")
-	///     .on_event(|app_handle, event| {
-	///       match event {
-	///         RunEvent::ExitRequested { api, .. } => {
-	///           // Prevents the app from exiting.
-	///           // This will cause the core thread to continue running in the background even without any open windows.
-	///           api.prevent_exit();
-	///         }
-	///         // Ignore all other cases.
-	///         _ => {}
-	///       }
-	///     })
-	///     .build()
+	/// 	Builder::new("example")
+	/// 		.on_event(|app_handle, event| {
+	/// 			match event {
+	/// 				RunEvent::ExitRequested { api, .. } => {
+	/// 					// Prevents the app from exiting.
+	/// 					// This will cause the core thread to continue running in the background even without any open windows.
+	/// 					api.prevent_exit();
+	/// 				}
+	/// 				// Ignore all other cases.
+	/// 				_ => {}
+	/// 			}
+	/// 		})
+	/// 		.build()
 	/// }
 	/// ```
 	#[must_use]

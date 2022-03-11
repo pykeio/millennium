@@ -27,10 +27,9 @@ use crossbeam_channel::{self as channel, Receiver, Sender};
 use crate::platform_impl::platform::{
 	app_state,
 	ffi::{
-		id, kCFRunLoopAfterWaiting, kCFRunLoopBeforeWaiting, kCFRunLoopCommonModes, kCFRunLoopDefaultMode, kCFRunLoopEntry, kCFRunLoopExit, nil, CFIndex,
-		CFRelease, CFRunLoopActivity, CFRunLoopAddObserver, CFRunLoopAddSource, CFRunLoopGetMain, CFRunLoopObserverCreate, CFRunLoopObserverRef,
-		CFRunLoopSourceContext, CFRunLoopSourceCreate, CFRunLoopSourceInvalidate, CFRunLoopSourceRef, CFRunLoopSourceSignal, CFRunLoopWakeUp, NSStringRust,
-		UIApplicationMain, UIUserInterfaceIdiom
+		id, kCFRunLoopAfterWaiting, kCFRunLoopBeforeWaiting, kCFRunLoopCommonModes, kCFRunLoopDefaultMode, kCFRunLoopEntry, kCFRunLoopExit, nil, CFIndex, CFRelease, CFRunLoopActivity,
+		CFRunLoopAddObserver, CFRunLoopAddSource, CFRunLoopGetMain, CFRunLoopObserverCreate, CFRunLoopObserverRef, CFRunLoopSourceContext, CFRunLoopSourceCreate, CFRunLoopSourceInvalidate,
+		CFRunLoopSourceRef, CFRunLoopSourceSignal, CFRunLoopWakeUp, NSStringRust, UIApplicationMain, UIUserInterfaceIdiom
 	},
 	monitor, view, MonitorHandle
 };
@@ -52,11 +51,7 @@ pub enum EventWrapper {
 #[non_exhaustive]
 #[derive(Debug, PartialEq)]
 pub enum EventProxy {
-	DpiChangedProxy {
-		window_id: id,
-		suggested_size: LogicalSize<f64>,
-		scale_factor: f64
-	}
+	DpiChangedProxy { window_id: id, suggested_size: LogicalSize<f64>, scale_factor: f64 }
 }
 
 #[derive(Clone)]

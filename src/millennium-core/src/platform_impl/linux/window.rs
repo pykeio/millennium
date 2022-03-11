@@ -96,11 +96,7 @@ pub struct Window {
 }
 
 impl Window {
-	pub(crate) fn new<T>(
-		event_loop_window_target: &EventLoopWindowTarget<T>,
-		attributes: WindowAttributes,
-		pl_attribs: PlatformSpecificWindowBuilderAttributes
-	) -> Result<Self, RootOsError> {
+	pub(crate) fn new<T>(event_loop_window_target: &EventLoopWindowTarget<T>, attributes: WindowAttributes, pl_attribs: PlatformSpecificWindowBuilderAttributes) -> Result<Self, RootOsError> {
 		let app = &event_loop_window_target.app;
 		let window_requests_tx = event_loop_window_target.window_requests_tx.clone();
 		let window = gtk::ApplicationWindow::new(app);
@@ -112,10 +108,7 @@ impl Window {
 
 		// Set Width/Height & Resizable
 		let win_scale_factor = window.scale_factor();
-		let (width, height) = attributes
-			.inner_size
-			.map(|size| size.to_logical::<f64>(win_scale_factor as f64).into())
-			.unwrap_or((800, 600));
+		let (width, height) = attributes.inner_size.map(|size| size.to_logical::<f64>(win_scale_factor as f64).into()).unwrap_or((800, 600));
 		window.set_resizable(attributes.resizable);
 		if attributes.resizable {
 			window.set_default_size(width, height);
@@ -133,30 +126,12 @@ impl Window {
 		} else {
 			gdk::WindowHints::empty()
 		});
-		let (min_width, min_height) = attributes
-			.min_inner_size
-			.map(|size| size.to_logical::<f64>(win_scale_factor as f64).into())
-			.unwrap_or_default();
-		let (max_width, max_height) = attributes
-			.max_inner_size
-			.map(|size| size.to_logical::<f64>(win_scale_factor as f64).into())
-			.unwrap_or_default();
+		let (min_width, min_height) = attributes.min_inner_size.map(|size| size.to_logical::<f64>(win_scale_factor as f64).into()).unwrap_or_default();
+		let (max_width, max_height) = attributes.max_inner_size.map(|size| size.to_logical::<f64>(win_scale_factor as f64).into()).unwrap_or_default();
 		let picky_none: Option<&gtk::Window> = None;
 		window.set_geometry_hints(
 			picky_none,
-			Some(&gdk::Geometry::new(
-				min_width,
-				min_height,
-				max_width,
-				max_height,
-				0,
-				0,
-				0,
-				0,
-				0f64,
-				0f64,
-				gdk::Gravity::Center
-			)),
+			Some(&gdk::Geometry::new(min_width, min_height, max_width, max_height, 0, 0, 0, 0, 0f64, 0f64, gdk::Gravity::Center)),
 			geom_mask
 		);
 
@@ -320,8 +295,7 @@ impl Window {
 	pub fn inner_size(&self) -> PhysicalSize<u32> {
 		let (width, height) = &*self.size;
 
-		LogicalSize::new(width.load(Ordering::Acquire) as u32, height.load(Ordering::Acquire) as u32)
-			.to_physical(self.scale_factor.load(Ordering::Acquire) as f64)
+		LogicalSize::new(width.load(Ordering::Acquire) as u32, height.load(Ordering::Acquire) as u32).to_physical(self.scale_factor.load(Ordering::Acquire) as f64)
 	}
 
 	pub fn set_inner_size<S: Into<Size>>(&self, size: S) {
@@ -335,8 +309,7 @@ impl Window {
 	pub fn outer_size(&self) -> PhysicalSize<u32> {
 		let (width, height) = &*self.size;
 
-		LogicalSize::new(width.load(Ordering::Acquire) as u32, height.load(Ordering::Acquire) as u32)
-			.to_physical(self.scale_factor.load(Ordering::Acquire) as f64)
+		LogicalSize::new(width.load(Ordering::Acquire) as u32, height.load(Ordering::Acquire) as u32).to_physical(self.scale_factor.load(Ordering::Acquire) as f64)
 	}
 
 	pub fn set_min_inner_size<S: Into<Size>>(&self, min_size: Option<S>) {
@@ -601,10 +574,10 @@ pub fn hit_test(window: &gdk::Window, cx: f64, cy: f64) -> WindowEdge {
 	const BOTTOMRIGHT: i32 = BOTTOM | RIGHT;
 
 	#[rustfmt::skip]
-  let result = (LEFT * (if cx < (left + BORDERLESS_RESIZE_INSET) { 1 } else { 0 }))
-    | (RIGHT * (if cx >= (right - BORDERLESS_RESIZE_INSET) { 1 } else { 0 }))
-    | (TOP * (if cy < (top + BORDERLESS_RESIZE_INSET) { 1 } else { 0 }))
-    | (BOTTOM * (if cy >= (bottom - BORDERLESS_RESIZE_INSET) { 1 } else { 0 }));
+	let result = (LEFT * (if cx < (left + BORDERLESS_RESIZE_INSET) { 1 } else { 0 }))
+		| (RIGHT * (if cx >= (right - BORDERLESS_RESIZE_INSET) { 1 } else { 0 }))
+		| (TOP * (if cy < (top + BORDERLESS_RESIZE_INSET) { 1 } else { 0 }))
+		| (BOTTOM * (if cy >= (bottom - BORDERLESS_RESIZE_INSET) { 1 } else { 0 }));
 
 	match result {
 		LEFT => WindowEdge::West,

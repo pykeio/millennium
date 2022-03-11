@@ -248,10 +248,7 @@ pub use {
 };
 pub use {
 	self::app::{App, AppHandle, AssetResolver, Builder, CloseRequestApi, GlobalWindowEvent, PathResolver, RunEvent},
-	self::hooks::{
-		Invoke, InvokeError, InvokeHandler, InvokeMessage, InvokePayload, InvokeResolver, InvokeResponder, InvokeResponse, OnPageLoad, PageLoadPayload,
-		SetupHook
-	},
+	self::hooks::{Invoke, InvokeError, InvokeHandler, InvokeMessage, InvokePayload, InvokeResolver, InvokeResponder, InvokeResponse, OnPageLoad, PageLoadPayload, SetupHook},
 	self::manager::Asset,
 	self::runtime::{
 		webview::{WebviewAttributes, WindowBuilder},
@@ -353,7 +350,10 @@ impl TryFrom<Icon> for runtime::WindowIcon {
 							height: info.height
 						})
 					}
-					_ => panic!("image extension `{}` not supported; please file a feature request. PNG or ICO icons are supported via the `icon-png` and `icon-ico` feature flags respectively.", extension)
+					_ => panic!(
+						"image extension `{}` not supported; please file a feature request. PNG or ICO icons are supported via the `icon-png` and `icon-ico` feature flags respectively.",
+						extension
+					)
 				}
 			}
 		}
@@ -650,16 +650,16 @@ mod test_utils {
 	}
 
 	proptest! {
-	  #![proptest_config(ProptestConfig::with_cases(10000))]
-	  #[test]
-	  // check to see if spawn executes a function.
-	  fn check_spawn_task(task in "[a-z]+") {
-		// create dummy task function
-		let dummy_task = async move {
-		  format!("{}-run-dummy-task", task);
-		};
-		// call spawn
-		crate::async_runtime::spawn(dummy_task);
-	  }
+		#![proptest_config(ProptestConfig::with_cases(10000))]
+		#[test]
+		// check to see if spawn executes a function.
+		fn check_spawn_task(task in "[a-z]+") {
+			// create dummy task function
+			let dummy_task = async move {
+				format!("{}-run-dummy-task", task);
+			};
+			// call spawn
+			crate::async_runtime::spawn(dummy_task);
+		}
 	}
 }

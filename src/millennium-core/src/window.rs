@@ -35,24 +35,23 @@ use crate::{
 ///
 /// ```no_run
 /// use millennium_core::{
-///     event::{Event, WindowEvent},
-///     event_loop::{ControlFlow, EventLoop},
-///     window::Window,
+/// 	event::{Event, WindowEvent},
+/// 	event_loop::{ControlFlow, EventLoop},
+/// 	window::Window
 /// };
 ///
 /// let mut event_loop = EventLoop::new();
 /// let window = Window::new(&event_loop).unwrap();
 ///
 /// event_loop.run(move |event, _, control_flow| {
-///     *control_flow = ControlFlow::Wait;
+/// 	*control_flow = ControlFlow::Wait;
 ///
-///     match event {
-///         Event::WindowEvent {
-///             event: WindowEvent::CloseRequested,
-///             ..
-///         } => *control_flow = ControlFlow::Exit,
-///         _ => (),
-///     }
+/// 	match event {
+/// 		Event::WindowEvent {
+/// 			event: WindowEvent::CloseRequested, ..
+/// 		} => *control_flow = ControlFlow::Exit,
+/// 		_ => ()
+/// 	}
 /// });
 /// ```
 pub struct Window {
@@ -90,7 +89,7 @@ impl WindowId {
 	/// # Safety
 	/// Returns a dummy `WindowId`, useful for unit testing. The only guarantee
 	/// made about the return value of this function is that it will always be
-	/// equal to itself and to future values returned by this function.  No
+	/// equal to itself and to future values returned by this function. No
 	/// other guarantees are made. This may be equal to a real `WindowId`.
 	///
 	/// **Passing this into a Millennium Core function will result in undefined
@@ -420,7 +419,7 @@ impl Window {
 	/// [`WindowBuilder::new().build(event_loop)`].
 	///
 	/// Error should be very rare and only occur in case of permission denied,
-	/// incompatible system,  out of memory, etc.
+	/// incompatible system, out of memory, etc.
 	///
 	/// [`WindowBuilder::new().build(event_loop)`]: crate::window::WindowBuilder::build
 	#[inline]
@@ -503,15 +502,15 @@ impl Window {
 	}
 
 	/// Returns the position of the top-left hand corner of the window relative
-	/// to the  top-left hand corner of the desktop.
+	/// to the top-left hand corner of the desktop.
 	///
 	/// Note that the top-left hand corner of the desktop is not necessarily the
-	/// same as  the screen. If the user uses a desktop with multiple monitors,
-	/// the top-left hand corner  of the desktop is the top-left hand corner of
+	/// same as the screen. If the user uses a desktop with multiple monitors,
+	/// the top-left hand corner of the desktop is the top-left hand corner of
 	/// the monitor at the top-left of the desktop.
 	///
 	/// The coordinates can be negative if the top-left hand corner of the
-	/// window is outside  of the visible screen region.
+	/// window is outside of the visible screen region.
 	///
 	/// ## Platform-specific
 	///

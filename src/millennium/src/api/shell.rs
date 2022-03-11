@@ -113,15 +113,12 @@ impl Program {
 ///
 /// ```rust,no_run
 /// use millennium::{api::shell::open, Manager};
-/// millennium::Builder::default()
-///   .setup(|app| {
-///     // open the given URL on the system default browser
-///     open(&app.shell_scope(), "https://example.com", None).unwrap();
-///     Ok(())
-///   });
+/// millennium::Builder::default().setup(|app| {
+/// 	// open the given URL on the system default browser
+/// 	open(&app.shell_scope(), "https://example.com", None).unwrap();
+/// 	Ok(())
+/// });
 /// ```
 pub fn open<P: AsRef<str>>(scope: &ShellScope, path: P, with: Option<Program>) -> crate::api::Result<()> {
-	scope
-		.open(path.as_ref(), with)
-		.map_err(|err| crate::api::Error::Shell(format!("failed to open: {}", err)))
+	scope.open(path.as_ref(), with).map_err(|err| crate::api::Error::Shell(format!("failed to open: {}", err)))
 }

@@ -46,19 +46,13 @@ pub struct SystemTrayHandle {
 
 impl TrayHandle for SystemTrayHandle {
 	fn set_icon(&self, icon: TrayIcon) -> Result<()> {
-		self.proxy
-			.send_event(Message::Tray(TrayMessage::UpdateIcon(icon)))
-			.map_err(|_| Error::FailedToSendMessage)
+		self.proxy.send_event(Message::Tray(TrayMessage::UpdateIcon(icon))).map_err(|_| Error::FailedToSendMessage)
 	}
 	fn set_menu(&self, menu: SystemTrayMenu) -> Result<()> {
-		self.proxy
-			.send_event(Message::Tray(TrayMessage::UpdateMenu(menu)))
-			.map_err(|_| Error::FailedToSendMessage)
+		self.proxy.send_event(Message::Tray(TrayMessage::UpdateMenu(menu))).map_err(|_| Error::FailedToSendMessage)
 	}
 	fn update_item(&self, id: u16, update: MenuUpdate) -> Result<()> {
-		self.proxy
-			.send_event(Message::Tray(TrayMessage::UpdateItem(id, update)))
-			.map_err(|_| Error::FailedToSendMessage)
+		self.proxy.send_event(Message::Tray(TrayMessage::UpdateItem(id, update))).map_err(|_| Error::FailedToSendMessage)
 	}
 	#[cfg(target_os = "macos")]
 	fn set_icon_as_template(&self, is_template: bool) -> millennium_runtime::Result<()> {

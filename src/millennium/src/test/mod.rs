@@ -46,9 +46,7 @@ impl Assets for NoopAsset {
 }
 
 pub fn noop_assets() -> NoopAsset {
-	NoopAsset {
-		csp_hashes: Default::default()
-	}
+	NoopAsset { csp_hashes: Default::default() }
 }
 
 pub fn mock_context<A: Assets>(assets: A) -> crate::Context<A> {
@@ -88,10 +86,7 @@ pub fn mock_context<A: Assets>(assets: A) -> crate::Context<A> {
 		_info_plist: (),
 		pattern: Pattern::Brownfield(std::marker::PhantomData),
 		#[cfg(shell_scope)]
-		shell_scope: ShellScopeConfig {
-			open: None,
-			scopes: HashMap::new()
-		}
+		shell_scope: ShellScopeConfig { open: None, scopes: HashMap::new() }
 	}
 }
 

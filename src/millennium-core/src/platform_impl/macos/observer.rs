@@ -220,18 +220,8 @@ pub fn setup_control_flow_observers(panic_info: Weak<PanicInfo>) {
 			copyDescription: None
 		};
 		let run_loop = RunLoop::get();
-		run_loop.add_observer(
-			kCFRunLoopEntry | kCFRunLoopAfterWaiting,
-			CFIndex::min_value(),
-			control_flow_begin_handler,
-			&mut context as *mut _
-		);
-		run_loop.add_observer(
-			kCFRunLoopExit | kCFRunLoopBeforeWaiting,
-			CFIndex::max_value(),
-			control_flow_end_handler,
-			&mut context as *mut _
-		);
+		run_loop.add_observer(kCFRunLoopEntry | kCFRunLoopAfterWaiting, CFIndex::min_value(), control_flow_begin_handler, &mut context as *mut _);
+		run_loop.add_observer(kCFRunLoopExit | kCFRunLoopBeforeWaiting, CFIndex::max_value(), control_flow_end_handler, &mut context as *mut _);
 	}
 }
 

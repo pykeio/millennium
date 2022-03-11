@@ -112,10 +112,7 @@ impl<T: Pixel> LogicalPosition<T> {
 	/// Casts the logical size to another pixel type.
 	#[inline]
 	pub fn cast<X: Pixel>(&self) -> LogicalPosition<X> {
-		LogicalPosition {
-			x: self.x.cast(),
-			y: self.y.cast()
-		}
+		LogicalPosition { x: self.x.cast(), y: self.y.cast() }
 	}
 }
 

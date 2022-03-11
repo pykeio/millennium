@@ -101,11 +101,10 @@ impl Matches {
 ///
 /// ```rust,no_run
 /// use millennium::api::cli::get_matches;
-/// millennium::Builder::default()
-///   .setup(|app| {
-///     let matches = get_matches(app.config().millennium.cli.as_ref().unwrap(), app.package_info()).unwrap();
-///     Ok(())
-///   });
+/// millennium::Builder::default().setup(|app| {
+/// 	let matches = get_matches(app.config().millennium.cli.as_ref().unwrap(), app.package_info()).unwrap();
+/// 	Ok(())
+/// });
 /// ```
 pub fn get_matches(cli: &CliConfig, package_info: &PackageInfo) -> crate::api::Result<Matches> {
 	let about = cli.description().unwrap_or(&package_info.description.to_string()).to_string();
@@ -141,11 +140,7 @@ fn get_matches_internal(config: &CliConfig, matches: &ArgMatches) -> Matches {
 
 	if let Some((subcommand_name, subcommand_matches)) = matches.subcommand() {
 		let mut subcommand_cli_matches = Matches::default();
-		map_matches(
-			config.subcommands().unwrap().get(subcommand_name).unwrap(),
-			subcommand_matches,
-			&mut subcommand_cli_matches
-		);
+		map_matches(config.subcommands().unwrap().get(subcommand_name).unwrap(), subcommand_matches, &mut subcommand_cli_matches);
 		cli_matches.set_subcommand(subcommand_name.to_string(), subcommand_cli_matches);
 	}
 

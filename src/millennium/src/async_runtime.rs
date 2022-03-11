@@ -223,10 +223,7 @@ impl RuntimeHandle {
 fn default_runtime() -> GlobalRuntime {
 	let runtime = Runtime::Tokio(TokioRuntime::new().unwrap());
 	let handle = runtime.handle();
-	GlobalRuntime {
-		runtime: Some(runtime),
-		handle
-	}
+	GlobalRuntime { runtime: Some(runtime), handle }
 }
 
 /// Sets the runtime to use to execute asynchronous tasks.
@@ -238,13 +235,13 @@ fn default_runtime() -> GlobalRuntime {
 /// ```rust
 /// #[tokio::main]
 /// async fn main() {
-///   // perform some async task before initializing the app
-///   do_something().await;
-///   // share the current runtime with Millennium
-///   millennium::async_runtime::set(tokio::runtime::Handle::current());
+/// 	// perform some async task before initializing the app
+/// 	do_something().await;
+/// 	// share the current runtime with Millennium
+/// 	millennium::async_runtime::set(tokio::runtime::Handle::current());
 ///
-///   // bootstrap the Millennium app...
-///   // millennium::Builder::default().run().unwrap();
+/// 	// bootstrap the Millennium app...
+/// 	// millennium::Builder::default().run().unwrap();
 /// }
 ///
 /// async fn do_something() {}

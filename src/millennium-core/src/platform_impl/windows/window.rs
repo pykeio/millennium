@@ -83,11 +83,7 @@ pub struct Window {
 }
 
 impl Window {
-	pub fn new<T: 'static>(
-		event_loop: &EventLoopWindowTarget<T>,
-		w_attr: WindowAttributes,
-		pl_attr: PlatformSpecificWindowBuilderAttributes
-	) -> Result<Window, RootOsError> {
+	pub fn new<T: 'static>(event_loop: &EventLoopWindowTarget<T>, w_attr: WindowAttributes, pl_attr: PlatformSpecificWindowBuilderAttributes) -> Result<Window, RootOsError> {
 		// We dispatch an `init` function because of code style.
 		// First person to remove the need for cloning here gets a cookie!
 		//
@@ -104,9 +100,8 @@ impl Window {
 								panic!("OleInitialize failed! Result was: `OLE_E_WRONGCOMPOBJ`")
 							}
 							win32f::RPC_E_CHANGED_MODE => panic!(
-								"OleInitialize failed! Result was: `RPC_E_CHANGED_MODE`. \
-                Make sure other crates are not using multithreaded COM library \
-                on the same thread or disable drag and drop support."
+								"OleInitialize failed! Result was: `RPC_E_CHANGED_MODE`. Make sure other crates \
+								are not using multithreaded COM library on the same thread or disable drag and drop support."
 							),
 							_ => ()
 						};
@@ -368,12 +363,7 @@ impl Window {
 		unsafe {
 			GetCursorPos(&mut pos);
 			ReleaseCapture();
-			PostMessageW(
-				self.window.0,
-				WM_NCLBUTTONDOWN,
-				WPARAM(HTCAPTION as _),
-				util::MAKELPARAM(pos.x as i16, pos.y as i16)
-			);
+			PostMessageW(self.window.0, WM_NCLBUTTONDOWN, WPARAM(HTCAPTION as _), util::MAKELPARAM(pos.x as i16, pos.y as i16));
 		}
 
 		Ok(())
@@ -463,15 +453,7 @@ impl Window {
 
 					let native_video_mode = video_mode.video_mode.native_video_mode;
 
-					let res = unsafe {
-						ChangeDisplaySettingsExW(
-							PWSTR(display_name.as_mut_ptr()),
-							&native_video_mode,
-							HWND::default(),
-							CDS_FULLSCREEN,
-							std::ptr::null_mut()
-						)
-					};
+					let res = unsafe { ChangeDisplaySettingsExW(PWSTR(display_name.as_mut_ptr()), &native_video_mode, HWND::default(), CDS_FULLSCREEN, std::ptr::null_mut()) };
 
 					debug_assert!(res != DISP_CHANGE_BADFLAGS);
 					debug_assert!(res != DISP_CHANGE_BADMODE);
@@ -480,8 +462,7 @@ impl Window {
 					assert_eq!(res, DISP_CHANGE_SUCCESSFUL);
 				}
 				(&Some(Fullscreen::Exclusive(_)), &None) | (&Some(Fullscreen::Exclusive(_)), &Some(Fullscreen::Borderless(_))) => {
-					let res =
-						unsafe { ChangeDisplaySettingsExW(PWSTR::default(), std::ptr::null_mut(), HWND::default(), CDS_FULLSCREEN, std::ptr::null_mut()) };
+					let res = unsafe { ChangeDisplaySettingsExW(PWSTR::default(), std::ptr::null_mut(), HWND::default(), CDS_FULLSCREEN, std::ptr::null_mut()) };
 
 					debug_assert!(res != DISP_CHANGE_BADFLAGS);
 					debug_assert!(res != DISP_CHANGE_BADMODE);
@@ -535,15 +516,7 @@ impl Window {
 					let size: (u32, u32) = monitor.size().into();
 
 					unsafe {
-						SetWindowPos(
-							window.0,
-							HWND::default(),
-							position.0,
-							position.1,
-							size.0 as i32,
-							size.1 as i32,
-							SWP_ASYNCWINDOWPOS | SWP_NOZORDER
-						);
+						SetWindowPos(window.0, HWND::default(), position.0, position.1, size.0 as i32, size.1 as i32, SWP_ASYNCWINDOWPOS | SWP_NOZORDER);
 						InvalidateRgn(window.0, HRGN::default(), false);
 					}
 				}
@@ -747,11 +720,7 @@ pub struct WindowWrapper(HWND);
 unsafe impl Sync for WindowWrapper {}
 unsafe impl Send for WindowWrapper {}
 
-unsafe fn init<T: 'static>(
-	attributes: WindowAttributes,
-	pl_attribs: PlatformSpecificWindowBuilderAttributes,
-	event_loop: &EventLoopWindowTarget<T>
-) -> Result<Window, RootOsError> {
+unsafe fn init<T: 'static>(attributes: WindowAttributes, pl_attribs: PlatformSpecificWindowBuilderAttributes, event_loop: &EventLoopWindowTarget<T>) -> Result<Window, RootOsError> {
 	// registering the window class
 	let mut class_name = register_window_class(&attributes.window_icon, &pl_attribs.taskbar_icon);
 
@@ -917,9 +886,9 @@ unsafe fn register_window_class(window_icon: &Option<Icon>, taskbar_icon: &Optio
 	};
 
 	// We ignore errors because registering the same window class twice would
-	// trigger  an error, and because errors here are detected during CreateWindowEx
+	// trigger an error, and because errors here are detected during CreateWindowEx
 	// anyway. Also since there is no weird element in the struct, there is no
-	// reason for this  call to fail.
+	// reason for this call to fail.
 	RegisterClassExW(&class);
 
 	class_name
@@ -975,8 +944,8 @@ thread_local! {
 	static COM_INITIALIZED: ComInitialized = {
 		unsafe {
 			ComInitialized(match CoInitializeEx(ptr::null_mut(), COINIT_APARTMENTTHREADED) {
-			  Ok(()) => Some(()),
-			  Err(_) => None,
+				Ok(()) => Some(()),
+				Err(_) => None
 			})
 		}
 	};
@@ -1062,10 +1031,10 @@ pub fn hit_test(hwnd: HWND, cx: i32, cy: i32) -> LRESULT {
 			let RECT { left, right, bottom, top } = window_rect;
 
 			#[rustfmt::skip]
-      let result = (LEFT * (if cx < (left + BORDERLESS_RESIZE_INSET) { 1 } else { 0 }))
-        | (RIGHT * (if cx >= (right - BORDERLESS_RESIZE_INSET) { 1 } else { 0 }))
-        | (TOP * (if cy < (top + BORDERLESS_RESIZE_INSET) { 1 } else { 0 }))
-        | (BOTTOM * (if cy >= (bottom - BORDERLESS_RESIZE_INSET) { 1 } else { 0 }));
+			let result = (LEFT * (if cx < (left + BORDERLESS_RESIZE_INSET) { 1 } else { 0 }))
+				| (RIGHT * (if cx >= (right - BORDERLESS_RESIZE_INSET) { 1 } else { 0 }))
+				| (TOP * (if cy < (top + BORDERLESS_RESIZE_INSET) { 1 } else { 0 }))
+				| (BOTTOM * (if cy >= (bottom - BORDERLESS_RESIZE_INSET) { 1 } else { 0 }));
 
 			LRESULT(match result {
 				CLIENT => HTCLIENT,

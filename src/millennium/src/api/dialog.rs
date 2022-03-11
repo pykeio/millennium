@@ -138,9 +138,9 @@ pub mod blocking {
 		/// use millennium::api::dialog::blocking::FileDialogBuilder;
 		/// #[millennium::command]
 		/// fn my_command() {
-		///   let file_path = FileDialogBuilder::new().pick_file();
-		///   // do something with the optional file path here
-		///   // the file path is `None` if the user closed the dialog
+		/// 	let file_path = FileDialogBuilder::new().pick_file();
+		/// 	// do something with the optional file path here
+		/// 	// the file path is `None` if the user closed the dialog
 		/// }
 		/// ```
 		pub fn pick_file(self) -> Option<PathBuf> {
@@ -157,9 +157,9 @@ pub mod blocking {
 		/// use millennium::api::dialog::blocking::FileDialogBuilder;
 		/// #[millennium::command]
 		/// fn my_command() {
-		///   let file_path = FileDialogBuilder::new().pick_files();
-		///   // do something with the optional file paths here
-		///   // the file paths value is `None` if the user closed the dialog
+		/// 	let file_path = FileDialogBuilder::new().pick_files();
+		/// 	// do something with the optional file paths here
+		/// 	// the file paths value is `None` if the user closed the dialog
 		/// }
 		/// ```
 		pub fn pick_files(self) -> Option<Vec<PathBuf>> {
@@ -176,9 +176,9 @@ pub mod blocking {
 		/// use millennium::api::dialog::blocking::FileDialogBuilder;
 		/// #[millennium::command]
 		/// fn my_command() {
-		///   let folder_path = FileDialogBuilder::new().pick_folder();
-		///   // do something with the optional folder path here
-		///   // the folder path is `None` if the user closed the dialog
+		/// 	let folder_path = FileDialogBuilder::new().pick_folder();
+		/// 	// do something with the optional folder path here
+		/// 	// the folder path is `None` if the user closed the dialog
 		/// }
 		/// ```
 		pub fn pick_folder(self) -> Option<PathBuf> {
@@ -195,9 +195,9 @@ pub mod blocking {
 		/// use millennium::api::dialog::blocking::FileDialogBuilder;
 		/// #[millennium::command]
 		/// fn my_command() {
-		///   let file_path = FileDialogBuilder::new().save_file();
-		///   // do something with the optional file path here
-		///   // the file path is `None` if the user closed the dialog
+		/// 	let file_path = FileDialogBuilder::new().save_file();
+		/// 	// do something with the optional file path here
+		/// 	// the file path is `None` if the user closed the dialog
 		/// }
 		/// ```
 		pub fn save_file(self) -> Option<PathBuf> {
@@ -264,12 +264,7 @@ pub mod blocking {
 	}
 
 	#[allow(unused_variables)]
-	fn run_message_dialog<R: Runtime>(
-		parent_window: Option<&Window<R>>,
-		title: impl AsRef<str>,
-		message: impl AsRef<str>,
-		buttons: rfd::MessageButtons
-	) -> bool {
+	fn run_message_dialog<R: Runtime>(parent_window: Option<&Window<R>>, title: impl AsRef<str>, message: impl AsRef<str>, buttons: rfd::MessageButtons) -> bool {
 		let (tx, rx) = sync_channel(1);
 		super::nonblocking::run_message_dialog(parent_window, title, message, buttons, move |response| {
 			tx.send(response).unwrap();
@@ -299,14 +294,14 @@ mod nonblocking {
 		/// ```rust,no_run
 		/// use millennium::api::dialog::FileDialogBuilder;
 		/// millennium::Builder::default()
-		///   .build(millennium::generate_context!("test/fixture/.millenniumrc"))
-		///   .expect("failed to build Millennium app")
-		///   .run(|_app, _event| {
-		///     FileDialogBuilder::new().pick_file(|file_path| {
-		///       // do something with the optional file path here
-		///       // the file path is `None` if the user closed the dialog
-		///     })
-		///   })
+		/// 	.build(millennium::generate_context!("test/fixture/.millenniumrc"))
+		/// 	.expect("failed to build Millennium app")
+		/// 	.run(|_app, _event| {
+		/// 		FileDialogBuilder::new().pick_file(|file_path| {
+		/// 			// do something with the optional file path here
+		/// 			// the file path is `None` if the user closed the dialog
+		/// 		})
+		/// 	})
 		/// ```
 		pub fn pick_file<F: FnOnce(Option<PathBuf>) + Send + 'static>(self, f: F) {
 			run_dialog!(self.0.pick_file(), f)
@@ -322,14 +317,14 @@ mod nonblocking {
 		/// ```rust,no_run
 		/// use millennium::api::dialog::FileDialogBuilder;
 		/// millennium::Builder::default()
-		///   .build(millennium::generate_context!("test/fixture/.millenniumrc"))
-		///   .expect("failed to build Millennium app")
-		///   .run(|_app, _event| {
-		///     FileDialogBuilder::new().pick_files(|file_paths| {
-		///       // do something with the optional file paths here
-		///       // the file paths value is `None` if the user closed the dialog
-		///     })
-		///   })
+		/// 	.build(millennium::generate_context!("test/fixture/.millenniumrc"))
+		/// 	.expect("failed to build Millennium app")
+		/// 	.run(|_app, _event| {
+		/// 		FileDialogBuilder::new().pick_files(|file_paths| {
+		/// 			// do something with the optional file paths here
+		/// 			// the file paths value is `None` if the user closed the dialog
+		/// 		})
+		/// 	})
 		/// ```
 		pub fn pick_files<F: FnOnce(Option<Vec<PathBuf>>) + Send + 'static>(self, f: F) {
 			run_dialog!(self.0.pick_files(), f)
@@ -345,14 +340,14 @@ mod nonblocking {
 		/// ```rust,no_run
 		/// use millennium::api::dialog::FileDialogBuilder;
 		/// millennium::Builder::default()
-		///   .build(millennium::generate_context!("test/fixture/.millenniumrc"))
-		///   .expect("failed to build Millennium app")
-		///   .run(|_app, _event| {
-		///     FileDialogBuilder::new().pick_folder(|folder_path| {
-		///       // do something with the optional folder path here
-		///       // the folder path is `None` if the user closed the dialog
-		///     })
-		///   })
+		/// 	.build(millennium::generate_context!("test/fixture/.millenniumrc"))
+		/// 	.expect("failed to build Millennium app")
+		/// 	.run(|_app, _event| {
+		/// 		FileDialogBuilder::new().pick_folder(|folder_path| {
+		/// 			// do something with the optional folder path here
+		/// 			// the folder path is `None` if the user closed the dialog
+		/// 		})
+		/// 	})
 		/// ```
 		pub fn pick_folder<F: FnOnce(Option<PathBuf>) + Send + 'static>(self, f: F) {
 			run_dialog!(self.0.pick_folder(), f)
@@ -369,14 +364,14 @@ mod nonblocking {
 		/// ```rust,no_run
 		/// use millennium::api::dialog::FileDialogBuilder;
 		/// millennium::Builder::default()
-		///   .build(millennium::generate_context!("test/fixture/.millenniumrc"))
-		///   .expect("failed to build Millennium app")
-		///   .run(|_app, _event| {
-		///     FileDialogBuilder::new().save_file(|file_path| {
-		///       // do something with the optional file path here
-		///       // the file path is `None` if the user closed the dialog
-		///     })
-		///   })
+		/// 	.build(millennium::generate_context!("test/fixture/.millenniumrc"))
+		/// 	.expect("failed to build Millennium app")
+		/// 	.run(|_app, _event| {
+		/// 		FileDialogBuilder::new().save_file(|file_path| {
+		/// 			// do something with the optional file path here
+		/// 			// the file path is `None` if the user closed the dialog
+		/// 		})
+		/// 	})
 		/// ```
 		pub fn save_file<F: FnOnce(Option<PathBuf>) + Send + 'static>(self, f: F) {
 			run_dialog!(self.0.save_file(), f)
@@ -397,7 +392,7 @@ mod nonblocking {
 	/// # let app = millennium::Builder::default().build(millennium::generate_context!("test/fixture/.millenniumrc")).unwrap();
 	/// # let window = millennium::Manager::get_window(&app, "main").unwrap();
 	/// ask(Some(&window), "Millennium", "Is Millennium awesome?", |answer| {
-	///   // do something with `answer`
+	/// 	// do something with `answer`
 	/// });
 	/// ```
 	#[allow(unused_variables)]
@@ -419,7 +414,7 @@ mod nonblocking {
 	/// # let app = millennium::Builder::default().build(millennium::generate_context!("test/fixture/.millenniumrc")).unwrap();
 	/// # let window = millennium::Manager::get_window(&app, "main").unwrap();
 	/// confirm(Some(&window), "Millennium", "Are you sure?", |answer| {
-	///   // do something with `answer`
+	/// 	// do something with `answer`
 	/// });
 	/// ```
 	#[allow(unused_variables)]

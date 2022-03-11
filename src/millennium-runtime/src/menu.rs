@@ -204,17 +204,15 @@ impl Menu {
 	/// ```
 	/// # use millennium_runtime::menu::{Menu, MenuItem, CustomMenuItem, Submenu};
 	/// Menu::with_items([
-	///   MenuItem::SelectAll.into(),
-	///   #[cfg(target_os = "macos")]
-	///   MenuItem::Redo.into(),
-	///   CustomMenuItem::new("toggle", "Toggle visibility").into(),
-	///   Submenu::new("View", Menu::new()).into(),
+	/// 	MenuItem::SelectAll.into(),
+	/// 	#[cfg(target_os = "macos")]
+	/// 	MenuItem::Redo.into(),
+	/// 	CustomMenuItem::new("toggle", "Toggle visibility").into(),
+	/// 	Submenu::new("View", Menu::new()).into()
 	/// ]);
 	/// ```
 	pub fn with_items<I: IntoIterator<Item = MenuEntry>>(items: I) -> Self {
-		Self {
-			items: items.into_iter().collect()
-		}
+		Self { items: items.into_iter().collect() }
 	}
 
 	/// Adds the custom menu item to the menu.

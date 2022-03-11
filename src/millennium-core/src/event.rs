@@ -30,19 +30,19 @@
 //! let mut start_cause = StartCause::Init;
 //!
 //! while control_flow != ControlFlow::Exit {
-//!     event_handler(NewEvents(start_cause), ..., &mut control_flow);
+//! 	event_handler(NewEvents(start_cause), ..., &mut control_flow);
 //!
-//!     for e in (window events, user events, device events) {
-//!         event_handler(e, ..., &mut control_flow);
-//!     }
-//!     event_handler(MainEventsCleared, ..., &mut control_flow);
+//! 	for e in (window events, user events, device events) {
+//! 		event_handler(e, ..., &mut control_flow);
+//! 	}
+//! 	event_handler(MainEventsCleared, ..., &mut control_flow);
 //!
-//!     for w in (redraw windows) {
-//!         event_handler(RedrawRequested(w), ..., &mut control_flow);
-//!     }
-//!     event_handler(RedrawEventsCleared, ..., &mut control_flow);
+//! 	for w in (redraw windows) {
+//! 		event_handler(RedrawRequested(w), ..., &mut control_flow);
+//! 	}
+//! 	event_handler(RedrawEventsCleared, ..., &mut control_flow);
 //!
-//!     start_cause = wait_if_necessary(control_flow);
+//! 	start_cause = wait_if_necessary(control_flow);
 //! }
 //!
 //! event_handler(LoopDestroyed, ..., &mut control_flow);
@@ -97,11 +97,7 @@ pub enum Event<'a, T: 'static> {
 	/// Emitted when a menu has been clicked. There are two types of menu event.
 	/// One comes from the menu bar, the other comes from the status bar.
 	#[non_exhaustive]
-	MenuEvent {
-		window_id: Option<WindowId>,
-		menu_id: MenuId,
-		origin: MenuType
-	},
+	MenuEvent { window_id: Option<WindowId>, menu_id: MenuId, origin: MenuType },
 
 	/// Emitted when tray has been clicked.
 	///
@@ -109,11 +105,7 @@ pub enum Event<'a, T: 'static> {
 	///
 	/// - **iOS / Android / Linux:** Unsupported.
 	#[non_exhaustive]
-	TrayEvent {
-		bounds: Rectangle,
-		event: TrayEvent,
-		position: PhysicalPosition<f64>
-	},
+	TrayEvent { bounds: Rectangle, event: TrayEvent, position: PhysicalPosition<f64> },
 
 	/// Emitted when a global shortcut is triggered.
 	///
@@ -430,10 +422,7 @@ pub enum WindowEvent<'a> {
 	///
 	/// For more information about DPI in general, see the [`dpi`](crate::dpi)
 	/// module.
-	ScaleFactorChanged {
-		scale_factor: f64,
-		new_inner_size: &'a mut PhysicalSize<u32>
-	},
+	ScaleFactorChanged { scale_factor: f64, new_inner_size: &'a mut PhysicalSize<u32> },
 
 	/// The system window theme has changed.
 	///
@@ -457,11 +446,7 @@ impl Clone for WindowEvent<'static> {
 			HoveredFileCancelled => HoveredFileCancelled,
 			ReceivedImeText(c) => ReceivedImeText(c.clone()),
 			Focused(f) => Focused(*f),
-			KeyboardInput {
-				device_id,
-				event,
-				is_synthetic
-			} => KeyboardInput {
+			KeyboardInput { device_id, event, is_synthetic } => KeyboardInput {
 				device_id: *device_id,
 				event: event.clone(),
 				is_synthetic: *is_synthetic
@@ -469,11 +454,7 @@ impl Clone for WindowEvent<'static> {
 
 			ModifiersChanged(modifiers) => ModifiersChanged(*modifiers),
 			#[allow(deprecated)]
-			CursorMoved {
-				device_id,
-				position,
-				modifiers
-			} => CursorMoved {
+			CursorMoved { device_id, position, modifiers } => CursorMoved {
 				device_id: *device_id,
 				position: *position,
 				modifiers: *modifiers
@@ -481,24 +462,14 @@ impl Clone for WindowEvent<'static> {
 			CursorEntered { device_id } => CursorEntered { device_id: *device_id },
 			CursorLeft { device_id } => CursorLeft { device_id: *device_id },
 			#[allow(deprecated)]
-			MouseWheel {
-				device_id,
-				delta,
-				phase,
-				modifiers
-			} => MouseWheel {
+			MouseWheel { device_id, delta, phase, modifiers } => MouseWheel {
 				device_id: *device_id,
 				delta: *delta,
 				phase: *phase,
 				modifiers: *modifiers
 			},
 			#[allow(deprecated)]
-			MouseInput {
-				device_id,
-				state,
-				button,
-				modifiers
-			} => MouseInput {
+			MouseInput { device_id, state, button, modifiers } => MouseInput {
 				device_id: *device_id,
 				state: *state,
 				button: *button,
@@ -536,52 +507,16 @@ impl<'a> WindowEvent<'a> {
 			HoveredFileCancelled => Some(HoveredFileCancelled),
 			ReceivedImeText(c) => Some(ReceivedImeText(c)),
 			Focused(focused) => Some(Focused(focused)),
-			KeyboardInput {
-				device_id,
-				event,
-				is_synthetic
-			} => Some(KeyboardInput {
-				device_id,
-				event,
-				is_synthetic
-			}),
+			KeyboardInput { device_id, event, is_synthetic } => Some(KeyboardInput { device_id, event, is_synthetic }),
 			ModifiersChanged(modifiers) => Some(ModifiersChanged(modifiers)),
 			#[allow(deprecated)]
-			CursorMoved {
-				device_id,
-				position,
-				modifiers
-			} => Some(CursorMoved {
-				device_id,
-				position,
-				modifiers
-			}),
+			CursorMoved { device_id, position, modifiers } => Some(CursorMoved { device_id, position, modifiers }),
 			CursorEntered { device_id } => Some(CursorEntered { device_id }),
 			CursorLeft { device_id } => Some(CursorLeft { device_id }),
 			#[allow(deprecated)]
-			MouseWheel {
-				device_id,
-				delta,
-				phase,
-				modifiers
-			} => Some(MouseWheel {
-				device_id,
-				delta,
-				phase,
-				modifiers
-			}),
+			MouseWheel { device_id, delta, phase, modifiers } => Some(MouseWheel { device_id, delta, phase, modifiers }),
 			#[allow(deprecated)]
-			MouseInput {
-				device_id,
-				state,
-				button,
-				modifiers
-			} => Some(MouseInput {
-				device_id,
-				state,
-				button,
-				modifiers
-			}),
+			MouseInput { device_id, state, button, modifiers } => Some(MouseInput { device_id, state, button, modifiers }),
 			TouchpadPressure { device_id, pressure, stage } => Some(TouchpadPressure { device_id, pressure, stage }),
 			AxisMotion { device_id, axis, value } => Some(AxisMotion { device_id, axis, value }),
 			Touch(touch) => Some(Touch(touch)),

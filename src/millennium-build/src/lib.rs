@@ -190,10 +190,7 @@ pub fn try_build(attributes: Attributes) -> Result<()> {
 
 		let all_cli_managed_features = MillenniumConfig::all_features();
 		let diff = features_diff(
-			&features
-				.into_iter()
-				.filter(|f| all_cli_managed_features.contains(&f.as_str()))
-				.collect::<Vec<String>>(),
+			&features.into_iter().filter(|f| all_cli_managed_features.contains(&f.as_str())).collect::<Vec<String>>(),
 			&config.millennium.features().into_iter().map(|f| f.to_string()).collect::<Vec<String>>()
 		);
 
@@ -226,11 +223,7 @@ pub fn try_build(attributes: Attributes) -> Result<()> {
 	let target_dir = Path::new(&out_dir).parent().unwrap().parent().unwrap().parent().unwrap();
 
 	if let Some(paths) = config.millennium.bundle.external_bin {
-		copy_binaries(
-			ResourcePaths::new(external_binaries(&paths, &target_triple).as_slice(), true),
-			&target_triple,
-			target_dir
-		)?;
+		copy_binaries(ResourcePaths::new(external_binaries(&paths, &target_triple).as_slice(), true), &target_triple, target_dir)?;
 	}
 	if let Some(paths) = config.millennium.bundle.resources {
 		copy_resources(ResourcePaths::new(paths.as_slice(), true), target_dir)?;

@@ -297,10 +297,7 @@ fn parse_accelerator(accelerator_string: &str) -> Result<Accelerator, Accelerato
 			// examples:
 			// 1. "Ctrl+Shift+C+A" => only one main key should be allowd.
 			// 2. "Ctrl+C+Shift" => wrong order
-			return Err(AcceleratorParseError(format!(
-				"Unexpected accelerator string format: \"{}\"",
-				accelerator_string
-			)));
+			return Err(AcceleratorParseError(format!("Unexpected accelerator string format: \"{}\"", accelerator_string)));
 		}
 
 		match token.as_str() {

@@ -286,8 +286,7 @@ pub(super) fn get_function_impl(library: &str, function: &str) -> FARPROC {
 
 macro_rules! get_function {
 	($lib:expr, $func:ident) => {
-		crate::platform_impl::platform::util::get_function_impl(concat!($lib, '\0'), concat!(stringify!($func), '\0'))
-			.map(|f| unsafe { std::mem::transmute::<_, $func>(f) })
+		crate::platform_impl::platform::util::get_function_impl(concat!($lib, '\0'), concat!(stringify!($func), '\0')).map(|f| unsafe { std::mem::transmute::<_, $func>(f) })
 	};
 }
 
@@ -297,8 +296,7 @@ pub type SetProcessDpiAwarenessContext = unsafe extern "system" fn(value: DPI_AW
 pub type GetDpiForWindow = unsafe extern "system" fn(hwnd: HWND) -> u32;
 pub type GetDpiForMonitor = unsafe extern "system" fn(hmonitor: HMONITOR, dpi_type: MONITOR_DPI_TYPE, dpi_x: *mut u32, dpi_y: *mut u32) -> HRESULT;
 pub type EnableNonClientDpiScaling = unsafe extern "system" fn(hwnd: HWND) -> BOOL;
-pub type AdjustWindowRectExForDpi =
-	unsafe extern "system" fn(rect: *mut RECT, dwStyle: WINDOW_STYLE, bMenu: BOOL, dwExStyle: WINDOW_EX_STYLE, dpi: u32) -> BOOL;
+pub type AdjustWindowRectExForDpi = unsafe extern "system" fn(rect: *mut RECT, dwStyle: WINDOW_STYLE, bMenu: BOOL, dwExStyle: WINDOW_EX_STYLE, dpi: u32) -> BOOL;
 
 lazy_static! {
 	pub static ref GET_DPI_FOR_WINDOW: Option<GetDpiForWindow> = get_function!("user32.dll", GetDpiForWindow);

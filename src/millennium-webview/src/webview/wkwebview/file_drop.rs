@@ -39,12 +39,8 @@ static OBJC_DRAGGING_ENTERED: Lazy<extern "C" fn(*const Object, Sel, id) -> NSDr
 static OBJC_DRAGGING_EXITED: Lazy<extern "C" fn(*const Object, Sel, id)> =
 	Lazy::new(|| unsafe { std::mem::transmute(method_getImplementation(class_getInstanceMethod(class!(WKWebView), sel!(draggingExited:)))) });
 
-static OBJC_PERFORM_DRAG_OPERATION: Lazy<extern "C" fn(*const Object, Sel, id) -> BOOL> = Lazy::new(|| unsafe {
-	std::mem::transmute(method_getImplementation(class_getInstanceMethod(
-		class!(WKWebView),
-		sel!(performDragOperation:)
-	)))
-});
+static OBJC_PERFORM_DRAG_OPERATION: Lazy<extern "C" fn(*const Object, Sel, id) -> BOOL> =
+	Lazy::new(|| unsafe { std::mem::transmute(method_getImplementation(class_getInstanceMethod(class!(WKWebView), sel!(performDragOperation:)))) });
 
 static OBJC_DRAGGING_UPDATED: Lazy<extern "C" fn(*const Object, Sel, id) -> NSDragOperation> =
 	Lazy::new(|| unsafe { std::mem::transmute(method_getImplementation(class_getInstanceMethod(class!(WKWebView), sel!(draggingUpdated:)))) });
@@ -131,20 +127,11 @@ extern "C" fn dragging_exited(this: &mut Object, sel: Sel, drag_info: id) {
 pub(crate) unsafe fn add_file_drop_methods(decl: &mut ClassDecl) {
 	decl.add_ivar::<*mut c_void>("FileDropHandler");
 
-	decl.add_method(
-		sel!(draggingUpdated:),
-		dragging_updated as extern "C" fn(&mut Object, Sel, id) -> NSDragOperation
-	);
+	decl.add_method(sel!(draggingUpdated:), dragging_updated as extern "C" fn(&mut Object, Sel, id) -> NSDragOperation);
 
-	decl.add_method(
-		sel!(draggingEntered:),
-		dragging_entered as extern "C" fn(&mut Object, Sel, id) -> NSDragOperation
-	);
+	decl.add_method(sel!(draggingEntered:), dragging_entered as extern "C" fn(&mut Object, Sel, id) -> NSDragOperation);
 
-	decl.add_method(
-		sel!(performDragOperation:),
-		perform_drag_operation as extern "C" fn(&mut Object, Sel, id) -> BOOL
-	);
+	decl.add_method(sel!(performDragOperation:), perform_drag_operation as extern "C" fn(&mut Object, Sel, id) -> BOOL);
 
 	decl.add_method(sel!(draggingExited:), dragging_exited as extern "C" fn(&mut Object, Sel, id));
 }

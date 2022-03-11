@@ -46,14 +46,14 @@ pub fn command(attributes: TokenStream, item: TokenStream) -> TokenStream {
 /// use millennium_macros::{command, generate_handler};
 /// #[command]
 /// fn command_one() {
-///   println!("command one called");
+/// 	println!("command one called");
 /// }
 /// #[command]
 /// fn command_two() {
-///   println!("command two called");
+/// 	println!("command two called");
 /// }
 /// fn main() {
-///   let _handler = generate_handler![command_one, command_two];
+/// 	let _handler = generate_handler![command_one, command_two];
 /// }
 /// ```
 /// # Stability

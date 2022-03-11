@@ -93,12 +93,9 @@ impl ShortcutManager {
 
 							let result = (xlib.XGrabKey)(display, keycode, modifiers, root, 0, xlib::GrabModeAsync, xlib::GrabModeAsync);
 							if result == 0 {
-								if let Err(err) =
-									thread_sender
-										.clone()
-										.send(HotkeyMessage::RegisterHotkeyResult(Err(ShortcutManagerError::InvalidAccelerator(
-											"Unable to register accelerator".into()
-										)))) {
+								if let Err(err) = thread_sender.clone().send(HotkeyMessage::RegisterHotkeyResult(Err(ShortcutManagerError::InvalidAccelerator(
+									"Unable to register accelerator".into()
+								)))) {
 									#[cfg(debug_assertions)]
 									eprintln!("hotkey: thread_sender.send error {}", err);
 								}
@@ -110,12 +107,9 @@ impl ShortcutManager {
 						Ok(HotkeyMessage::UnregisterHotkey(id)) => {
 							let result = (xlib.XUngrabKey)(display, id.0, id.1, root);
 							if result == 0 {
-								if let Err(err) =
-									thread_sender
-										.clone()
-										.send(HotkeyMessage::UnregisterHotkeyResult(Err(ShortcutManagerError::InvalidAccelerator(
-											"Unable to unregister accelerator".into()
-										)))) {
+								if let Err(err) = thread_sender.clone().send(HotkeyMessage::UnregisterHotkeyResult(Err(ShortcutManagerError::InvalidAccelerator(
+									"Unable to unregister accelerator".into()
+								)))) {
 									#[cfg(debug_assertions)]
 									eprintln!("hotkey: thread_sender.send error {}", err);
 								}

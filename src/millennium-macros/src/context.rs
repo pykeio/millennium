@@ -72,10 +72,7 @@ impl Parse for ContextItems {
 			input.call(syn::Path::parse_mod_style)?
 		};
 
-		Ok(Self {
-			config_file,
-			root: context_path
-		})
+		Ok(Self { config_file, root: context_path })
 	}
 }
 

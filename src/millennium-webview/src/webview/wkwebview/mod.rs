@@ -186,8 +186,7 @@ impl InnerWebView {
 						let () = msg_send![task, didReceiveData: data];
 					} else {
 						let urlresponse: id = msg_send![class!(NSHTTPURLResponse), alloc];
-						let response: id =
-							msg_send![urlresponse, initWithURL:url statusCode:404 HTTPVersion:NSString::new("HTTP/1.1") headerFields:null::<c_void>()];
+						let response: id = msg_send![urlresponse, initWithURL:url statusCode:404 HTTPVersion:NSString::new("HTTP/1.1") headerFields:null::<c_void>()];
 						let () = msg_send![task, didReceiveResponse: response];
 					}
 					// Finish
@@ -283,10 +282,7 @@ impl InnerWebView {
 				let cls = match cls {
 					Some(mut cls) => {
 						cls.add_ivar::<*mut c_void>("function");
-						cls.add_method(
-							sel!(userContentController:didReceiveScriptMessage:),
-							did_receive as extern "C" fn(&Object, Sel, id, id)
-						);
+						cls.add_method(sel!(userContentController:didReceiveScriptMessage:), did_receive as extern "C" fn(&Object, Sel, id, id));
 						cls.register()
 					}
 					None => class!(WebViewDelegate)
@@ -329,8 +325,8 @@ impl InnerWebView {
 			// Initialize scripts
 			w.init(
 				r#"Object.defineProperty(window, 'ipc', {
-  value: Object.freeze({postMessage: function(s) {window.webkit.messageHandlers.ipc.postMessage(s);}})
-});"#
+					value: Object.freeze({postMessage: function(s) {window.webkit.messageHandlers.ipc.postMessage(s);}})
+				});"#
 			);
 			for js in attributes.initialization_scripts {
 				w.init(&js);
@@ -398,10 +394,10 @@ impl InnerWebView {
 		unsafe {
 			let userscript: id = msg_send![class!(WKUserScript), alloc];
 			let script: id =
-      // FIXME: We allow subframe injection because webview2 does and cannot be disabled (currently).
-      // once webview2 allows disabling all-frame script injection, forMainFrameOnly should be enabled
-      // if it does not break anything. (originally added for isolation pattern).
-        msg_send![userscript, initWithSource:NSString::new(js) injectionTime:0 forMainFrameOnly:0];
+				// FIXME: We allow subframe injection because webview2 does and cannot be disabled (currently).
+				// once webview2 allows disabling all-frame script injection, forMainFrameOnly should be enabled
+				// if it does not break anything. (originally added for isolation pattern).
+				msg_send![userscript, initWithSource:NSString::new(js) injectionTime:0 forMainFrameOnly:0];
 			let _: () = msg_send![self.manager, addUserScript: script];
 		}
 	}
@@ -441,7 +437,8 @@ impl InnerWebView {
 			// Allow the modal to detach from the current thread and be non-blocker
 			let () = msg_send![print_operation, setCanSpawnSeparateThread: YES];
 			// Launch the modal
-			let () = msg_send![print_operation, runOperationModalForWindow: self.ns_window delegate: null::<*const c_void>() didRunSelector: null::<*const c_void>() contextInfo: null::<*const c_void>()];
+			let () =
+				msg_send![print_operation, runOperationModalForWindow: self.ns_window delegate: null::<*const c_void>() didRunSelector: null::<*const c_void>() contextInfo: null::<*const c_void>()];
 		}
 	}
 

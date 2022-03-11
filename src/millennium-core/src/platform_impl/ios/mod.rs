@@ -36,11 +36,11 @@
 //! ```rust, ignore
 //! #[no_mangle]
 //! pub extern fn start_app() {
-//!     start_inner()
+//! 	start_inner()
 //! }
 //!
 //! fn start_inner() {
-//!    ...
+//! 	...
 //! }
 //! ```
 //!
@@ -79,12 +79,12 @@
 // calls. This could be worked around in the future by using GCD (grand central
 // dispatch) and/or caching of values like window size/position.
 macro_rules! assert_main_thread {
-    ($($t:tt)*) => {
-        let is_main_thread: ::objc::runtime::BOOL = msg_send!(class!(NSThread), isMainThread);
-        if is_main_thread == ::objc::runtime::NO {
-            panic!($($t)*);
-        }
-    };
+	($($t:tt)*) => {
+		let is_main_thread: ::objc::runtime::BOOL = msg_send!(class!(NSThread), isMainThread);
+		if is_main_thread == ::objc::runtime::NO {
+			panic!($($t)*);
+		}
+	};
 }
 
 mod app_state;
@@ -134,15 +134,7 @@ impl Menu {
 	pub fn new_popup_menu() -> Self {
 		return Self::new();
 	}
-	pub fn add_item(
-		&mut self,
-		_menu_id: MenuId,
-		_title: &str,
-		_accelerator: Option<Accelerator>,
-		_enabled: bool,
-		_selected: bool,
-		_menu_type: MenuType
-	) -> CustomMenuItem {
+	pub fn add_item(&mut self, _menu_id: MenuId, _title: &str, _accelerator: Option<Accelerator>, _enabled: bool, _selected: bool, _menu_type: MenuType) -> CustomMenuItem {
 		return CustomMenuItem(MenuItemAttributes {});
 	}
 	pub fn add_submenu(&mut self, _title: &str, _enabled: bool, _submenu: Menu) {}
@@ -168,9 +160,7 @@ pub struct DeviceId {
 
 impl DeviceId {
 	pub unsafe fn dummy() -> Self {
-		return DeviceId {
-			uiscreen: std::ptr::null_mut()
-		};
+		return DeviceId { uiscreen: std::ptr::null_mut() };
 	}
 }
 

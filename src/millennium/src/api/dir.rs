@@ -55,11 +55,7 @@ pub fn read_dir<P: AsRef<Path>>(path: P, recursive: bool) -> crate::api::Result<
 		if let Ok(flag) = is_dir(&path_as_string) {
 			files_and_dirs.push(DiskEntry {
 				path: path.clone(),
-				children: if flag {
-					Some(if recursive { read_dir(&path_as_string, true)? } else { vec![] })
-				} else {
-					None
-				},
+				children: if flag { Some(if recursive { read_dir(&path_as_string, true)? } else { vec![] }) } else { None },
 				name: path.file_name().map(|name| name.to_string_lossy()).map(|name| name.to_string())
 			});
 		}

@@ -63,11 +63,7 @@ pub struct MenuHandler {
 
 impl MenuHandler {
 	pub fn new(event_sender: Box<dyn Fn(Event<'static, ()>)>, menu_type: MenuType, window_id: Option<RootWindowId>) -> MenuHandler {
-		MenuHandler {
-			window_id,
-			menu_type,
-			event_sender
-		}
+		MenuHandler { window_id, menu_type, event_sender }
 	}
 	pub fn send_menu_event(&self, menu_id: u16) {
 		(self.event_sender)(Event::MenuEvent {
@@ -149,20 +145,14 @@ impl Menu {
 	pub fn new() -> Self {
 		unsafe {
 			let hmenu = CreateMenu();
-			Menu {
-				hmenu,
-				accels: HashMap::default()
-			}
+			Menu { hmenu, accels: HashMap::default() }
 		}
 	}
 
 	pub fn new_popup_menu() -> Self {
 		unsafe {
 			let hmenu = CreatePopupMenu();
-			Menu {
-				hmenu,
-				accels: HashMap::default()
-			}
+			Menu { hmenu, accels: HashMap::default() }
 		}
 	}
 
@@ -178,15 +168,7 @@ impl Menu {
 		Some(self.accels.values().cloned().map(|d| d.0).collect())
 	}
 
-	pub fn add_item(
-		&mut self,
-		menu_id: MenuId,
-		title: &str,
-		accelerators: Option<Accelerator>,
-		enabled: bool,
-		selected: bool,
-		_menu_type: MenuType
-	) -> CustomMenuItem {
+	pub fn add_item(&mut self, menu_id: MenuId, title: &str, accelerators: Option<Accelerator>, enabled: bool, selected: bool, _menu_type: MenuType) -> CustomMenuItem {
 		unsafe {
 			let mut flags = MF_STRING;
 			if !enabled {

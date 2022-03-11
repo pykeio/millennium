@@ -28,9 +28,7 @@ use std::{
 use glib::FileError;
 use url::Url;
 // use webkit2gtk_sys::webkit_uri_request_get_http_headers;
-use webkit2gtk::{
-	traits::*, ApplicationInfo, CookiePersistentStorage, LoadEvent, UserContentManager, WebContext, WebContextBuilder, WebView, WebsiteDataManagerBuilder
-};
+use webkit2gtk::{traits::*, ApplicationInfo, CookiePersistentStorage, LoadEvent, UserContentManager, WebContext, WebContextBuilder, WebView, WebsiteDataManagerBuilder};
 
 use crate::{
 	http::{Request as HttpRequest, RequestBuilder as HttpRequestBuilder, Response as HttpResponse},
@@ -220,8 +218,8 @@ where
 			let uri = uri.as_str();
 
 			// let headers = unsafe {
-			//  webkit_uri_request_get_http_headers(request.clone().to_glib_none().0)
-			//};
+			// 	webkit_uri_request_get_http_headers(request.clone().to_glib_none().0)
+			// };
 
 			// FIXME: Read the method
 			// FIXME: Read the headers

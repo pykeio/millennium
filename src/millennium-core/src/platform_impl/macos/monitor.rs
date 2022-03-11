@@ -27,9 +27,7 @@ use core_foundation::{
 	string::CFString
 };
 use core_graphics::display::{CGDirectDisplayID, CGDisplay, CGDisplayBounds};
-use core_video_sys::{
-	kCVReturnSuccess, kCVTimeIsIndefinite, CVDisplayLinkCreateWithCGDisplay, CVDisplayLinkGetNominalOutputVideoRefreshPeriod, CVDisplayLinkRelease
-};
+use core_video_sys::{kCVReturnSuccess, kCVTimeIsIndefinite, CVDisplayLinkCreateWithCGDisplay, CVDisplayLinkGetNominalOutputVideoRefreshPeriod, CVDisplayLinkRelease};
 
 use super::{ffi, util};
 use crate::{
