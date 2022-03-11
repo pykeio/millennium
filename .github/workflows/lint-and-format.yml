@@ -1,21 +1,20 @@
-name: Lint & Format (Rust)
+name: Lint & Format
 on:
   push:
     paths:
       - '.github/workflows/lint-and-format.yml'
       - 'src/**/*.rs'
-      - 'src/**/Cargo.toml'
   pull_request:
     paths:
       - '.github/workflows/lint-and-format.yml'
       - 'src/**/*.rs'
-      - 'src/**/Cargo.toml'
 env:
   RUST_BACKTRACE: 1
   CARGO_INCREMENTAL: 0 # This is set to 0 by rust-cache.
   CARGO_PROFILE_DEV_DEBUG: 0 # This would add unnecessary bloat to the target folder, decreasing cache efficiency.
 jobs:
-  check_format:
+  check_fmt:
+    name: Check fmt (Rust)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -29,7 +28,8 @@ jobs:
         with:
           command: fmt
           args: --all -- --check
-  check_lint:
+  check_clippy:
+    name: Run clippy (Rust)
     runs-on: ubuntu-latest
     strategy:
       matrix:

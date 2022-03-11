@@ -1,13 +1,13 @@
-name: Test Millennium (Rust)
+name: Test Millennium
 on:
   push:
     paths:
-      - '.github/workflows/lint-and-format.yml'
+      - '.github/workflows/test-main.yml'
       - 'src/**/*.rs'
       - 'src/**/Cargo.toml'
   pull_request:
     paths:
-      - '.github/workflows/lint-and-format.yml'
+      - '.github/workflows/test-main.yml'
       - 'src/**/*.rs'
       - 'src/**/Cargo.toml'
 env:
@@ -15,7 +15,7 @@ env:
   CARGO_INCREMENTAL: 0 # This is set to 0 by rust-cache.
   CARGO_PROFILE_DEV_DEBUG: 0 # This would add unnecessary bloat to the target folder, decreasing cache efficiency.
 jobs:
-  test-rust:
+  test-main:
     runs-on: ${{ matrix.platform }}
     strategy:
       fail-fast: false
@@ -32,6 +32,12 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
+      - name: Install WebView2
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://go.microsoft.com/fwlink/p/?LinkId=2124703 -OutFile installwebview.exe -UseBasicParsing
+          cmd /C start /wait installwebview.exe /silent /install
       - name: Get current date
         if: matrix.platform == 'macos-latest' || matrix.platform == 'ubuntu-latest'
         run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
@@ -55,6 +61,5 @@ jobs:
             ${{ matrix.platform }}-
       - name: Test Rust packages
         run: |
-          cargo test -p millennium
-          cargo test -p millennium --features api-all
-          cargo test -p millennium --features compression,millennium_webview,isolation,custom-protocol,api-all,cli,updater,system-tray
+          cargo test --verbose -p millennium
+          cargo test --verbose -p millennium --features compression,millennium_webview,isolation,custom-protocol,api-all,cli,updater,system-tray
