@@ -15,6 +15,7 @@
 // limitations under the License.
 
 #![allow(clippy::large_enum_variant)]
+#![allow(clippy::tabs_in_doc_comments)]
 
 //! The `Window` struct and associated types.
 use std::fmt;

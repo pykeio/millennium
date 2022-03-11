@@ -14,6 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#![allow(clippy::tabs_in_doc_comments)]
+
 //! Types and functions related to HTTP request.
 
 use std::{collections::HashMap, path::PathBuf, time::Duration};

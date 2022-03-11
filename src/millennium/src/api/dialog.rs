@@ -14,6 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#![allow(clippy::tabs_in_doc_comments)]
+
 //! Use native message and file open/save dialogs.
 //!
 //! This module exposes non-blocking APIs on its root, relying on callback

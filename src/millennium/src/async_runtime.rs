@@ -14,6 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#![allow(clippy::tabs_in_doc_comments)]
+
 //! The singleton async runtime used by Millennium and exposed to users.
 //!
 //! Millennium uses [`tokio`] Runtime to initialize code, such as

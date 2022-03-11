@@ -14,6 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#![allow(clippy::tabs_in_doc_comments)]
+
 #[cfg(feature = "system-tray")]
 pub(crate) mod tray;
 
@@ -1083,7 +1085,9 @@ impl<R: Runtime> Builder<R> {
 
 		#[cfg(feature = "system-tray")]
 		if let Some(system_tray) = self.system_tray {
+			#[allow(unused_mut)] // for rust analyzer hack
 			let mut ids = HashMap::new();
+			#[cfg(not(feature = "__rust_analyzer_hack"))]
 			if let Some(menu) = system_tray.menu() {
 				tray::get_menu_ids(&mut ids, menu);
 			}

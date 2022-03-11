@@ -14,6 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#![allow(clippy::tabs_in_doc_comments)]
+
 //! Types and functions related to Inter Procedure Call(IPC).
 //!
 //! This module includes utilities to send messages to the JS layer of the
@@ -165,7 +167,7 @@ pub fn serialize_js<T: Serialize>(value: &T) -> crate::api::Result<String> {
 /// use millennium::api::ipc::{format_callback, CallbackFn};
 /// // callback with a string argument
 /// let cb = format_callback(CallbackFn(12345), &"the string response").unwrap();
-/// assert!(cb.contains(r#"window["_12345"]("the string response")"#));
+/// assert!(cb.contains(r#"window['_12345']("the string response")"#));
 /// ```
 ///
 /// - With types implement [`serde::Serialize`]:
@@ -187,7 +189,7 @@ pub fn serialize_js<T: Serialize>(value: &T) -> crate::api::Result<String> {
 /// )
 /// .expect("failed to serialize");
 ///
-/// assert!(cb.contains(r#"window["_6789"](JSON.parse('{"value":"XXXXXXXXX"#));
+/// assert!(cb.contains(r#"window['_6789'](JSON.parse('{"value":"XXXXXXXXX"#));
 /// ```
 pub fn format_callback<T: Serialize>(function_name: CallbackFn, arg: &T) -> crate::api::Result<String> {
 	serialize_js_with(arg, Default::default(), |arg| {
@@ -224,11 +226,11 @@ pub fn format_callback<T: Serialize>(function_name: CallbackFn, arg: &T) -> crat
 /// use millennium::api::ipc::{format_callback_result, CallbackFn};
 /// let res: Result<u8, &str> = Ok(5);
 /// let cb = format_callback_result(res, CallbackFn(145), CallbackFn(0)).expect("failed to format");
-/// assert!(cb.contains(r#"window["_145"](5)"#));
+/// assert!(cb.contains(r#"window['_145'](5)"#));
 ///
 /// let res: Result<&str, &str> = Err("error message here");
 /// let cb = format_callback_result(res, CallbackFn(2), CallbackFn(1)).expect("failed to format");
-/// assert!(cb.contains(r#"window["_1"]("error message here")"#));
+/// assert!(cb.contains(r#"window['_1']("error message here")"#));
 /// ```
 // TODO: better example to explain
 pub fn format_callback_result<T: Serialize, E: Serialize>(result: Result<T, E>, success_callback: CallbackFn, error_callback: CallbackFn) -> crate::api::Result<String> {
@@ -288,7 +290,7 @@ mod test {
 	fn qc_formating(f: CallbackFn, a: String) -> bool {
 		// call format callback
 		let fc = format_callback(f, &a).unwrap();
-		fc.contains(&format!(r#"window["_{}"](JSON.parse('{}'))"#, f.0, serde_json::Value::String(a.clone()),)) || fc.contains(&format!(r#"window["_{}"]({})"#, f.0, serde_json::Value::String(a),))
+		fc.contains(&format!(r#"window['_{}'](JSON.parse('{}'))"#, f.0, serde_json::Value::String(a.clone()),)) || fc.contains(&format!(r#"window['_{}']({})"#, f.0, serde_json::Value::String(a),))
 	}
 
 	// check arbitrary strings in format_callback_result
@@ -300,6 +302,6 @@ mod test {
 			Err(e) => (ec, e)
 		};
 
-		resp.contains(&format!(r#"window["_{}"]({})"#, function.0, serde_json::Value::String(value),))
+		resp.contains(&format!(r#"window['_{}']({})"#, function.0, serde_json::Value::String(value),))
 	}
 }
