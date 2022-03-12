@@ -159,7 +159,7 @@ impl Attributes {
 /// build script; see [`try_build`] for no panics.
 pub fn build() {
 	if let Err(error) = try_build(Attributes::default()) {
-		panic!("error found during millennium-build: {}", error);
+		panic!("error found during millennium-build: {:#?}", error);
 	}
 }
 
