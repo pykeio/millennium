@@ -111,13 +111,15 @@ pub enum Cmd {
 	RemoveDir { path: SafePathBuf, options: Option<DirOperationOptions> },
 	/// The remove file API.
 	RemoveFile { path: SafePathBuf, options: Option<FileOperationOptions> },
-	/// The rename file API.
+	/// The rename API.
 	#[serde(rename_all = "camelCase")]
-	RenameFile {
+	Rename {
 		old_path: SafePathBuf,
 		new_path: SafePathBuf,
 		options: Option<FileOperationOptions>
-	}
+	},
+	/// The file exists API.
+	Exists { path: SafePathBuf, options: Option<FileOperationOptions> }
 }
 
 impl Cmd {
@@ -209,8 +211,8 @@ impl Cmd {
 		Ok(())
 	}
 
-	#[module_command_handler(fs_rename_file, "fs > renameFile")]
-	fn rename_file<R: Runtime>(context: InvokeContext<R>, old_path: SafePathBuf, new_path: SafePathBuf, options: Option<FileOperationOptions>) -> super::Result<()> {
+	#[module_command_handler(fs_rename, "fs > rename")]
+	fn rename<R: Runtime>(context: InvokeContext<R>, old_path: SafePathBuf, new_path: SafePathBuf, options: Option<FileOperationOptions>) -> super::Result<()> {
 		let (old, new) = match options.and_then(|o| o.dir) {
 			Some(dir) => (
 				resolve_path(&context.config, &context.package_info, &context.window, old_path, Some(dir))?,
@@ -221,6 +223,12 @@ impl Cmd {
 		fs::rename(&old, &new)
 			.with_context(|| format!("old: {}, new: {}", old.0.display(), new.0.display()))
 			.map_err(Into::into)
+	}
+
+	#[module_command_handler(fs_exists, "fs > exists")]
+	fn exists<R: Runtime>(context: InvokeContext<R>, path: SafePathBuf, options: Option<FileOperationOptions>) -> super::Result<bool> {
+		let resolved_path = resolve_path(&context.config, &context.package_info, &context.window, path, options.and_then(|o| o.dir))?;
+		Ok(fs::metadata(&resolved_path).is_ok())
 	}
 }
 
@@ -331,10 +339,17 @@ mod tests {
 		crate::test_utils::assert_not_allowlist_error(res);
 	}
 
-	#[millennium_macros::module_command_test(fs_rename_file, "fs > renameFile")]
+	#[millennium_macros::module_command_test(fs_rename, "fs > rename")]
 	#[quickcheck_macros::quickcheck]
-	fn rename_file(old_path: SafePathBuf, new_path: SafePathBuf, options: Option<FileOperationOptions>) {
-		let res = super::Cmd::rename_file(crate::test::mock_invoke_context(), old_path, new_path, options);
+	fn rename(old_path: SafePathBuf, new_path: SafePathBuf, options: Option<FileOperationOptions>) {
+		let res = super::Cmd::rename(crate::test::mock_invoke_context(), old_path, new_path, options);
+		crate::test_utils::assert_not_allowlist_error(res);
+	}
+
+	#[millennium_macros::module_command_test(fs_exists, "fs > exists")]
+	#[quickcheck_macros::quickcheck]
+	fn exists(path: SafePathBuf, options: Option<FileOperationOptions>) {
+		let res = super::Cmd::exists(crate::test::mock_invoke_context(), path, options);
 		crate::test_utils::assert_not_allowlist_error(res);
 	}
 }

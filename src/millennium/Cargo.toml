@@ -173,8 +173,9 @@ fs-all = [
 	"fs-read-dir",
 	"fs-remove-dir",
 	"fs-remove-file",
-	"fs-rename-file",
-	"fs-write-file"
+	"fs-write-file",
+	"fs-rename",
+	"fs-exists"
 ]
 fs-copy-file = [ ]
 fs-create-dir = [ ]
@@ -182,8 +183,9 @@ fs-read-file = [ ]
 fs-read-dir = [ ]
 fs-remove-dir = [ ]
 fs-remove-file = [ ]
-fs-rename-file = [ ]
 fs-write-file = [ ]
+fs-rename = [ ]
+fs-exists = [ ]
 global-shortcut-all = [ ]
 http-all = [ "http-request" ]
 http-request = [ "http-api" ]

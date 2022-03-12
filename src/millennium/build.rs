@@ -33,7 +33,8 @@ fn main() {
 		fs_create_dir: { any(fs_all, feature = "fs-create_dir") },
 		fs_remove_dir: { any(fs_all, feature = "fs-remove-dir") },
 		fs_remove_file: { any(fs_all, feature = "fs-remove-file") },
-		fs_rename_file: { any(fs_all, feature = "fs-rename-file") },
+		fs_rename: { any(fs_all, feature = "fs-rename") },
+		fs_exists: { any(fs_all, feature = "fs-exists") },
 
 		// window
 		window_all: { any(api_all, feature = "window-all") },

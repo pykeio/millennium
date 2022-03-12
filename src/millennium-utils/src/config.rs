@@ -902,7 +902,10 @@ pub struct FsAllowlistConfig {
 	pub remove_file: bool,
 	/// Rename file from local filesystem.
 	#[serde(default)]
-	pub rename_file: bool
+	pub rename: bool,
+	/// Check if file on local filesystem exists.
+	#[serde(default)]
+	pub exists: bool
 }
 
 impl Allowlist for FsAllowlistConfig {
@@ -917,7 +920,8 @@ impl Allowlist for FsAllowlistConfig {
 			create_dir: true,
 			remove_dir: true,
 			remove_file: true,
-			rename_file: true
+			rename: true,
+			exists: true
 		};
 		let mut features = allowlist.to_features();
 		features.push("fs-all");
@@ -936,7 +940,8 @@ impl Allowlist for FsAllowlistConfig {
 			check_feature!(self, features, create_dir, "fs-create-dir");
 			check_feature!(self, features, remove_dir, "fs-remove-dir");
 			check_feature!(self, features, remove_file, "fs-remove-file");
-			check_feature!(self, features, rename_file, "fs-rename-file");
+			check_feature!(self, features, rename, "fs-rename");
+			check_feature!(self, features, exists, "fs-exists");
 			features
 		}
 	}
