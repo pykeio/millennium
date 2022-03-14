@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"lib": [ "DOM", "ES2021", "ES2015.Reflect" ],
+		"target": "es2015",
+		"strict": true,
+		"allowJs": true,
+		"esModuleInterop": true,
+		"baseUrl": ".",
+		"paths": {
+			"types": [ "@types" ]
+		},
+		"declaration": true,
+		"declarationDir": "dist",
+		"rootDir": "src",
+		"outDir": "dist",
+		"moduleResolution": "node"
+	},
+	"include": [ "./src", "src/event.ts" ]
+}

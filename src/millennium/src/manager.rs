@@ -795,7 +795,7 @@ impl<R: Runtime> WindowManager<R> {
 					"eventName".into(),
 					0,
 					None,
-					"window['_' + window.__MILLENNIUM__.transformCallback(cb)]".into()
+					"window['_' + window.Millennium.transformCallback(cb)]".into()
 				)
 			),
 			core_script: include_str!("../scripts/core.js"),

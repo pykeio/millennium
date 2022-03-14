@@ -1,0 +1,54 @@
+{
+	"name": "@pyke/millennium-api",
+	"version": "0.0.0-dev.2",
+	"description": "JavaScript API for Millennium applications",
+	"type": "module",
+	"license": "Apache-2.0",
+	"homepage": "https://millennium.pyke.io/",
+	"bugs": "https://github.com/pykeio/millennium/issues",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/pykeio/millennium.git",
+		"directory": "packages/millennium-api"
+	},
+	"engines": {
+		"node": ">=12.7.0"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"main": "dist/millennium-api.min.js",
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"exports": {
+		".": "./dist/millennium-api.min.js",
+		"./app": "./dist/app.js",
+		"./cli": "./dist/cli.js",
+		"./command-line": "./dist/cli.js",
+		"./event": "./dist/event.js",
+		"./fs": "./dist/fs.js",
+		"./globalShortcut": "./dist/globalShortcut.js",
+		"./global-shortcut": "./dist/globalShortcut.js",
+		"./http": "./dist/http.js",
+		"./millennium": "./dist/millennium.js",
+		"./core": "./dist/millennium.js",
+		"./notification": "./dist/notification.js",
+		"./os": "./dist/os.js",
+		"./path": "./dist/path.js",
+		"./process": "./dist/process.js",
+		"./shell": "./dist/shell.js",
+		"./updater": "./dist/updater.js",
+		"./window": "./dist/window.js"
+	},
+	"scripts": {
+		"build": "tsc && node build.js"
+	},
+	"devDependencies": {
+		"@types/node": "^17.0.21",
+		"esbuild": "^0.14.25",
+		"type-fest": "^2.12.0",
+		"typescript": "^4.6.2"
+	}
+}

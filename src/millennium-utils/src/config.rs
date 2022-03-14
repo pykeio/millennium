@@ -1984,7 +1984,7 @@ pub struct BuildConfig {
 	pub before_build_command: Option<String>,
 	/// Features passed to `cargo` commands.
 	pub features: Option<Vec<String>>,
-	/// Whether we should inject the Millennium API on `window.__MILLENNIUM__`
+	/// Whether we should inject the Millennium API as `window.Millennium`
 	/// or not.
 	#[serde(default)]
 	pub with_global_millennium: bool

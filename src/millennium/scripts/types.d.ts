@@ -47,14 +47,14 @@ declare global {
 		[key: string]: any;
 	}
 
-	namespace __MILLENNIUM__ {
+	namespace Millennium {
 		function transformCallback<T>(callback: (res: T) => void | PromiseLike<void>, once?: boolean): MillenniumCallbackId;
 	}
 
 	function listen<T>(event: string, callback: (event: { payload: T, [k: string]: any }) => void | PromiseLike<void>): void;
 
 	interface Window {
-		__MILLENNIUM__: typeof __MILLENNIUM__;
+		Millennium: typeof Millennium;
 
 		__MILLENNIUM_INVOKE__:
 			(<T extends MillenniumCallbackId & { cmd: string }, R = any>(args: T) => Promise<R>) &
@@ -70,6 +70,14 @@ declare global {
 
 		__MILLENNIUM_PATTERN__: {
 			pattern: MillenniumPattern;
+		};
+	}
+
+	interface Navigator {
+		userAgentData?: {
+			platform: string;
+			mobile: boolean;
+			brands: { brand: string; version: string }[];
 		};
 	}
 }

@@ -197,7 +197,7 @@ pub fn format_callback<T: Serialize>(function_name: CallbackFn, arg: &T) -> crat
 		if (window['_{fn}']) {{
 			window['_{fn}']({arg});
 		}} else {{
-			console.warn('[Millennium] Couldn't find callback id {fn} in window. This happens when the app is reloaded while Rust is running an asynchronous operation.');
+			console.warn('[Millennium] Couldn\'t find callback id {fn} in window. This happens when the app is reloaded while Rust is running an asynchronous operation.');
 		}}"#,
 			fn = function_name.0,
 			arg = arg

@@ -23,15 +23,15 @@
 		return window.crypto.getRandomValues(new Uint32Array(1))[0];
 	}
 
-	if (!window.__MILLENNIUM__)
-		Object.defineProperty(window, '__MILLENNIUM__', {
+	if (!window.Millennium)
+		Object.defineProperty(window, 'Millennium', {
 			value: {},
-			writable: false,
+			writable: true,
 			configurable: false,
 			enumerable: true
 		});
 
-	window.__MILLENNIUM__.transformCallback = function transformCallback(
+	window.Millennium.transformCallback = function transformCallback(
 		callback,
 		once
 	) {
@@ -41,11 +41,12 @@
 		Object.defineProperty(window, prop, {
 			value: result => {
 				if (once)
-					Reflect.deleteProperty(window, prop);
+					delete window[prop];
 
 				return callback && callback(result);
 			},
-			writable: false,
+			writable: true,
+			enumerable: false,
 			configurable: true
 		});
 
@@ -65,13 +66,13 @@
 
 	window.__MILLENNIUM_INVOKE__ = function invoke(cmd, args = {}) {
 		return new Promise(function (resolve, reject) {
-			const callback = window.__MILLENNIUM__.transformCallback(r => {
+			const callback = window.Millennium.transformCallback(r => {
 				resolve(r);
-				delete window[error];
+				delete window[`_${error}`];
 			}, true);
-			const error = window.__MILLENNIUM__.transformCallback(e => {
-				reject(e);
-				delete window[callback];
+			const error = window.Millennium.transformCallback(e => {
+				reject(new Error(e));
+				delete window[`_${callback}`];
 			}, true);
 
 			if (typeof cmd === 'string')
@@ -259,7 +260,7 @@
 	};
 
 	// window.print works on Linux/Windows; need to use the API on macOS
-	if (navigator.userAgent.includes('Mac'))
+	if (/macintosh/i.test(navigator.userAgentData ? navigator.userAgentData.platform : navigator.userAgent))
 		window.print = function() {
 			return window.__MILLENNIUM_INVOKE__('millennium', {
 				__millenniumModule: 'Window',

@@ -16,20 +16,30 @@
  * limitations under the License.
  */
 
-/// <reference path="./types.d.ts" />
+import { invoke } from '../millennium';
 
-;(function () {
-	function __millenniumDeepFreeze(object) {
-		const props = Object.getOwnPropertyNames(object);
-		for (const prop of props)
-			if (typeof object[prop] === 'object')
-				__millenniumDeepFreeze(object[prop]);
+export type MillenniumModule =
+	| 'App'
+	| 'Fs'
+	| 'Path'
+	| 'Os'
+	| 'Window'
+	| 'Shell'
+	| 'Event'
+	| 'Internal'
+	| 'Dialog'
+	| 'Cli'
+	| 'Notification'
+	| 'Http'
+	| 'GlobalShortcut'
+	| 'Process'
+	| 'Clipboard';
 
-		return Object.freeze(object);
-	}
+export interface MillenniumCommand {
+	__millenniumModule: MillenniumModule;
+	[key: string]: unknown;
+}
 
-	Object.defineProperty(window, '__MILLENNIUM_PATTERN__', {
-		// @ts-ignore
-		value: __millenniumDeepFreeze(__TEMPLATE_pattern__)
-	});
-})();
+export async function invokeMillenniumCommand<T>(command: MillenniumCommand): Promise<T> {
+	return invoke<T>('millennium', command);
+}

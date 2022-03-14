@@ -16,20 +16,24 @@
  * limitations under the License.
  */
 
-/// <reference path="./types.d.ts" />
-
-;(function () {
-	function __millenniumDeepFreeze(object) {
-		const props = Object.getOwnPropertyNames(object);
-		for (const prop of props)
-			if (typeof object[prop] === 'object')
-				__millenniumDeepFreeze(object[prop]);
-
-		return Object.freeze(object);
+declare global {
+	interface Navigator {
+		userAgentData?: {
+			platform: string;
+			mobile: boolean;
+			brands: { brand: string; version: string }[];
+		};
 	}
+}
 
-	Object.defineProperty(window, '__MILLENNIUM_PATTERN__', {
-		// @ts-ignore
-		value: __millenniumDeepFreeze(__TEMPLATE_pattern__)
-	});
-})();
+export function isLinux(): boolean {
+	return /linux/i.test(navigator.userAgentData?.platform ?? navigator.userAgent);
+}
+
+export function isWindows(): boolean {
+	return /win/i.test(navigator.userAgentData?.platform ?? navigator.userAgent);
+}
+
+export function isMacOS(): boolean {
+	return /macintosh/i.test(navigator.userAgentData?.platform ?? navigator.userAgent);
+}
