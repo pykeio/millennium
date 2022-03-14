@@ -15,3 +15,6 @@ comment_width = 80
 normalize_comments = true
 format_macro_bodies = true
 use_try_shorthand = true
+merge_derives = true
+use_field_init_shorthand = true
+force_explicit_abi = true
