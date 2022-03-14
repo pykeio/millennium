@@ -34,10 +34,10 @@ use millennium_runtime::{
 	http::{Request as HttpRequest, RequestParts as HttpRequestParts, Response as HttpResponse, ResponseParts as HttpResponseParts},
 	menu::{CustomMenuItem, Menu, MenuEntry, MenuHash, MenuId, MenuItem, MenuUpdate},
 	monitor::Monitor,
-	webview::{FileDropEvent, FileDropHandler, WebviewIpcHandler, WindowBuilder, WindowBuilderBase},
+	webview::{WebviewIpcHandler, WindowBuilder, WindowBuilderBase},
 	window::{
 		dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize, Position, Size},
-		DetachedWindow, JsEventListenerKey, PendingWindow, WindowEvent
+		DetachedWindow, FileDropEvent, JsEventListenerKey, PendingWindow, WindowEvent
 	},
 	ClipboardManager, Dispatch, Error, ExitRequestedEventAction, GlobalShortcutManager, Result, RunEvent, RunIteration, Runtime, RuntimeHandle, UserAttentionType, WindowIcon
 };
@@ -2211,7 +2211,6 @@ fn create_webview(event_loop: &EventLoopWindowTarget<Message>, web_context: &Web
 		uri_scheme_protocols,
 		mut window_builder,
 		ipc_handler,
-		file_drop_handler,
 		label,
 		url,
 		menu_ids,
@@ -2242,11 +2241,11 @@ fn create_webview(event_loop: &EventLoopWindowTarget<Message>, web_context: &Web
 		.with_url(&url)
 		.unwrap() // safe to unwrap because we validate the URL beforehand
 		.with_transparent(is_window_transparent);
-	if let Some(handler) = ipc_handler {
-		webview_builder = webview_builder.with_ipc_handler(create_ipc_handler(context.clone(), label.clone(), menu_ids.clone(), js_event_listeners.clone(), handler));
+	if webview_attributes.file_drop_handler_enabled {
+		webview_builder = webview_builder.with_file_drop_handler(create_file_drop_handler(&context));
 	}
-	if let Some(handler) = file_drop_handler {
-		webview_builder = webview_builder.with_file_drop_handler(create_file_drop_handler(context, label.clone(), menu_ids, js_event_listeners, handler));
+	if let Some(handler) = ipc_handler {
+		webview_builder = webview_builder.with_ipc_handler(create_ipc_handler(context, label.clone(), menu_ids, js_event_listeners, handler));
 	}
 	for (scheme, protocol) in uri_scheme_protocols {
 		webview_builder = webview_builder.with_custom_protocol(scheme, move |millennium_request| {
@@ -2323,27 +2322,23 @@ fn create_ipc_handler(
 	})
 }
 
-/// Create a Millennium Webview file drop handler from a Millennium file drop
-/// handler.
-fn create_file_drop_handler(
-	context: Context,
-	label: String,
-	menu_ids: Arc<Mutex<HashMap<MenuHash, MenuId>>>,
-	js_event_listeners: Arc<Mutex<HashMap<JsEventListenerKey, HashSet<u64>>>>,
-	handler: FileDropHandler<MillenniumWebview>
-) -> Box<dyn Fn(&Window, MillenniumFileDropEvent) -> bool + 'static> {
+/// Create a Millennium Webview file drop handler.
+fn create_file_drop_handler(context: &Context) -> Box<dyn Fn(&Window, MillenniumFileDropEvent) -> bool + 'static> {
+	let window_event_listeners = context.window_event_listeners.clone();
 	Box::new(move |window, event| {
-		handler(
-			FileDropEventWrapper(event).into(),
-			DetachedWindow {
-				dispatcher: MillenniumDispatcher {
-					window_id: window.id(),
-					context: context.clone()
-				},
-				label: label.clone(),
-				menu_ids: menu_ids.clone(),
-				js_event_listeners: js_event_listeners.clone()
+		let event: FileDropEvent = FileDropEventWrapper(event).into();
+		let window_event = WindowEvent::FileDrop(event);
+		let listeners = window_event_listeners.lock().unwrap();
+		if let Some(window_listeners) = listeners.get(&window.id()) {
+			let listeners_map = window_listeners.lock().unwrap();
+			let has_listener = !listeners_map.is_empty();
+			for listener in listeners_map.values() {
+				listener(&window_event);
 			}
-		)
+			// block the default OS action on file drop if we had a listener
+			has_listener
+		} else {
+			false
+		}
 	})
 }

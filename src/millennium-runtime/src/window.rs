@@ -17,6 +17,7 @@
 use std::{
 	collections::{HashMap, HashSet},
 	hash::{Hash, Hasher},
+	path::PathBuf,
 	sync::{mpsc::Sender, Arc, Mutex}
 };
 
@@ -26,7 +27,7 @@ use serde::Serialize;
 use crate::{
 	http::{Request as HttpRequest, Response as HttpResponse},
 	menu::{Menu, MenuEntry, MenuHash, MenuId},
-	webview::{FileDropHandler, WebviewAttributes, WebviewIpcHandler},
+	webview::{WebviewAttributes, WebviewIpcHandler},
 	Dispatch, Runtime, WindowBuilder
 };
 
@@ -73,7 +74,22 @@ pub enum WindowEvent {
 		scale_factor: f64,
 		/// The window inner size.
 		new_inner_size: dpi::PhysicalSize<u32>
-	}
+	},
+	/// An event associated with the file drop action.
+	FileDrop(FileDropEvent)
+}
+
+/// The file drop event payload.
+#[derive(Debug, Clone)]
+#[non_exhaustive]
+pub enum FileDropEvent {
+	/// The file(s) have been dragged onto the window, but have not been dropped
+	/// yet.
+	Hovered(Vec<PathBuf>),
+	/// The file(s) have been dropped onto the window.
+	Dropped(Vec<PathBuf>),
+	/// THe file drop was aborted.
+	Cancelled
 }
 
 /// A menu event.
@@ -111,9 +127,6 @@ pub struct PendingWindow<R: Runtime> {
 	/// How to handle IPC calls on the webview window.
 	pub ipc_handler: Option<WebviewIpcHandler<R>>,
 
-	/// How to handle a file dropping onto the webview window.
-	pub file_drop_handler: Option<FileDropHandler<R>>,
-
 	/// The resolved URL to load on the webview.
 	pub url: String,
 
@@ -149,7 +162,6 @@ impl<R: Runtime> PendingWindow<R> {
 				uri_scheme_protocols: Default::default(),
 				label,
 				ipc_handler: None,
-				file_drop_handler: None,
 				url: "millennium://localhost".to_string(),
 				menu_ids: Arc::new(Mutex::new(menu_ids)),
 				js_event_listeners: Default::default()
@@ -175,7 +187,6 @@ impl<R: Runtime> PendingWindow<R> {
 				uri_scheme_protocols: Default::default(),
 				label,
 				ipc_handler: None,
-				file_drop_handler: None,
 				url: "millennium://localhost".to_string(),
 				menu_ids: Arc::new(Mutex::new(menu_ids)),
 				js_event_listeners: Default::default()

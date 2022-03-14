@@ -49,8 +49,8 @@ use crate::{
 	plugin::PluginStore,
 	runtime::{
 		http::{MimeType, Request as HttpRequest, Response as HttpResponse, ResponseBuilder as HttpResponseBuilder},
-		webview::{FileDropEvent, FileDropHandler, WebviewIpcHandler, WindowBuilder},
-		window::{dpi::PhysicalSize, DetachedWindow, PendingWindow, WindowEvent},
+		webview::{WebviewIpcHandler, WindowBuilder},
+		window::{dpi::PhysicalSize, DetachedWindow, FileDropEvent, PendingWindow, WindowEvent},
 		Runtime
 	},
 	utils::{
@@ -727,30 +727,6 @@ impl<R: Runtime> WindowManager<R> {
 		})
 	}
 
-	fn prepare_file_drop(&self, app_handle: AppHandle<R>) -> FileDropHandler<R> {
-		let manager = self.clone();
-		Box::new(move |event, window| {
-			let window = Window::new(manager.clone(), window, app_handle.clone());
-			let _ = match event {
-				FileDropEvent::Hovered(paths) => window.emit_and_trigger("millennium://file-drop-hover", paths),
-				FileDropEvent::Dropped(paths) => {
-					let scopes = window.state::<Scopes>();
-					for path in &paths {
-						if path.is_file() {
-							let _ = scopes.allow_file(path);
-						} else {
-							let _ = scopes.allow_directory(path, false);
-						}
-					}
-					window.emit_and_trigger("millennium://file-drop", paths)
-				}
-				FileDropEvent::Cancelled => window.emit_and_trigger("millennium://file-drop-cancelled", ()),
-				_ => unimplemented!()
-			};
-			true
-		})
-	}
-
 	fn initialization_script(&self, ipc_script: &str, pattern_script: &str, plugin_initialization_script: &str, with_global_millennium: bool) -> crate::Result<String> {
 		#[derive(Template)]
 		#[default_template("../scripts/init.js")]
@@ -931,11 +907,7 @@ impl<R: Runtime> WindowManager<R> {
 		if is_local {
 			let label = pending.label.clone();
 			pending = self.prepare_pending_window(pending, &label, window_labels, app_handle.clone(), web_resource_request_handler)?;
-			pending.ipc_handler = Some(self.prepare_ipc_handler(app_handle.clone()));
-		}
-
-		if pending.webview_attributes.file_drop_handler_enabled {
-			pending.file_drop_handler = Some(self.prepare_file_drop(app_handle));
+			pending.ipc_handler = Some(self.prepare_ipc_handler(app_handle));
 		}
 
 		// in `Windows`, we need to force a data_directory
@@ -1098,6 +1070,22 @@ fn on_window_event<R: Runtime>(window: &Window<R>, manager: &WindowManager<R>, e
 				size: *new_inner_size
 			}
 		)?,
+		WindowEvent::FileDrop(event) => match event {
+			FileDropEvent::Hovered(paths) => window.emit_and_trigger("millennium://file-drop-hover", paths)?,
+			FileDropEvent::Dropped(paths) => {
+				let scopes = window.state::<Scopes>();
+				for path in paths {
+					if path.is_file() {
+						let _ = scopes.allow_file(path);
+					} else {
+						let _ = scopes.allow_directory(path, false);
+					}
+				}
+				window.emit_and_trigger("millennium://file-drop", paths)?;
+			}
+			FileDropEvent::Cancelled => window.emit_and_trigger("millennium://file-drop-cancelled", ())?,
+			_ => unimplemented!()
+		},
 		_ => unimplemented!()
 	}
 	Ok(())
