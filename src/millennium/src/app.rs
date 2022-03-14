@@ -741,10 +741,10 @@ impl<R: Runtime> Builder<R> {
 	/// This method can be called any number of times as long as each call
 	/// refers to a different `T`.
 	///
-	/// Managed state can be retrieved by any request handler via the
-	/// [`State`](crate::State) request guard. In particular, if a value of type
+	/// Managed state can be retrieved by any command handler via the
+	/// [`State`](crate::State) guard. In particular, if a value of type
 	/// `T` is managed by Millennium, adding `State<T>` to the list of arguments
-	/// in a request handler instructs Millennium to retrieve the managed value.
+	/// in a command handler instructs Millennium to retrieve the managed value.
 	///
 	/// # Panics
 	///
@@ -760,25 +760,29 @@ impl<R: Runtime> Builder<R> {
 	///
 	/// use millennium::State;
 	/// // here we use Mutex to achieve interior mutability
-	/// struct Storage(Mutex<HashMap<u64, String>>);
+	/// struct Storage {
+	/// 	store: Mutex<HashMap<u64, String>>
+	/// }
 	/// struct Connection;
-	/// struct DbConnection(Mutex<Option<Connection>>);
+	/// struct DbConnection {
+	/// 	db: Mutex<Option<Connection>>
+	/// }
 	///
 	/// #[millennium::command]
 	/// fn connect(connection: State<DbConnection>) {
 	/// 	// initialize the connection, mutating the state with interior mutability
-	/// 	*connection.0.lock().unwrap() = Some(Connection {});
+	/// 	*connection.db.lock().unwrap() = Some(Connection {});
 	/// }
 	///
 	/// #[millennium::command]
 	/// fn storage_insert(key: u64, value: String, storage: State<Storage>) {
 	/// 	// mutate the storage behind the Mutex
-	/// 	storage.0.lock().unwrap().insert(key, value);
+	/// 	storage.store.lock().unwrap().insert(key, value);
 	/// }
 	///
 	/// millennium::Builder::default()
-	/// 	.manage(Storage(Default::default()))
-	/// 	.manage(DbConnection(Default::default()))
+	/// 	.manage(Storage { store: Default::default() })
+	/// 	.manage(DbConnection { db: Default::default() })
 	/// 	.invoke_handler(millennium::generate_handler![connect, storage_insert])
 	/// 	// on an actual app, remove the string argument
 	/// 	.run(millennium::generate_context!("test/fixture/.millenniumrc"))

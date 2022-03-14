@@ -14,6 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#![allow(clippy::tabs_in_doc_comments)]
+
 //! Millennium is a framework for building tiny, blazing fast binaries for all
 //! major desktop platforms. Developers can integrate any front-end framework
 //! that compiles to HTML, JS and CSS for building their user interface.
@@ -555,16 +557,98 @@ pub trait Manager<R: Runtime>: sealed::ManagerBase<R> {
 	}
 
 	/// Add `state` to the state managed by the application.
-	/// See [`crate::Builder#manage`] for instructions.
-	fn manage<T>(&self, state: T)
+	///
+	/// This method can be called any number of times as long as each call
+	/// refers to a different `T`.
+	///
+	/// Managed state can be retrieved by any command handler via the
+	/// [`State`](crate::State) guard. In particular, if a value of type
+	/// `T` is managed by Millennium, adding `State<T>` to the list of arguments
+	/// in a command handler instructs Millennium to retrieve the managed value.
+	///
+	/// # Panics
+	///
+	/// Panics if state of type `T` is already being managed.
+	///
+	/// # Mutability
+	///
+	/// Since the managed state is global and must be [`Send`] + [`Sync`],
+	/// mutations can only happen through interior mutability:
+	///
+	/// ```rust,no_run
+	/// use std::{collections::HashMap, sync::Mutex};
+	///
+	/// use millennium::State;
+	/// // here we use Mutex to achieve interior mutability
+	/// struct Storage {
+	/// 	store: Mutex<HashMap<u64, String>>
+	/// }
+	/// struct Connection;
+	/// struct DbConnection {
+	/// 	db: Mutex<Option<Connection>>
+	/// }
+	///
+	/// #[millennium::command]
+	/// fn connect(connection: State<DbConnection>) {
+	/// 	// initialize the connection, mutating the state with interior mutability
+	/// 	*connection.db.lock().unwrap() = Some(Connection {});
+	/// }
+	///
+	/// #[millennium::command]
+	/// fn storage_insert(key: u64, value: String, storage: State<Storage>) {
+	/// 	// mutate the storage behind the Mutex
+	/// 	storage.store.lock().unwrap().insert(key, value);
+	/// }
+	///
+	/// millennium::Builder::default()
+	/// 	.manage(Storage { store: Default::default() })
+	/// 	.manage(DbConnection { db: Default::default() })
+	/// 	.invoke_handler(millennium::generate_handler![connect, storage_insert])
+	/// 	// on an actual app, remove the string argument
+	/// 	.run(millennium::generate_context!("test/fixture/.millenniumrc"))
+	/// 	.expect("error while running millennium application");
+	/// ```
+	///
+	/// # Examples
+	///
+	/// ```rust,no_run
+	/// use millennium::State;
+	///
+	/// struct MyInt(isize);
+	/// struct MyString(String);
+	///
+	/// #[millennium::command]
+	/// fn int_command(state: State<MyInt>) -> String {
+	/// 	format!("The stateful int is: {}", state.0)
+	/// }
+	///
+	/// #[millennium::command]
+	/// fn string_command<'r>(state: State<'r, MyString>) {
+	/// 	println!("state: {}", state.inner().0);
+	/// }
+	///
+	/// millennium::Builder::default()
+	/// 	.manage(MyInt(10))
+	/// 	.manage(MyString("Hello, managed state!".to_string()))
+	/// 	.invoke_handler(millennium::generate_handler![int_command, string_command])
+	/// 	// on an actual app, remove the string argument
+	/// 	.run(millennium::generate_context!("test/fixture/.millenniumrc"))
+	/// 	.expect("error while running Millennium application");
+	/// ```
+	fn manage<T>(&self, state: T) -> bool
 	where
 		T: Send + Sync + 'static
 	{
-		self.manager().state().set(state);
+		self.manager().state().set(state)
 	}
 
-	/// Gets the managed state for the type `T`. Panics if the type is not
-	/// managed.
+	/// Retrieves the managed state for the type `T`.
+	///
+	/// # Panics
+	///
+	/// Panics if the state for the type `T` has not been previously
+	/// [managed](Self::manage). Use [try_state](Self::try_state) for a
+	/// non-panicking version.
 	fn state<T>(&self) -> State<'_, T>
 	where
 		T: Send + Sync + 'static
@@ -572,8 +656,10 @@ pub trait Manager<R: Runtime>: sealed::ManagerBase<R> {
 		self.manager().inner.state.try_get().expect("state() called before manage() for given type")
 	}
 
-	/// Tries to get the managed state for the type `T`. Returns `None` if the
-	/// type is not managed.
+	/// Attempts to retrieve the managed state for the type `T`.
+	///
+	/// Returns `Some` if the state has previously been [managed](Self::manage).
+	/// Otherwise, returns `None`.
 	fn try_state<T>(&self) -> Option<State<'_, T>>
 	where
 		T: Send + Sync + 'static
