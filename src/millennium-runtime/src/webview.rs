@@ -158,6 +158,10 @@ pub trait WindowBuilder: WindowBuilderBase {
 	#[must_use]
 	fn decorations(self, decorations: bool) -> Self;
 
+	#[cfg(target_os = "windows")]
+	#[cfg_attr(doc_cfg, doc(cfg(target_os = "windows")))]
+	fn titlebar_hidden(self, titlebar_hidden: bool) -> Self;
+
 	/// Whether the window should always be on top of other windows.
 	#[must_use]
 	fn always_on_top(self, always_on_top: bool) -> Self;

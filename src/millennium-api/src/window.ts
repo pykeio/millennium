@@ -606,6 +606,7 @@ export interface WindowOptions {
 	 * **Using private APIs on macOS will make your application ineligible for the App Store.**
 	 */
 	transparent?: boolean;
+	titlebarHidden?: boolean;
 	maximized?: boolean;
 	visibile?: boolean;
 	decorations?: boolean;

@@ -1709,6 +1709,18 @@ unsafe fn public_window_callback_inner<T: 'static>(window: HWND, msg: u32, wpara
 		win32wm::WM_NCCALCSIZE => {
 			let win_flags = subclass_input.window_state.lock().window_flags();
 
+			// remove ~6px margin at the top of the window when HIDDEN_TITLEBAR is enabled
+			if win_flags.contains(WindowFlags::HIDDEN_TITLEBAR) {
+				let mut border_thickness = RECT::default();
+				AdjustWindowRectEx(&mut border_thickness, GetWindowLongPtrW(window, GWL_STYLE) as u32 & !WS_CAPTION, false, 0);
+
+				let params = &mut *(lparam.0 as *mut NCCALCSIZE_PARAMS);
+				// FIXME: this gets rid of a 6px margin at the top of the window, but it
+				// prevents resizing using the top border. adding a 1px margin (which gets
+				// covered by the border) helps a little bit, but it's still not perfect.
+				params.rgrc[0].top += border_thickness.top + 1;
+			}
+
 			if !win_flags.contains(WindowFlags::DECORATIONS) {
 				// adjust the maximized borderless window so it doesn't cover the taskbar
 				if util::is_maximized(window) {

@@ -204,6 +204,12 @@ impl WindowBuilder for MockWindowBuilder {
 		self
 	}
 
+	#[cfg(target_os = "windows")]
+	#[cfg_attr(doc_cfg, doc(cfg(target_os = "windows")))]
+	fn titlebar_hidden(self, titlebar_hidden: bool) -> Self {
+		self
+	}
+
 	fn always_on_top(self, always_on_top: bool) -> Self {
 		self
 	}

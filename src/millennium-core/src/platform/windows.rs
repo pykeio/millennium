@@ -239,6 +239,9 @@ pub trait WindowBuilderExtWindows {
 
 	/// Whether to create the window icon with the taskbar icon or not.
 	fn with_skip_taskbar(self, skip: bool) -> WindowBuilder;
+
+	/// Whether the titlebar should be hidden or not.
+	fn with_titlebar_hidden(self, titlebar_hidden: bool) -> WindowBuilder;
 }
 
 impl WindowBuilderExtWindows for WindowBuilder {
@@ -287,6 +290,12 @@ impl WindowBuilderExtWindows for WindowBuilder {
 	#[inline]
 	fn with_skip_taskbar(mut self, skip: bool) -> WindowBuilder {
 		self.platform_specific.skip_taskbar = skip;
+		self
+	}
+
+	#[inline]
+	fn with_titlebar_hidden(mut self, titlebar_hidden: bool) -> WindowBuilder {
+		self.platform_specific.titlebar_hidden = titlebar_hidden;
 		self
 	}
 }

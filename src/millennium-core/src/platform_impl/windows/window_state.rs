@@ -79,16 +79,17 @@ bitflags! {
 }
 bitflags! {
 	pub struct WindowFlags: u32 {
-		const RESIZABLE      = 1 << 0;
-		const DECORATIONS    = 1 << 1;
-		const VISIBLE        = 1 << 2;
-		const ON_TASKBAR     = 1 << 3;
-		const ALWAYS_ON_TOP  = 1 << 4;
-		const NO_BACK_BUFFER = 1 << 5;
-		const TRANSPARENT    = 1 << 6;
-		const CHILD          = 1 << 7;
-		const MAXIMIZED      = 1 << 8;
-		const POPUP          = 1 << 14;
+		const RESIZABLE       = 1 << 0;
+		const DECORATIONS     = 1 << 1;
+		const VISIBLE         = 1 << 2;
+		const ON_TASKBAR      = 1 << 3;
+		const ALWAYS_ON_TOP   = 1 << 4;
+		const NO_BACK_BUFFER  = 1 << 5;
+		const TRANSPARENT     = 1 << 6;
+		const CHILD           = 1 << 7;
+		const MAXIMIZED       = 1 << 8;
+		const POPUP           = 1 << 14;
+		const HIDDEN_TITLEBAR = 1 << 15;
 
 		/// Marker flag for fullscreen. Should always match `WindowState::fullscreen`, but is
 		/// included here to make masking easier.
@@ -234,6 +235,10 @@ impl WindowFlags {
 		}
 		if self.contains(WindowFlags::MAXIMIZED) {
 			style |= WS_MAXIMIZE;
+		}
+		if self.contains(WindowFlags::HIDDEN_TITLEBAR) {
+			style_ex |= WS_EX_WINDOWEDGE;
+			style &= !(WS_CAPTION);
 		}
 		if self.intersects(WindowFlags::MARKER_EXCLUSIVE_FULLSCREEN | WindowFlags::MARKER_BORDERLESS_FULLSCREEN) {
 			style &= !WS_OVERLAPPEDWINDOW;

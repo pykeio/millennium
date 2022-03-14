@@ -642,6 +642,10 @@ impl WindowBuilder for WindowBuilderWrapper {
 		if config.transparent {
 			eprintln!("The window is set to be transparent but the `macos-private-api` is not enabled. This can be enabled via the `millennium.macOSPrivateApi` configuration property.");
 		}
+		#[cfg(target_os = "windows")]
+		{
+			window = window.titlebar_hidden(config.titlebar_hidden);
+		}
 
 		if let (Some(min_width), Some(min_height)) = (config.min_width, config.min_height) {
 			window = window.min_inner_size(min_width, min_height);
@@ -733,6 +737,12 @@ impl WindowBuilder for WindowBuilderWrapper {
 
 	fn decorations(mut self, decorations: bool) -> Self {
 		self.inner = self.inner.with_decorations(decorations);
+		self
+	}
+
+	#[cfg(target_os = "windows")]
+	fn titlebar_hidden(mut self, titlebar_hidden: bool) -> Self {
+		self.inner = self.inner.with_titlebar_hidden(titlebar_hidden);
 		self
 	}
 

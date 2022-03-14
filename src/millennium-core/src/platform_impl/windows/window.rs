@@ -732,6 +732,7 @@ unsafe fn init<T: 'static>(attributes: WindowAttributes, pl_attribs: PlatformSpe
 	// WindowFlags::VISIBLE and MAXIMIZED are set down below after the window has
 	// been configured.
 	window_flags.set(WindowFlags::RESIZABLE, attributes.resizable);
+	window_flags.set(WindowFlags::HIDDEN_TITLEBAR, pl_attribs.titlebar_hidden);
 
 	let parent = match pl_attribs.parent {
 		Parent::ChildOf(parent) => {
@@ -903,6 +904,16 @@ unsafe extern "system" fn window_proc(window: HWND, msg: u32, wparam: WPARAM, lp
 			let userdata = util::GetWindowLongPtrW(window, GWL_USERDATA);
 			if userdata != 0 {
 				let win_flags = WindowFlags::from_bits_unchecked(userdata as _);
+				if win_flags.contains(WindowFlags::HIDDEN_TITLEBAR) {
+					let mut border_thickness = RECT::default();
+					AdjustWindowRectEx(&mut border_thickness, GetWindowLongPtrW(window, GWL_STYLE) as u32 & !WS_CAPTION, false, 0);
+
+					let params = &mut *(lparam.0 as *mut NCCALCSIZE_PARAMS);
+					// FIXME: this gets rid of a 6px margin at the top of the window, but it
+					// prevents resizing using the top border. adding a 1px margin (which gets
+					// covered by the border) helps a little bit, but it's still not perfect.
+					params.rgrc[0].top += border_thickness.top + 1;
+				}
 				if !win_flags.contains(WindowFlags::DECORATIONS) {
 					// adjust the maximized borderless window so it doesn't cover the taskbar
 					if util::is_maximized(window) {

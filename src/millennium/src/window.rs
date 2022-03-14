@@ -345,6 +345,14 @@ impl<R: Runtime> WindowBuilder<R> {
 		self
 	}
 
+	/// Whether to hide the window's titlebar (while still having borders).
+	#[cfg(target_os = "windows")]
+	#[cfg_attr(doc_cfg, doc(cfg(target_os = "windows")))]
+	pub fn titlebar_hidden(mut self, titlebar_hidden: bool) -> Self {
+		self.window_builder = self.window_builder.titlebar_hidden(titlebar_hidden);
+		self
+	}
+
 	/// Whether the window should always be on top of other windows.
 	#[must_use]
 	pub fn always_on_top(mut self, always_on_top: bool) -> Self {

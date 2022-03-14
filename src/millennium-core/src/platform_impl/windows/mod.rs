@@ -59,6 +59,7 @@ pub struct PlatformSpecificWindowBuilderAttributes {
 	pub skip_taskbar: bool,
 	pub no_redirection_bitmap: bool,
 	pub drag_and_drop: bool,
+	pub titlebar_hidden: bool,
 	pub preferred_theme: Option<Theme>
 }
 
@@ -68,8 +69,9 @@ impl Default for PlatformSpecificWindowBuilderAttributes {
 			parent: Parent::None,
 			menu: None,
 			taskbar_icon: None,
-			no_redirection_bitmap: false,
+			no_redirection_bitmap: true,
 			drag_and_drop: true,
+			titlebar_hidden: false,
 			preferred_theme: None,
 			skip_taskbar: false
 		}
@@ -107,6 +109,7 @@ impl DeviceId {
 #[non_exhaustive]
 #[derive(Debug)]
 pub enum OsError {
+	#[allow(dead_code)]
 	CreationError(&'static str),
 	IoError(std::io::Error)
 }

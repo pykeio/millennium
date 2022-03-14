@@ -605,6 +605,10 @@ pub struct WindowConfig {
 	/// Whether the window should have borders and bars.
 	#[serde(default = "default_decorations")]
 	pub decorations: bool,
+	/// Whether the window's titlebar should be hidden (while still having
+	/// borders).
+	#[serde(default = "default_titlebar_hidden")]
+	pub titlebar_hidden: bool,
 	/// Whether the window should always be on top of other windows.
 	#[serde(default)]
 	pub always_on_top: bool,
@@ -636,6 +640,7 @@ impl Default for WindowConfig {
 			maximized: false,
 			visible: default_visible(),
 			decorations: default_decorations(),
+			titlebar_hidden: default_titlebar_hidden(),
 			always_on_top: false,
 			skip_taskbar: false
 		}
@@ -672,6 +677,10 @@ fn default_visible() -> bool {
 
 fn default_decorations() -> bool {
 	true
+}
+
+fn default_titlebar_hidden() -> bool {
+	false
 }
 
 fn default_file_drop_enabled() -> bool {
@@ -2347,6 +2356,7 @@ mod build {
 			let maximized = self.maximized;
 			let visible = self.visible;
 			let decorations = self.decorations;
+			let titlebar_hidden = self.titlebar_hidden;
 			let always_on_top = self.always_on_top;
 			let skip_taskbar = self.skip_taskbar;
 
@@ -2373,6 +2383,7 @@ mod build {
 				maximized,
 				visible,
 				decorations,
+				titlebar_hidden,
 				always_on_top,
 				skip_taskbar
 			);
