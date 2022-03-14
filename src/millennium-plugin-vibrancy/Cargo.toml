@@ -1,0 +1,38 @@
+[package]
+publish = false
+name = "millennium-plugin-vibrancy"
+description = "Vibrancy & acrylic effects for Millennium"
+version = "1.0.0-beta.1"
+license = "Apache-2.0 OR MIT"
+readme = "README.md"
+repository = "https://github.com/pykeio/millennium"
+authors = [ "pyke.io", "Tauri Programme within The Commons Conservancy" ]
+categories = [ "gui" ]
+keywords = [ "vibrancy", "acrylic", "mica", "blur", "windowing" ]
+rust-version = "1.57"
+edition = "2021"
+
+[package.metadata.docs.rs]
+default-target = "x86_64-pc-windows-msvc"
+targets = [ "x86_64-apple-darwin", "x86_64-pc-windows-msvc" ]
+
+[dependencies]
+raw-window-handle = "0.4"
+
+[dev-dependencies]
+millennium-core = { version = "1.0.0-beta.1", path = "../millennium-core" }
+
+[target."cfg(target_os = \"windows\")".dependencies.windows-sys]
+version = "0.33.0"
+features = [
+	"Win32_Foundation",
+	"Win32_System_LibraryLoader",
+	"Win32_System_SystemInformation",
+	"Win32_Graphics_Gdi",
+	"Win32_Graphics_Dwm",
+	"Win32_UI_WindowsAndMessaging"
+]
+
+[target."cfg(target_os = \"macos\")".dependencies]
+cocoa = "0.24"
+objc = "0.2"
