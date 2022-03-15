@@ -326,7 +326,7 @@ impl ToTokens for EmbeddedAssets {
 			assets.append_all(quote!(#key => {
 				const _: &[u8] = include_bytes!(#input);
 				include_bytes!(#output)
-			}));
+			},));
 		}
 
 		let mut global_hashes = TokenStream::new();
