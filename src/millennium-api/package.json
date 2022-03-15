@@ -1,6 +1,6 @@
 {
 	"name": "@pyke/millennium-api",
-	"version": "0.0.0-dev.2",
+	"version": "0.0.0-dev.3",
 	"description": "JavaScript API for Millennium applications",
 	"type": "module",
 	"license": "Apache-2.0",
@@ -17,13 +17,14 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"main": "dist/millennium-api.min.js",
+	"main": "dist/millennium-api.js",
+	"typings": "dist/index.d.ts",
 	"files": [
 		"dist",
 		"README.md"
 	],
 	"exports": {
-		".": "./dist/millennium-api.min.js",
+		".": "./dist/millennium-api.js",
 		"./app": "./dist/app.js",
 		"./cli": "./dist/cli.js",
 		"./command-line": "./dist/cli.js",

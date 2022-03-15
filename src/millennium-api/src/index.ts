@@ -35,7 +35,8 @@ export * as fileSystem from './fs';
 export * as cli from './cli';
 export * as windows from './window';
 
-export { transformCallback } from './millennium';
+export { appWindow } from './window';
+export * from './millennium';
 export type { ArgMatch, CliMatches, SubcommandMatch } from './cli';
 export type { Event, EventCallback, EventName, Unlistener } from './event';
 export { BaseDirectory } from './fs';

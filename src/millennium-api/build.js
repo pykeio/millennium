@@ -43,7 +43,7 @@ await build({
 	platform: 'browser',
 	entryPoints: [ 'src/index.ts' ],
 	target,
-	outfile: 'dist/millennium-api.min.js'
+	outfile: 'dist/millennium-api.js'
 });
 
 async function exists(path) {
