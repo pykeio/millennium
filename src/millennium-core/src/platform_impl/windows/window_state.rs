@@ -210,6 +210,9 @@ impl WindowFlags {
 			style |= WS_THICKFRAME | WS_MAXIMIZEBOX;
 		}
 		if self.contains(WindowFlags::DECORATIONS) {
+			if !self.contains(WindowFlags::RESIZABLE) {
+				style |= WS_THICKFRAME;
+			}
 			style_ex |= WS_EX_WINDOWEDGE;
 		}
 		if self.contains(WindowFlags::VISIBLE) {

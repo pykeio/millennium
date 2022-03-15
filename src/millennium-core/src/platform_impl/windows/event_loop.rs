@@ -1746,6 +1746,18 @@ unsafe fn public_window_callback_inner<T: 'static>(window: HWND, msg: u32, wpara
 					let (cx, cy) = (i32::from(util::GET_X_LPARAM(lparam)), i32::from(util::GET_Y_LPARAM(lparam)));
 
 					result = ProcResult::Value(crate::platform_impl::hit_test(window, cx, cy));
+				} else if !win_flags.contains(WindowFlags::RESIZABLE) {
+					// we need WS_THICKFRAME for borders when decorations are enabled, but this
+					// conflicts with resizable: false. this will prevent resizing (at least via the
+					// borders) when resizing is disabled
+					let mut window_rect = RECT::default();
+					unsafe {
+						if GetWindowRect(window, <*mut _>::cast(&mut window_rect)).as_bool() {
+							result = ProcResult::Value(LRESULT(HTCLIENT as _));
+						} else {
+							result = ProcResult::Value(LRESULT(HTNOWHERE as _));
+						}
+					}
 				} else {
 					result = ProcResult::DefSubclassProc;
 				}
