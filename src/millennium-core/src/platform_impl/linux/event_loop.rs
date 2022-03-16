@@ -732,14 +732,11 @@ impl<T: 'static> EventLoop<T> {
 	///
 	/// There are a dew notibale event will sent to callback when state is
 	/// transisted:
-	/// - On any state moves to `LoopDestroyed`, a `LoopDestroyed` event is
-	///   sent.
-	/// - On `NewStart` to `EventQueue`, a `NewEvents` with corresponding
-	///   `StartCause` depends on
+	/// - On any state moves to `LoopDestroyed`, a `LoopDestroyed` event is sent.
+	/// - On `NewStart` to `EventQueue`, a `NewEvents` with corresponding `StartCause` depends on
 	/// current control flow is sent.
 	/// - On `EventQueue` to `DrawQueue`, a `MainEventsCleared` event is sent.
-	/// - On `DrawQueue` back to `NewStart`, a `RedrawEventsCleared` event is
-	///   sent.
+	/// - On `DrawQueue` back to `NewStart`, a `RedrawEventsCleared` event is sent.
 	pub(crate) fn run_return<F>(&mut self, mut callback: F) -> i32
 	where
 		F: FnMut(Event<'_, T>, &RootELW<T>, &mut ControlFlow)

@@ -14,6 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#![allow(clippy::tabs_in_doc_comments)]
+
 use std::fmt;
 
 use super::{
@@ -37,7 +39,11 @@ type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 /// ```
 /// # use millennium_runtime::http::*;
 ///
-/// let response = ResponseBuilder::new().status(202).mimetype("text/html").body("hello!".as_bytes().to_vec()).unwrap();
+/// let response = ResponseBuilder::new()
+/// 	.status(202)
+/// 	.mimetype("text/html")
+/// 	.body("hello!".as_bytes().to_vec())
+/// 	.unwrap();
 /// ```
 pub struct Response {
 	head: ResponseParts,

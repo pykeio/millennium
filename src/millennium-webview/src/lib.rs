@@ -58,34 +58,26 @@
 //! Millennium Webview uses a set of feature flags to toggle several advanced
 //! features. `file-drop`, `protocol`, and `tray` are enabled by default.
 //!
-//! - `file-drop`: Enables [`with_file_drop_handler`] to control the behaviour
-//!   when there are files
+//! - `file-drop`: Enables [`with_file_drop_handler`] to control the behaviour when there are files
 //! interacting with the window. Enabled by default.
-//! - `protocol`: Enables [`with_custom_protocol`] to define custom URL scheme
-//!   for handling tasks like
+//! - `protocol`: Enables [`with_custom_protocol`] to define custom URL scheme for handling tasks like
 //! loading assets. Enabled by default.
-//! - `tray`: Enables system tray and more menu item variants on **Linux**. You
-//!   can still create
+//! - `tray`: Enables system tray and more menu item variants on **Linux**. You can still create
 //! those types if you disable it. They just don't create the actual objects. We
 //! set this flag because some implementations require more installed packages.
 //! Disable this if you don't want to install `libappindicator` package. Enabled
 //! by default.
-//! - `ayatana`: Enable this if you wish to use more update
-//!   `libayatana-appindicator` since
+//! - `ayatana`: Enable this if you wish to use more update `libayatana-appindicator` since
 //! `libappindicator` is no longer maintained.
-//! - `devtool`: Enable devtool on **macOS** requires calling private functions.
-//!   While it's still
+//! - `devtool`: Enable devtool on **macOS** requires calling private functions. While it's still
 //! enabled in **debug** build on mac, it will require this feature flag to
 //! actually enable it in **release** build. Avoid this in release build if your
 //! app needs to publish to App Store.
-//! - `transparent`: Transparent background on **macOS** requires calling
-//!   private functions.
+//! - `transparent`: Transparent background on **macOS** requires calling private functions.
 //! Avoid this in release build if your app needs to publish to App Store.
-//! - `fullscreen`: Fullscreen video and other media on **macOS** requires
-//!   calling private functions.
+//! - `fullscreen`: Fullscreen video and other media on **macOS** requires calling private functions.
 //! Avoid this in release build if your app needs to publish to App Store.
-//! - `dox`: Enables this in `package.metadata.docs.rs` section to skip linking
-//!   some **Linux**
+//! - `dox`: Enables this in `package.metadata.docs.rs` section to skip linking some **Linux**
 //! libraries and prevent from building documentation on doc.rs fails.
 //!
 //! [`EventLoop`]: crate::application::event_loop::EventLoop

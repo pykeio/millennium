@@ -87,14 +87,12 @@ pub struct WebViewAttributes {
 	/// send requests with native `fetch` and `XmlHttpRequest` APIs. Here are
 	/// the different Origin headers across platforms:
 	///
-	/// - macOS: `<scheme_name>://<path>` (so it will be `millennium://examples`
-	///   in `custom_protocol` example)
-	/// - Linux: Though it's same as macOS, there's a [bug] that Origin header
-	///   in the request will be
+	/// - macOS: `<scheme_name>://<path>` (so it will be `millennium://examples` in `custom_protocol` example)
+	/// - Linux: Though it's same as macOS, there's a [bug] that Origin header in the request will be
 	/// empty. So the only way to pass the server is setting
 	/// `Access-Control-Allow-Origin: *`.
-	/// - Windows: `https://<scheme_name>.<path>` (so it will be `https://millennium.examples`
-	///   in `custom_protocol` example)
+	/// - Windows: `https://<scheme_name>.<path>` (so it will be `https://millennium.examples` in `custom_protocol`
+	///   example)
 	///
 	/// [bug]: https://bugs.webkit.org/show_bug.cgi?id=229034
 	pub custom_protocols: Vec<(String, Box<dyn Fn(&HttpRequest) -> Result<HttpResponse>>)>,
@@ -214,14 +212,12 @@ impl<'a> WebViewBuilder<'a> {
 	/// send requests with native `fetch` and `XmlHttpRequest` APIs. Here are
 	/// the different Origin headers across platforms:
 	///
-	/// - macOS: `<scheme_name>://<path>` (so it will be `millennium://examples`
-	///   in `custom_protocol` example)
-	/// - Linux: Though it's same as macOS, there's a [bug] that Origin header
-	///   in the request will be
+	/// - macOS: `<scheme_name>://<path>` (so it will be `millennium://examples` in `custom_protocol` example)
+	/// - Linux: Though it's same as macOS, there's a [bug] that Origin header in the request will be
 	/// empty. So the only way to pass the server is setting
 	/// `Access-Control-Allow-Origin: *`.
-	/// - Windows: `https://<scheme_name>.<path>` (so it will be `https://millennium.examples`
-	///   in `custom_protocol` example)
+	/// - Windows: `https://<scheme_name>.<path>` (so it will be `https://millennium.examples` in `custom_protocol`
+	///   example)
 	///
 	/// [bug]: https://bugs.webkit.org/show_bug.cgi?id=229034
 	#[cfg(feature = "protocol")]
@@ -323,8 +319,7 @@ impl<'a> WebViewBuilder<'a> {
 	///
 	/// Platform-specific behavior:
 	///
-	/// - **Unix:** This method must be called in a gtk thread. Usually this
-	///   means it should be
+	/// - **Unix:** This method must be called in a gtk thread. Usually this means it should be
 	/// called in the same thread with the [`EventLoop`] you create.
 	///
 	/// [`EventLoop`]: crate::application::event_loop::EventLoop
@@ -373,8 +368,7 @@ impl WebView {
 	///
 	/// Platform-specific behavior:
 	///
-	/// - **Unix:** This method must be called in a gtk thread. Usually this
-	///   means it should be
+	/// - **Unix:** This method must be called in a gtk thread. Usually this means it should be
 	/// called in the same thread with the [`EventLoop`] you create.
 	///
 	/// [`EventLoop`]: crate::application::event_loop::EventLoop

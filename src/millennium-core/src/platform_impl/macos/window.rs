@@ -27,7 +27,8 @@ use std::{
 
 use cocoa::{
 	appkit::{
-		self, CGFloat, NSApp, NSApplication, NSApplicationPresentationOptions, NSColor, NSRequestUserAttentionType, NSScreen, NSView, NSWindow, NSWindowButton, NSWindowOrderingMode, NSWindowStyleMask
+		self, CGFloat, NSApp, NSApplication, NSApplicationPresentationOptions, NSColor, NSRequestUserAttentionType, NSScreen, NSView, NSWindow, NSWindowButton,
+		NSWindowOrderingMode, NSWindowStyleMask
 	},
 	base::{id, nil},
 	foundation::{NSAutoreleasePool, NSDictionary, NSPoint, NSRect, NSSize, NSUInteger}
@@ -178,7 +179,10 @@ fn create_window(attrs: &WindowAttributes, pl_attrs: &PlatformSpecificWindowBuil
 			NSWindowStyleMask::NSBorderlessWindowMask | NSWindowStyleMask::NSResizableWindowMask | NSWindowStyleMask::NSMiniaturizableWindowMask
 		} else {
 			// default case, resizable window with titlebar and titlebar buttons
-			NSWindowStyleMask::NSClosableWindowMask | NSWindowStyleMask::NSMiniaturizableWindowMask | NSWindowStyleMask::NSResizableWindowMask | NSWindowStyleMask::NSTitledWindowMask
+			NSWindowStyleMask::NSClosableWindowMask
+				| NSWindowStyleMask::NSMiniaturizableWindowMask
+				| NSWindowStyleMask::NSResizableWindowMask
+				| NSWindowStyleMask::NSTitledWindowMask
 		};
 
 		if !attrs.resizable {
@@ -290,7 +294,8 @@ pub struct SharedState {
 
 impl SharedState {
 	pub fn saved_standard_frame(&self) -> NSRect {
-		self.standard_frame.unwrap_or_else(|| NSRect::new(NSPoint::new(50.0, 50.0), NSSize::new(800.0, 600.0)))
+		self.standard_frame
+			.unwrap_or_else(|| NSRect::new(NSPoint::new(50.0, 50.0), NSSize::new(800.0, 600.0)))
 	}
 }
 
@@ -904,7 +909,10 @@ impl UnownedWindow {
 
 			let new_mask = {
 				let mut new_mask = if decorations {
-					NSWindowStyleMask::NSClosableWindowMask | NSWindowStyleMask::NSMiniaturizableWindowMask | NSWindowStyleMask::NSResizableWindowMask | NSWindowStyleMask::NSTitledWindowMask
+					NSWindowStyleMask::NSClosableWindowMask
+						| NSWindowStyleMask::NSMiniaturizableWindowMask
+						| NSWindowStyleMask::NSResizableWindowMask
+						| NSWindowStyleMask::NSTitledWindowMask
 				} else {
 					NSWindowStyleMask::NSBorderlessWindowMask | NSWindowStyleMask::NSResizableWindowMask
 				};
@@ -1055,7 +1063,8 @@ impl WindowExtMacOS for UnownedWindow {
 				shared_state_lock.is_simple_fullscreen = true;
 
 				// Simulate pre-Lion fullscreen by hiding the dock and menu bar
-				let presentation_options = NSApplicationPresentationOptions::NSApplicationPresentationAutoHideDock | NSApplicationPresentationOptions::NSApplicationPresentationAutoHideMenuBar;
+				let presentation_options = NSApplicationPresentationOptions::NSApplicationPresentationAutoHideDock
+					| NSApplicationPresentationOptions::NSApplicationPresentationAutoHideMenuBar;
 				app.setPresentationOptions_(presentation_options);
 
 				// Hide the titlebar

@@ -156,7 +156,12 @@ fn body_blocking(function: &ItemFn, invoke: &Invoke) -> syn::Result<TokenStream2
 /// Parse all arguments for the command wrapper to use from the signature of the
 /// command function.
 fn parse_args(function: &ItemFn, message: &Ident) -> syn::Result<Vec<TokenStream2>> {
-	function.sig.inputs.iter().map(|arg| parse_arg(&function.sig.ident, arg, message)).collect()
+	function
+		.sig
+		.inputs
+		.iter()
+		.map(|arg| parse_arg(&function.sig.ident, arg, message))
+		.collect()
 }
 
 /// Transform a [`FnArg`] into a command argument.

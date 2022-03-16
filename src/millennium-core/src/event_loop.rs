@@ -116,9 +116,8 @@ pub enum ControlFlow {
 	/// ## Platform-specific
 	///
 	/// - **Android / iOS / WASM**: The supplied exit code is unused.
-	/// - **Unix**: On most Unix-like platforms, only the 8 least significant
-	///   bits will be used, which can cause surprises with negative exit values
-	///   (`-42` would end up as `214`). See [`std::process::exit`].
+	/// - **Unix**: On most Unix-like platforms, only the 8 least significant bits will be used, which can cause
+	///   surprises with negative exit values (`-42` would end up as `214`). See [`std::process::exit`].
 	///
 	/// [`Exit`]: ControlFlow::Exit
 	ExitWithCode(i32)
@@ -191,8 +190,7 @@ impl<T> EventLoop<T> {
 	///
 	/// ## Platform-specific
 	///
-	/// - **Unix**: The program terminates with exit code 1 if the display
-	///   server disconnects.
+	/// - **Unix**: The program terminates with exit code 1 if the display server disconnects.
 	///
 	/// [`ControlFlow`]: crate::event_loop::ControlFlow
 	#[inline]

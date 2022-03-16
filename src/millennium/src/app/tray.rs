@@ -164,22 +164,30 @@ impl<R: Runtime> SystemTrayHandle<R> {
 impl<R: Runtime> SystemTrayMenuItemHandle<R> {
 	/// Modifies the enabled state of the menu item.
 	pub fn set_enabled(&self, enabled: bool) -> crate::Result<()> {
-		self.tray_handler.update_item(self.id, MenuUpdate::SetEnabled(enabled)).map_err(Into::into)
+		self.tray_handler
+			.update_item(self.id, MenuUpdate::SetEnabled(enabled))
+			.map_err(Into::into)
 	}
 
 	/// Modifies the title (label) of the menu item.
 	pub fn set_title<S: Into<String>>(&self, title: S) -> crate::Result<()> {
-		self.tray_handler.update_item(self.id, MenuUpdate::SetTitle(title.into())).map_err(Into::into)
+		self.tray_handler
+			.update_item(self.id, MenuUpdate::SetTitle(title.into()))
+			.map_err(Into::into)
 	}
 
 	/// Modifies the selected state of the menu item.
 	pub fn set_selected(&self, selected: bool) -> crate::Result<()> {
-		self.tray_handler.update_item(self.id, MenuUpdate::SetSelected(selected)).map_err(Into::into)
+		self.tray_handler
+			.update_item(self.id, MenuUpdate::SetSelected(selected))
+			.map_err(Into::into)
 	}
 
 	#[cfg(target_os = "macos")]
 	#[cfg_attr(doc_cfg, doc(cfg(target_os = "macos")))]
 	pub fn set_native_image(&self, image: crate::NativeImage) -> crate::Result<()> {
-		self.tray_handler.update_item(self.id, MenuUpdate::SetNativeImage(image)).map_err(Into::into)
+		self.tray_handler
+			.update_item(self.id, MenuUpdate::SetNativeImage(image))
+			.map_err(Into::into)
 	}
 }

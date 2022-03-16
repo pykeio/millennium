@@ -61,9 +61,7 @@ impl OsError {
 
 #[allow(unused_macros)]
 macro_rules! os_error {
-	($error:expr) => {{
-		crate::error::OsError::new(line!(), file!(), $error)
-	}};
+	($error:expr) => {{ crate::error::OsError::new(line!(), file!(), $error) }};
 }
 
 impl fmt::Display for OsError {

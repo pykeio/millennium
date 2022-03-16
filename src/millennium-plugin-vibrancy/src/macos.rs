@@ -65,7 +65,8 @@ pub use internal::apply_vibrancy;
 mod internal {
 	use cocoa::{
 		appkit::{
-			NSAppKitVersionNumber, NSAppKitVersionNumber10_10, NSAppKitVersionNumber10_11, NSAutoresizingMaskOptions, NSView, NSViewHeightSizable, NSViewWidthSizable, NSWindow, NSWindowOrderingMode
+			NSAppKitVersionNumber, NSAppKitVersionNumber10_10, NSAppKitVersionNumber10_11, NSAutoresizingMaskOptions, NSView, NSViewHeightSizable,
+			NSViewWidthSizable, NSWindow, NSWindowOrderingMode
 		},
 		base::{id, nil, BOOL},
 		foundation::{NSAutoreleasePool, NSPoint, NSRect, NSSize}

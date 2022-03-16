@@ -99,10 +99,11 @@ impl<T> EventLoopRunner<T> {
 	where
 		F: FnMut(Event<'_, T>, &mut ControlFlow)
 	{
-		let old_event_handler = self.event_handler.replace(mem::transmute::<
-			Option<Box<dyn FnMut(Event<'_, T>, &mut ControlFlow)>>,
-			Option<Box<dyn FnMut(Event<'_, T>, &mut ControlFlow)>>
-		>(Some(Box::new(f))));
+		let old_event_handler = self
+			.event_handler
+			.replace(mem::transmute::<Option<Box<dyn FnMut(Event<'_, T>, &mut ControlFlow)>>, Option<Box<dyn FnMut(Event<'_, T>, &mut ControlFlow)>>>(Some(
+				Box::new(f)
+			)));
 		assert!(old_event_handler.is_none());
 	}
 
@@ -312,7 +313,11 @@ impl<T> EventLoopRunner<T> {
 		use RunnerState::{Destroyed, HandlingMainEvents, HandlingRedrawEvents, Idle, Uninitialized};
 
 		match (self.runner_state.replace(new_runner_state), new_runner_state) {
-			(Uninitialized, Uninitialized) | (Idle, Idle) | (HandlingMainEvents, HandlingMainEvents) | (HandlingRedrawEvents, HandlingRedrawEvents) | (Destroyed, Destroyed) => (),
+			(Uninitialized, Uninitialized)
+			| (Idle, Idle)
+			| (HandlingMainEvents, HandlingMainEvents)
+			| (HandlingRedrawEvents, HandlingRedrawEvents)
+			| (Destroyed, Destroyed) => (),
 
 			// State transitions that initialize the event loop.
 			(Uninitialized, HandlingMainEvents) => {
@@ -434,7 +439,7 @@ impl<T> BufferedEvent<T> {
 						new_inner_size: &mut new_inner_size
 					}
 				});
-				util::set_inner_size_physical(HWND(window_id.0 .0), new_inner_size.width as _, new_inner_size.height as _);
+				util::set_inner_size_physical(HWND(window_id.0.0), new_inner_size.width as _, new_inner_size.height as _);
 			}
 		};
 	}

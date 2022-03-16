@@ -98,11 +98,7 @@ impl DeviceId {
 
 impl DeviceId {
 	pub fn persistent_identifier(&self) -> Option<String> {
-		if self.0 != 0 {
-			raw_input::get_raw_input_device_name(HANDLE(self.0))
-		} else {
-			None
-		}
+		if self.0 != 0 { raw_input::get_raw_input_device_name(HANDLE(self.0)) } else { None }
 	}
 }
 

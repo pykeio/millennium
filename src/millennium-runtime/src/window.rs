@@ -66,8 +66,7 @@ pub enum WindowEvent {
 	/// The following user actions can cause DPI changes:
 	///
 	/// - Changing the display's resolution.
-	/// - Changing the display's scale factor (e.g. in Control Panel on
-	///   Windows).
+	/// - Changing the display's scale factor (e.g. in Control Panel on Windows).
 	/// - Moving the window to a display with a different scale factor.
 	ScaleFactorChanged {
 		/// The new scale factor.
@@ -138,7 +137,9 @@ pub struct PendingWindow<T: UserEvent, R: Runtime<T>> {
 }
 
 pub fn is_label_valid(label: &str) -> bool {
-	label.chars().all(|c| char::is_alphanumeric(c) || c == '-' || c == '/' || c == ':' || c == '_')
+	label
+		.chars()
+		.all(|c| char::is_alphanumeric(c) || c == '-' || c == '/' || c == ':' || c == '_')
 }
 
 pub fn assert_label_is_valid(label: &str) {
@@ -147,7 +148,11 @@ pub fn assert_label_is_valid(label: &str) {
 
 impl<T: UserEvent, R: Runtime<T>> PendingWindow<T, R> {
 	/// Create a new [`PendingWindow`] with a label and starting url.
-	pub fn new(window_builder: <R::Dispatcher as Dispatch<T>>::WindowBuilder, webview_attributes: WebviewAttributes, label: impl Into<String>) -> crate::Result<Self> {
+	pub fn new(
+		window_builder: <R::Dispatcher as Dispatch<T>>::WindowBuilder,
+		webview_attributes: WebviewAttributes,
+		label: impl Into<String>
+	) -> crate::Result<Self> {
 		let mut menu_ids = HashMap::new();
 		if let Some(menu) = window_builder.get_menu() {
 			get_menu_ids(&mut menu_ids, menu);
@@ -203,7 +208,11 @@ impl<T: UserEvent, R: Runtime<T>> PendingWindow<T, R> {
 		self
 	}
 
-	pub fn register_uri_scheme_protocol<N: Into<String>, H: Fn(&HttpRequest) -> Result<HttpResponse, Box<dyn std::error::Error>> + Send + Sync + 'static>(&mut self, uri_scheme: N, protocol: H) {
+	pub fn register_uri_scheme_protocol<N: Into<String>, H: Fn(&HttpRequest) -> Result<HttpResponse, Box<dyn std::error::Error>> + Send + Sync + 'static>(
+		&mut self,
+		uri_scheme: N,
+		protocol: H
+	) {
 		let uri_scheme = uri_scheme.into();
 		self.uri_scheme_protocols.insert(uri_scheme, Box::new(move |data| (protocol)(data)));
 	}

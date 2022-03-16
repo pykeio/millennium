@@ -34,15 +34,12 @@
 // provided that you include the following on ALL copies of the work or portions
 // thereof, including modifications:
 //
-// - The full text of this NOTICE in a location viewable to users of the
-//   redistributed or derivative work.
-// - Any pre-existing intellectual property disclaimers, notices, or terms and
-//   conditions. If none exist, the W3C Software and Document Short Notice
-//   should be included.
-// - Notice of any changes or modifications, through a copyright statement on
-//   the new code or document such as "This software or document includes
-//   material copied from or derived from [title and URI of the W3C document].
-//   Copyright © [YEAR] W3C® (MIT, ERCIM, Keio, Beihang)."
+// - The full text of this NOTICE in a location viewable to users of the redistributed or derivative work.
+// - Any pre-existing intellectual property disclaimers, notices, or terms and conditions. If none exist, the W3C
+//   Software and Document Short Notice should be included.
+// - Notice of any changes or modifications, through a copyright statement on the new code or document such as "This
+//   software or document includes material copied from or derived from [title and URI of the W3C document]. Copyright ©
+//   [YEAR] W3C® (MIT, ERCIM, Keio, Beihang)."
 //
 // Disclaimers
 //
@@ -204,12 +201,9 @@ pub enum NativeKeyCode {
 ///
 /// This mostly conforms to the UI Events Specification's [`KeyboardEvent.code`]
 /// with a few exceptions:
-/// - The keys that the specification calls "MetaLeft" and "MetaRight" are named
-///   "SuperLeft" and "SuperRight" here.
-/// - The key that the specification calls "Super" is reported as `Unidentified`
-///   here.
-/// - The `Unidentified` variant here, can still identifiy a key through it's
-///   `NativeKeyCode`.
+/// - The keys that the specification calls "MetaLeft" and "MetaRight" are named "SuperLeft" and "SuperRight" here.
+/// - The key that the specification calls "Super" is reported as `Unidentified` here.
+/// - The `Unidentified` variant here, can still identifiy a key through it's `NativeKeyCode`.
 ///
 /// [`KeyboardEvent.code`]: https://w3c.github.io/uievents-code/#code-value-tables
 #[non_exhaustive]
@@ -854,15 +848,11 @@ impl fmt::Display for KeyCode {
 ///
 /// This mostly conforms to the UI Events Specification's [`KeyboardEvent.key`]
 /// with a few exceptions:
-/// - The `Super` variant here, is named `Meta` in the aforementioned
-///   specification. (There's another key which the specification calls `Super`.
-///   That does not exist here.)
-/// - The `Space` variant here, can be identified by the character it generates
-///   in the specificaiton.
-/// - The `Unidentified` variant here, can still identifiy a key through it's
-///   `NativeKeyCode`.
-/// - The `Dead` variant here, can specify the character which is inserted when
-///   pressing the dead-key twice.
+/// - The `Super` variant here, is named `Meta` in the aforementioned specification. (There's another key which the
+///   specification calls `Super`. That does not exist here.)
+/// - The `Space` variant here, can be identified by the character it generates in the specificaiton.
+/// - The `Unidentified` variant here, can still identifiy a key through it's `NativeKeyCode`.
+/// - The `Dead` variant here, can specify the character which is inserted when pressing the dead-key twice.
 ///
 /// [`KeyboardEvent.key`]: https://w3c.github.io/uievents-key/
 #[non_exhaustive]

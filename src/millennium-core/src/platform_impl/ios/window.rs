@@ -391,7 +391,11 @@ impl DerefMut for Window {
 }
 
 impl Window {
-	pub fn new<T>(_event_loop: &EventLoopWindowTarget<T>, window_attributes: WindowAttributes, platform_attributes: PlatformSpecificWindowBuilderAttributes) -> Result<Window, RootOsError> {
+	pub fn new<T>(
+		_event_loop: &EventLoopWindowTarget<T>,
+		window_attributes: WindowAttributes,
+		platform_attributes: PlatformSpecificWindowBuilderAttributes
+	) -> Result<Window, RootOsError> {
 		if let Some(_) = window_attributes.min_inner_size {
 			warn!("`WindowAttributes::min_inner_size` is ignored on iOS");
 		}

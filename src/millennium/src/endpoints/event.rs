@@ -65,7 +65,11 @@ impl<'de> Deserialize<'de> for WindowLabel {
 pub enum Cmd {
 	/// Listen to an event.
 	#[serde(rename_all = "camelCase")]
-	Listen { event: EventId, window_label: Option<WindowLabel>, handler: CallbackFn },
+	Listen {
+		event: EventId,
+		window_label: Option<WindowLabel>,
+		handler: CallbackFn
+	},
 	/// Unlisten to an event.
 	#[serde(rename_all = "camelCase")]
 	Unlisten { event: EventId, event_id: u64 },

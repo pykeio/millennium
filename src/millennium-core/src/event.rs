@@ -99,7 +99,11 @@ pub enum Event<'a, T: 'static> {
 	/// Emitted when a menu has been clicked. There are two types of menu event.
 	/// One comes from the menu bar, the other comes from the status bar.
 	#[non_exhaustive]
-	MenuEvent { window_id: Option<WindowId>, menu_id: MenuId, origin: MenuType },
+	MenuEvent {
+		window_id: Option<WindowId>,
+		menu_id: MenuId,
+		origin: MenuType
+	},
 
 	/// Emitted when tray has been clicked.
 	///
@@ -107,7 +111,11 @@ pub enum Event<'a, T: 'static> {
 	///
 	/// - **iOS / Android / Linux:** Unsupported.
 	#[non_exhaustive]
-	TrayEvent { bounds: Rectangle, event: TrayEvent, position: PhysicalPosition<f64> },
+	TrayEvent {
+		bounds: Rectangle,
+		event: TrayEvent,
+		position: PhysicalPosition<f64>
+	},
 
 	/// Emitted when a global shortcut is triggered.
 	///
@@ -139,8 +147,7 @@ pub enum Event<'a, T: 'static> {
 	/// Emitted after `MainEventsCleared` when a window should be redrawn.
 	///
 	/// This gets triggered in two scenarios:
-	/// - The OS has performed an operation that's invalidated the window's
-	///   contents (such as resizing the window).
+	/// - The OS has performed an operation that's invalidated the window's contents (such as resizing the window).
 	/// - The application has explicitly requested a redraw via
 	///   [`Window::request_redraw`](crate::window::Window::request_redraw).
 	///
@@ -153,8 +160,7 @@ pub enum Event<'a, T: 'static> {
 	///
 	/// ## Platform-specific
 	///
-	/// - **Linux: This is triggered by `draw` signal of the gtk window. It can
-	///   be used to detect if
+	/// - **Linux: This is triggered by `draw` signal of the gtk window. It can be used to detect if
 	/// the window is requested to redraw. But widgets it contains are usually
 	/// not tied to its signal. So if you really want to draw each component,
 	/// please consider using `connect_draw` method from [`WidgetExt`]
@@ -331,10 +337,8 @@ pub enum WindowEvent<'a> {
 	/// An event from the keyboard has been received.
 	///
 	/// ## Platform-specific
-	/// - **Windows:** The shift key overrides NumLock. In other words, while
-	///   shift is held down, numpad keys act as if NumLock wasn't active. When
-	///   this is used, the OS sends fake key events which are not marked as
-	///   `is_synthetic`.
+	/// - **Windows:** The shift key overrides NumLock. In other words, while shift is held down, numpad keys act as if
+	///   NumLock wasn't active. When this is used, the OS sends fake key events which are not marked as `is_synthetic`.
 	#[non_exhaustive]
 	KeyboardInput {
 		device_id: DeviceId,
@@ -343,9 +347,8 @@ pub enum WindowEvent<'a> {
 		/// If `true`, the event was generated synthetically by in one of the
 		/// following circumstances:
 		///
-		/// * Synthetic key press events are generated for all keys pressed when
-		///   a window gains focus. Likewise, synthetic key release events are
-		///   generated for all keys pressed when a window goes out of focus.
+		/// * Synthetic key press events are generated for all keys pressed when a window gains focus. Likewise,
+		///   synthetic key release events are generated for all keys pressed when a window goes out of focus.
 		///   ***Currently, this is only functional on Linux and Windows***
 		///
 		/// Otherwise, this value is always `false`.
@@ -413,8 +416,7 @@ pub enum WindowEvent<'a> {
 	/// The following user actions can cause DPI changes:
 	///
 	/// * Changing the display's resolution.
-	/// * Changing the display's scale factor (e.g. in Control Panel on
-	///   Windows).
+	/// * Changing the display's scale factor (e.g. in Control Panel on Windows).
 	/// * Moving the window to a display with a different scale factor.
 	///
 	/// After this event callback has been processed, the window will be resized
@@ -748,8 +750,7 @@ pub enum TrayEvent {
 	/// ## Platform-specific
 	///
 	/// - **Linux:** Unsupported
-	/// - **macOS:** <kbd>⌃ Control</kbd> + <kbd>Mouse Click</kbd> fire this
-	///   event.
+	/// - **macOS:** <kbd>⌃ Control</kbd> + <kbd>Mouse Click</kbd> fire this event.
 	RightClick,
 	/// Fired when a menu item receive a <kbd>Double Mouse Click</kbd>
 	///

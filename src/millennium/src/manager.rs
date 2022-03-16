@@ -80,7 +80,13 @@ struct CspHashStrings {
 /// Sets the CSP value to the asset HTML if needed (on Linux).
 /// Returns the CSP string for access on the response header (on Windows and
 /// macOS).
-fn set_csp<R: Runtime>(asset: &mut String, assets: Arc<dyn Assets>, asset_path: &AssetKey, #[allow(unused_variables)] manager: &WindowManager<R>, csp: Csp) -> String {
+fn set_csp<R: Runtime>(
+	asset: &mut String,
+	assets: Arc<dyn Assets>,
+	asset_path: &AssetKey,
+	#[allow(unused_variables)] manager: &WindowManager<R>,
+	csp: Csp
+) -> String {
 	let mut csp = csp.into();
 	let hash_strings = assets.csp_hashes(asset_path).fold(CspHashStrings::default(), |mut acc, hash| {
 		match hash {
@@ -336,7 +342,13 @@ impl<R: Runtime> WindowManager<R> {
 		if cfg!(feature = "custom-protocol") {
 			self.inner.config.millennium.security.csp.clone()
 		} else {
-			self.inner.config.millennium.security.dev_csp.clone().or_else(|| self.inner.config.millennium.security.csp.clone())
+			self.inner
+				.config
+				.millennium
+				.security
+				.dev_csp
+				.clone()
+				.or_else(|| self.inner.config.millennium.security.csp.clone())
 		}
 	}
 
@@ -574,7 +586,9 @@ impl<R: Runtime> WindowManager<R> {
 						let asset = String::from_utf8_lossy(asset.as_ref());
 						let template = millennium_utils::pattern::isolation::IsolationJavascriptRuntime { runtime_aes_gcm_key: &aes_gcm_key };
 						match template.render(asset.as_ref(), &Default::default()) {
-							Ok(asset) => HttpResponseBuilder::new().mimetype("text/html").body(asset.into_string().as_bytes().to_vec()),
+							Ok(asset) => HttpResponseBuilder::new()
+								.mimetype("text/html")
+								.body(asset.into_string().as_bytes().to_vec()),
 							Err(_) => HttpResponseBuilder::new().status(500).mimetype("text/plain").body(Vec::new())
 						}
 					}
@@ -726,7 +740,13 @@ impl<R: Runtime> WindowManager<R> {
 		})
 	}
 
-	fn initialization_script(&self, ipc_script: &str, pattern_script: &str, plugin_initialization_script: &str, with_global_millennium: bool) -> crate::Result<String> {
+	fn initialization_script(
+		&self,
+		ipc_script: &str,
+		pattern_script: &str,
+		plugin_initialization_script: &str,
+		with_global_millennium: bool
+	) -> crate::Result<String> {
 		#[derive(Template)]
 		#[default_template("../scripts/init.js")]
 		struct InitJavascript<'a> {
@@ -846,7 +866,11 @@ impl<R: Runtime> WindowManager<R> {
 	}
 
 	pub fn initialize_plugins(&self, app: &AppHandle<R>) -> crate::Result<()> {
-		self.inner.plugins.lock().expect("poisoned plugin store").initialize(app, &self.inner.config.plugins)
+		self.inner
+			.plugins
+			.lock()
+			.expect("poisoned plugin store")
+			.initialize(app, &self.inner.config.plugins)
 	}
 
 	pub fn prepare_window(

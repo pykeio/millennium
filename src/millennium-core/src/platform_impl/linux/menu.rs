@@ -117,7 +117,15 @@ impl Menu {
 		Self::new()
 	}
 
-	pub fn add_item(&mut self, menu_id: MenuId, title: &str, accelerators: Option<Accelerator>, enabled: bool, selected: bool, menu_type: MenuType) -> CustomMenuItem {
+	pub fn add_item(
+		&mut self,
+		menu_id: MenuId,
+		title: &str,
+		accelerators: Option<Accelerator>,
+		enabled: bool,
+		selected: bool,
+		menu_type: MenuType
+	) -> CustomMenuItem {
 		let gtk_item = if selected {
 			let item = CheckMenuItem::with_label(title);
 			item.set_active(true);
@@ -173,7 +181,13 @@ impl Menu {
 		menu
 	}
 
-	pub(crate) fn generate_menu<M: gtk::prelude::IsA<gtk::MenuShell>>(self, menu: &mut M, tx: &Sender<(WindowId, WindowRequest)>, accel_group: &AccelGroup, window_id: WindowId) {
+	pub(crate) fn generate_menu<M: gtk::prelude::IsA<gtk::MenuShell>>(
+		self,
+		menu: &mut M,
+		tx: &Sender<(WindowId, WindowRequest)>,
+		accel_group: &AccelGroup,
+		window_id: WindowId
+	) {
 		for menu_item in self.gtk_items {
 			let new_item = match menu_item.clone() {
 				GtkMenuInfo {

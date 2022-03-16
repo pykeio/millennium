@@ -98,13 +98,11 @@ impl SystemTray {
 pub enum UserAttentionType {
 	/// ## Platform-specific
 	/// - **macOS:** Bounces the dock icon until the application is in focus.
-	/// - **Windows:** Flashes both the window and the taskbar button until the
-	///   application is in focus.
+	/// - **Windows:** Flashes both the window and the taskbar button until the application is in focus.
 	Critical,
 	/// ## Platform-specific
 	/// - **macOS:** Bounces the dock icon once.
-	/// - **Windows:** Flashes the taskbar button until the application is in
-	///   focus.
+	/// - **Windows:** Flashes the taskbar button until the application is in focus.
 	Informational
 }
 

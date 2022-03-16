@@ -48,11 +48,7 @@ pub(crate) fn connect_drag_event(webview: Rc<WebView>, window: Rc<Window>, handl
 	let w = window.clone();
 	webview.connect_drag_drop(move |_, _, _, _, _| {
 		let uris = listener_ref.1.take();
-		if let Some(uris) = uris {
-			listener_ref.0(&w, FileDropEvent::Dropped(uris))
-		} else {
-			false
-		}
+		if let Some(uris) = uris { listener_ref.0(&w, FileDropEvent::Dropped(uris)) } else { false }
 	});
 
 	let listener_ref = listener.clone();

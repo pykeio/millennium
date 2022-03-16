@@ -80,9 +80,8 @@ lazy_static! {
 /// The sequence of window messages for a key press event is the following:
 /// - Exactly one WM_KEYDOWN / WM_SYSKEYDOWN
 /// - Zero or one WM_DEADCHAR / WM_SYSDEADCHAR
-/// - Zero or more WM_CHAR / WM_SYSCHAR. These messages each come with a UTF-16
-///   code unit which when put together in the sequence they arrived in, forms
-///   the text which is the result of pressing the key.
+/// - Zero or more WM_CHAR / WM_SYSCHAR. These messages each come with a UTF-16 code unit which when put together in the
+///   sequence they arrived in, forms the text which is the result of pressing the key.
 ///
 /// Key release messages are a bit different due to the fact that they don't
 /// contribute to text input. The "sequence" only consists of one WM_KEYUP /
@@ -132,7 +131,8 @@ impl KeyEventBuilder {
 				if has_next_key_message {
 					let next_msg = unsafe { next_msg.assume_init() };
 					let next_msg_kind = next_msg.message;
-					let next_belongs_to_this = !matches!(next_msg_kind, win32wm::WM_KEYDOWN | win32wm::WM_SYSKEYDOWN | win32wm::WM_KEYUP | win32wm::WM_SYSKEYUP);
+					let next_belongs_to_this =
+						!matches!(next_msg_kind, win32wm::WM_KEYDOWN | win32wm::WM_SYSKEYDOWN | win32wm::WM_KEYUP | win32wm::WM_SYSKEYUP);
 					if next_belongs_to_this {
 						self.event_info = finished_event_info.take();
 					} else {
@@ -325,7 +325,7 @@ impl KeyEventBuilder {
 						|| vk == VK_LMENU || vk == VK_RMENU
 						|| vk == VK_CAPITAL =>
 					{
-						continue
+						continue;
 					}
 					_ => ()
 				}

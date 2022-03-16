@@ -166,12 +166,18 @@ pub fn inline_isolation(document: &mut NodeRef, dir: &Path) {
 	for script in document.select("script[src]").expect("unable to parse document for scripts") {
 		let src = {
 			let attributes = script.attributes.borrow();
-			attributes.get(LocalName::from("src")).expect("script with src attribute has no src value").to_string()
+			attributes
+				.get(LocalName::from("src"))
+				.expect("script with src attribute has no src value")
+				.to_string()
 		};
 
 		let mut path = PathBuf::from(src);
 		if path.has_root() {
-			path = path.strip_prefix("/").expect("Millennium isolation pattern only supports relative or absolute (`/`) paths.").into();
+			path = path
+				.strip_prefix("/")
+				.expect("Millennium isolation pattern only supports relative or absolute (`/`) paths.")
+				.into();
 		}
 
 		let file = std::fs::read_to_string(dir.join(path)).expect("unable to find isolation file");

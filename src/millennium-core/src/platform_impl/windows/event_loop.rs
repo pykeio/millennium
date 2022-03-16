@@ -73,7 +73,8 @@ use crate::{
 	window::{Fullscreen, WindowId as RootWindowId}
 };
 
-type GetPointerFrameInfoHistory = unsafe extern "system" fn(pointerId: u32, entriesCount: *mut u32, pointerCount: *mut u32, pointerInfo: *mut POINTER_INFO) -> BOOL;
+type GetPointerFrameInfoHistory =
+	unsafe extern "system" fn(pointerId: u32, entriesCount: *mut u32, pointerCount: *mut u32, pointerInfo: *mut POINTER_INFO) -> BOOL;
 
 type SkipPointerFrameMessages = unsafe extern "system" fn(pointerId: u32) -> BOOL;
 
@@ -311,11 +312,7 @@ fn get_wait_thread_id() -> u32 {
 	unsafe {
 		let mut msg = MSG::default();
 		let result = GetMessageW(&mut msg, HWND::default(), *SEND_WAIT_THREAD_ID_MSG_ID, *SEND_WAIT_THREAD_ID_MSG_ID);
-		assert_eq!(
-			msg.message, *SEND_WAIT_THREAD_ID_MSG_ID,
-			"this shouldn't be possible. please open an issue with Tauri. error code: {}",
-			result.0
-		);
+		assert_eq!(msg.message, *SEND_WAIT_THREAD_ID_MSG_ID, "this shouldn't be possible. please open an issue with Tauri. error code: {}", result.0);
 		msg.lParam.0 as u32
 	}
 }
@@ -358,7 +355,8 @@ fn wait_thread(parent_thread_id: u32, msg_window_id: HWND) {
 					// MsgWaitForMultipleObjects tends to overshoot just a little bit. We subtract
 					// 1 millisecond from the requested time and spinlock for the remainder to
 					// compensate for that.
-					let resume_reason = MsgWaitForMultipleObjectsEx(0, ptr::null(), dur2timeout(wait_until - now).saturating_sub(1), QS_ALLEVENTS, MWMO_INPUTAVAILABLE);
+					let resume_reason =
+						MsgWaitForMultipleObjectsEx(0, ptr::null(), dur2timeout(wait_until - now).saturating_sub(1), QS_ALLEVENTS, MWMO_INPUTAVAILABLE);
 					if resume_reason == WAIT_TIMEOUT {
 						PostMessageW(msg_window_id, *PROCESS_NEW_EVENTS_MSG_ID, WPARAM(0), LPARAM(0));
 						wait_until_opt = None;
@@ -379,8 +377,7 @@ fn dur2timeout(dur: Duration) -> u32 {
 	// have two pieces to take care of:
 	//
 	// * Nanosecond precision is rounded up
-	// * Greater than u32::MAX milliseconds (50 days) is rounded up to INFINITE
-	//   (never time out).
+	// * Greater than u32::MAX milliseconds (50 days) is rounded up to INFINITE (never time out).
 	dur.as_secs()
 		.checked_mul(1000)
 		.and_then(|ms| ms.checked_add((dur.subsec_nanos() as u64) / 1_000_000))
@@ -726,7 +723,14 @@ fn update_modifiers<T>(window: HWND, subclass_input: &SubclassInput<T>) -> Modif
 // Returning 0 tells the Win32 API that the message has been processed.
 // FIXME: detect WM_DWMCOMPOSITIONCHANGED and call DwmEnableBlurBehindWindow if
 // necessary
-unsafe extern "system" fn public_window_callback<T: 'static>(window: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM, uidsubclass: usize, subclass_input_ptr: usize) -> LRESULT {
+unsafe extern "system" fn public_window_callback<T: 'static>(
+	window: HWND,
+	msg: u32,
+	wparam: WPARAM,
+	lparam: LPARAM,
+	uidsubclass: usize,
+	subclass_input_ptr: usize
+) -> LRESULT {
 	let subclass_input_ptr = subclass_input_ptr as *mut SubclassInput<T>;
 	let (result, subclass_removed, recurse_depth) = {
 		let subclass_input = &*subclass_input_ptr;
@@ -751,7 +755,14 @@ unsafe extern "system" fn public_window_callback<T: 'static>(window: HWND, msg: 
 	result
 }
 
-unsafe fn public_window_callback_inner<T: 'static>(window: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM, _: usize, subclass_input: &SubclassInput<T>) -> LRESULT {
+unsafe fn public_window_callback_inner<T: 'static>(
+	window: HWND,
+	msg: u32,
+	wparam: WPARAM,
+	lparam: LPARAM,
+	_: usize,
+	subclass_input: &SubclassInput<T>
+) -> LRESULT {
 	RedrawWindow(subclass_input.event_loop_runner.thread_msg_target(), ptr::null(), HRGN::default(), RDW_INTERNALPAINT);
 
 	let mut result = ProcResult::DefSubclassProc;
@@ -818,7 +829,10 @@ unsafe fn public_window_callback_inner<T: 'static>(window: HWND, msg: u32, wpara
 			});
 		}
 	};
-	subclass_input.event_loop_runner.catch_unwind(ime_callback).unwrap_or_else(|| result = ProcResult::Value(LRESULT(-1)));
+	subclass_input
+		.event_loop_runner
+		.catch_unwind(ime_callback)
+		.unwrap_or_else(|| result = ProcResult::Value(LRESULT(-1)));
 
 	// I decided to bind the closure to `callback` and pass it to catch_unwind
 	// rather than passing the closure to catch_unwind directly so that the match
@@ -826,12 +840,18 @@ unsafe fn public_window_callback_inner<T: 'static>(window: HWND, msg: u32, wpara
 	// preserved.
 	let callback = || match msg {
 		win32wm::WM_ENTERSIZEMOVE => {
-			subclass_input.window_state.lock().set_window_flags_in_place(|f| f.insert(WindowFlags::MARKER_IN_SIZE_MOVE));
+			subclass_input
+				.window_state
+				.lock()
+				.set_window_flags_in_place(|f| f.insert(WindowFlags::MARKER_IN_SIZE_MOVE));
 			result = ProcResult::Value(LRESULT(0));
 		}
 
 		win32wm::WM_EXITSIZEMOVE => {
-			subclass_input.window_state.lock().set_window_flags_in_place(|f| f.remove(WindowFlags::MARKER_IN_SIZE_MOVE));
+			subclass_input
+				.window_state
+				.lock()
+				.set_window_flags_in_place(|f| f.remove(WindowFlags::MARKER_IN_SIZE_MOVE));
 			result = ProcResult::Value(LRESULT(0));
 		}
 
@@ -898,7 +918,12 @@ unsafe fn public_window_callback_inner<T: 'static>(window: HWND, msg: u32, wpara
 				let new_monitor = MonitorFromRect(&new_rect, MONITOR_DEFAULTTONULL);
 				match fullscreen {
 					Fullscreen::Borderless(ref mut fullscreen_monitor) => {
-						if !new_monitor.is_invalid() && fullscreen_monitor.as_ref().map(|monitor| new_monitor != monitor.inner.hmonitor()).unwrap_or(true) {
+						if !new_monitor.is_invalid()
+							&& fullscreen_monitor
+								.as_ref()
+								.map(|monitor| new_monitor != monitor.inner.hmonitor())
+								.unwrap_or(true)
+						{
 							if let Ok(new_monitor_info) = monitor::get_monitor_info(new_monitor) {
 								let new_monitor_rect = new_monitor_info.monitorInfo.rcMonitor;
 								window_pos.x = new_monitor_rect.left;
@@ -1456,11 +1481,7 @@ unsafe fn public_window_callback_inner<T: 'static>(window: HWND, msg: u32, wpara
 				// `WM_MOUSEMOVE` seems to come after `WM_SETCURSOR` for a given cursor
 				// movement.
 				let in_client_area = u32::from(util::LOWORD(lparam.0 as u32)) == HTCLIENT;
-				if in_client_area {
-					Some(window_state.mouse.cursor)
-				} else {
-					None
-				}
+				if in_client_area { Some(window_state.mouse.cursor) } else { None }
 			};
 
 			match set_cursor_to {
@@ -1565,7 +1586,9 @@ unsafe fn public_window_callback_inner<T: 'static>(window: HWND, msg: u32, wpara
 			let mut new_physical_inner_size = match allow_resize {
 				// We calculate our own size because the default suggested rect doesn't do a great job
 				// of preserving the window's logical size.
-				true => old_physical_inner_size.to_logical::<f64>(old_scale_factor).to_physical::<u32>(new_scale_factor),
+				true => old_physical_inner_size
+					.to_logical::<f64>(old_scale_factor)
+					.to_physical::<u32>(new_scale_factor),
 				false => old_physical_inner_size
 			};
 
@@ -1610,9 +1633,11 @@ unsafe fn public_window_callback_inner<T: 'static>(window: HWND, msg: u32, wpara
 							GetCursorPos(&mut pos);
 							pos
 						};
-						let suggested_cursor_horizontal_ratio = (cursor_pos.x - suggested_rect.left) as f64 / (suggested_rect.right - suggested_rect.left) as f64;
+						let suggested_cursor_horizontal_ratio =
+							(cursor_pos.x - suggested_rect.left) as f64 / (suggested_rect.right - suggested_rect.left) as f64;
 
-						(cursor_pos.x - (suggested_cursor_horizontal_ratio * (conservative_rect.right - conservative_rect.left) as f64) as i32) - conservative_rect.left
+						(cursor_pos.x - (suggested_cursor_horizontal_ratio * (conservative_rect.right - conservative_rect.left) as f64) as i32)
+							- conservative_rect.left
 					};
 					conservative_rect.left += bias;
 					conservative_rect.right += bias;
@@ -1776,7 +1801,10 @@ unsafe fn public_window_callback_inner<T: 'static>(window: HWND, msg: u32, wpara
 		}
 	};
 
-	subclass_input.event_loop_runner.catch_unwind(callback).unwrap_or_else(|| result = ProcResult::Value(LRESULT(-1)));
+	subclass_input
+		.event_loop_runner
+		.catch_unwind(callback)
+		.unwrap_or_else(|| result = ProcResult::Value(LRESULT(-1)));
 
 	match result {
 		ProcResult::DefSubclassProc => DefSubclassProc(window, msg, wparam, lparam),
@@ -1785,7 +1813,14 @@ unsafe fn public_window_callback_inner<T: 'static>(window: HWND, msg: u32, wpara
 	}
 }
 
-unsafe extern "system" fn thread_event_target_callback<T: 'static>(window: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM, _: usize, subclass_input_ptr: usize) -> LRESULT {
+unsafe extern "system" fn thread_event_target_callback<T: 'static>(
+	window: HWND,
+	msg: u32,
+	wparam: WPARAM,
+	lparam: LPARAM,
+	_: usize,
+	subclass_input_ptr: usize
+) -> LRESULT {
 	let subclass_input = Box::from_raw(subclass_input_ptr as *mut ThreadMsgTargetSubclassInput<T>);
 
 	if msg != WM_PAINT {

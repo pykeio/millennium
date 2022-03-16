@@ -27,9 +27,8 @@ impl WebContext {
 	/// Create a new [`WebContext`].
 	///
 	/// `data_directory`:
-	/// * Whether the WebView window should have a custom user data path. This
-	///   is useful in Windows when a bundled application can't have the webview
-	///   data inside `Program Files`.
+	/// * Whether the WebView window should have a custom user data path. This is useful in Windows when a bundled
+	///   application can't have the webview data inside `Program Files`.
 	pub fn new(data_directory: Option<PathBuf>) -> Self {
 		let data = WebContextData { data_directory };
 		let os = WebContextImpl::new(&data);

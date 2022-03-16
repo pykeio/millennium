@@ -79,7 +79,12 @@ impl Cmd {
 	async fn http_request<R: Runtime>(context: InvokeContext<R>, client_id: ClientId, options: Box<HttpRequestBuilder>) -> super::Result<ResponseData> {
 		use crate::Manager;
 		if context.window.state::<crate::Scopes>().http.is_allowed(&options.url) {
-			let client = clients().lock().unwrap().get(&client_id).ok_or_else(|| crate::Error::HttpClientNotInitialized.into_anyhow())?.clone();
+			let client = clients()
+				.lock()
+				.unwrap()
+				.get(&client_id)
+				.ok_or_else(|| crate::Error::HttpClientNotInitialized.into_anyhow())?
+				.clone();
 			let response = client.send(*options).await?;
 			Ok(response.read().await?)
 		} else {

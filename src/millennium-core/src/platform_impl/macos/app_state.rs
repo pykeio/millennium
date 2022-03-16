@@ -93,7 +93,10 @@ impl<T> EventLoopHandler<T> {
 
 impl<T> Debug for EventLoopHandler<T> {
 	fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-		formatter.debug_struct("EventLoopHandler").field("window_target", &self.window_target).finish()
+		formatter
+			.debug_struct("EventLoopHandler")
+			.field("window_target", &self.window_target)
+			.finish()
 	}
 }
 
@@ -216,7 +219,13 @@ impl Handler {
 		}
 	}
 
-	fn handle_scale_factor_changed_event(&self, callback: &mut Box<dyn EventHandler + 'static>, ns_window: IdRef, suggested_size: LogicalSize<f64>, scale_factor: f64) {
+	fn handle_scale_factor_changed_event(
+		&self,
+		callback: &mut Box<dyn EventHandler + 'static>,
+		ns_window: IdRef,
+		suggested_size: LogicalSize<f64>,
+		scale_factor: f64
+	) {
 		let mut size = suggested_size.to_physical(scale_factor);
 		let new_inner_size = &mut size;
 		let event = Event::WindowEvent {
@@ -281,7 +290,9 @@ impl AppState {
 	}
 
 	pub fn wakeup(panic_info: Weak<PanicInfo>) {
-		let panic_info = panic_info.upgrade().expect("The panic info must exist here. This failure indicates a developer error.");
+		let panic_info = panic_info
+			.upgrade()
+			.expect("The panic info must exist here. This failure indicates a developer error.");
 		if panic_info.is_panicking() || !HANDLER.is_ready() {
 			return;
 		}
@@ -339,7 +350,9 @@ impl AppState {
 	}
 
 	pub fn cleared(panic_info: Weak<PanicInfo>) {
-		let panic_info = panic_info.upgrade().expect("The panic info must exist here. This failure indicates a developer error.");
+		let panic_info = panic_info
+			.upgrade()
+			.expect("The panic info must exist here. This failure indicates a developer error.");
 		if panic_info.is_panicking() || !HANDLER.is_ready() {
 			return;
 		}

@@ -63,19 +63,11 @@ pub fn to_wstring(str: &str) -> Vec<u16> {
 
 pub unsafe fn status_map<T, F: FnMut(&mut T) -> BOOL>(mut fun: F) -> Option<T> {
 	let mut data: T = mem::zeroed();
-	if fun(&mut data).as_bool() {
-		Some(data)
-	} else {
-		None
-	}
+	if fun(&mut data).as_bool() { Some(data) } else { None }
 }
 
 fn win_to_err<F: FnOnce() -> BOOL>(f: F) -> Result<(), io::Error> {
-	if f().as_bool() {
-		Ok(())
-	} else {
-		Err(io::Error::last_os_error())
-	}
+	if f().as_bool() { Ok(()) } else { Err(io::Error::last_os_error()) }
 }
 
 pub fn get_window_rect(hwnd: HWND) -> Option<RECT> {
@@ -126,15 +118,7 @@ pub(crate) fn set_inner_size_physical(window: HWND, x: u32, y: u32) {
 
 		let outer_x = (rect.right - rect.left).abs();
 		let outer_y = (rect.top - rect.bottom).abs();
-		SetWindowPos(
-			window,
-			HWND::default(),
-			0,
-			0,
-			outer_x,
-			outer_y,
-			SWP_ASYNCWINDOWPOS | SWP_NOZORDER | SWP_NOREPOSITION | SWP_NOMOVE | SWP_NOACTIVATE
-		);
+		SetWindowPos(window, HWND::default(), 0, 0, outer_x, outer_y, SWP_ASYNCWINDOWPOS | SWP_NOZORDER | SWP_NOREPOSITION | SWP_NOMOVE | SWP_NOACTIVATE);
 		InvalidateRgn(window, HRGN::default(), BOOL::default());
 	}
 }
@@ -287,7 +271,8 @@ pub(super) fn get_function_impl(library: &str, function: &str) -> FARPROC {
 
 macro_rules! get_function {
 	($lib:expr, $func:ident) => {
-		crate::platform_impl::platform::util::get_function_impl(concat!($lib, '\0'), concat!(stringify!($func), '\0')).map(|f| unsafe { std::mem::transmute::<_, $func>(f) })
+		crate::platform_impl::platform::util::get_function_impl(concat!($lib, '\0'), concat!(stringify!($func), '\0'))
+			.map(|f| unsafe { std::mem::transmute::<_, $func>(f) })
 	};
 }
 
@@ -297,7 +282,8 @@ pub type SetProcessDpiAwarenessContext = unsafe extern "system" fn(value: DPI_AW
 pub type GetDpiForWindow = unsafe extern "system" fn(hwnd: HWND) -> u32;
 pub type GetDpiForMonitor = unsafe extern "system" fn(hmonitor: HMONITOR, dpi_type: MONITOR_DPI_TYPE, dpi_x: *mut u32, dpi_y: *mut u32) -> HRESULT;
 pub type EnableNonClientDpiScaling = unsafe extern "system" fn(hwnd: HWND) -> BOOL;
-pub type AdjustWindowRectExForDpi = unsafe extern "system" fn(rect: *mut RECT, dwStyle: WINDOW_STYLE, bMenu: BOOL, dwExStyle: WINDOW_EX_STYLE, dpi: u32) -> BOOL;
+pub type AdjustWindowRectExForDpi =
+	unsafe extern "system" fn(rect: *mut RECT, dwStyle: WINDOW_STYLE, bMenu: BOOL, dwExStyle: WINDOW_EX_STYLE, dpi: u32) -> BOOL;
 
 lazy_static! {
 	pub static ref GET_DPI_FOR_WINDOW: Option<GetDpiForWindow> = get_function!("user32.dll", GetDpiForWindow);

@@ -107,7 +107,12 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 
 	let mut options = AssetOptions::new(config.millennium.pattern.clone()).freeze_prototype(config.millennium.security.freeze_prototype);
 	let csp = if dev {
-		config.millennium.security.dev_csp.clone().or_else(|| config.millennium.security.csp.clone())
+		config
+			.millennium
+			.security
+			.dev_csp
+			.clone()
+			.or_else(|| config.millennium.security.csp.clone())
 	} else {
 		config.millennium.security.csp.clone()
 	};
@@ -312,16 +317,24 @@ fn ico_icon<P: AsRef<Path>>(root: &TokenStream, out_dir: &Path, path: P) -> Resu
 	use std::io::Write;
 
 	let path = path.as_ref();
-	let bytes = std::fs::read(&path).unwrap_or_else(|_| panic!("failed to read window icon {}", path.display())).to_vec();
+	let bytes = std::fs::read(&path)
+		.unwrap_or_else(|_| panic!("failed to read window icon {}", path.display()))
+		.to_vec();
 	let icon_dir = ico::IconDir::read(std::io::Cursor::new(bytes)).unwrap_or_else(|_| panic!("failed to parse window icon {}", path.display()));
 	let entry = &icon_dir.entries()[0];
-	let rgba = entry.decode().unwrap_or_else(|_| panic!("failed to decode window icon {}", path.display())).rgba_data().to_vec();
+	let rgba = entry
+		.decode()
+		.unwrap_or_else(|_| panic!("failed to decode window icon {}", path.display()))
+		.rgba_data()
+		.to_vec();
 	let width = entry.width();
 	let height = entry.height();
 
 	let out_path = out_dir.join(path.file_name().unwrap());
 	let mut out_file = File::create(&out_path).map_err(|error| EmbeddedAssetsError::AssetWrite { path: out_path.clone(), error })?;
-	out_file.write_all(&rgba).map_err(|error| EmbeddedAssetsError::AssetWrite { path: path.to_owned(), error })?;
+	out_file
+		.write_all(&rgba)
+		.map_err(|error| EmbeddedAssetsError::AssetWrite { path: path.to_owned(), error })?;
 
 	let out_path = out_path.display().to_string();
 	let icon = quote!(Some(#root::Icon::Rgba { rgba: include_bytes!(#out_path).to_vec(), width: #width, height: #height }));
@@ -334,9 +347,13 @@ fn png_icon<P: AsRef<Path>>(root: &TokenStream, out_dir: &Path, path: P) -> Resu
 	use std::io::Write;
 
 	let path = path.as_ref();
-	let bytes = std::fs::read(&path).unwrap_or_else(|_| panic!("failed to read window icon {}", path.display())).to_vec();
+	let bytes = std::fs::read(&path)
+		.unwrap_or_else(|_| panic!("failed to read window icon {}", path.display()))
+		.to_vec();
 	let decoder = png::Decoder::new(std::io::Cursor::new(bytes));
-	let mut reader = decoder.read_info().unwrap_or_else(|_| panic!("failed to read window icon {}", path.display()));
+	let mut reader = decoder
+		.read_info()
+		.unwrap_or_else(|_| panic!("failed to read window icon {}", path.display()));
 	let mut buffer: Vec<u8> = Vec::new();
 	while let Ok(Some(row)) = reader.next_row() {
 		buffer.extend(row.data());
@@ -346,7 +363,9 @@ fn png_icon<P: AsRef<Path>>(root: &TokenStream, out_dir: &Path, path: P) -> Resu
 
 	let out_path = out_dir.join(path.file_name().unwrap());
 	let mut out_file = File::create(&out_path).map_err(|error| EmbeddedAssetsError::AssetWrite { path: out_path.clone(), error })?;
-	out_file.write_all(&buffer).map_err(|error| EmbeddedAssetsError::AssetWrite { path: path.to_owned(), error })?;
+	out_file
+		.write_all(&buffer)
+		.map_err(|error| EmbeddedAssetsError::AssetWrite { path: path.to_owned(), error })?;
 
 	let out_path = out_path.display().to_string();
 	let icon = quote!(Some(#root::Icon::Rgba { rgba: include_bytes!(#out_path).to_vec(), width: #width, height: #height }));
@@ -355,7 +374,14 @@ fn png_icon<P: AsRef<Path>>(root: &TokenStream, out_dir: &Path, path: P) -> Resu
 
 #[cfg(any(windows, target_os = "linux"))]
 fn find_icon<F: Fn(&&String) -> bool>(config: &Config, config_parent: &Path, predicate: F, default: &str) -> String {
-	let icon_path = config.millennium.bundle.icon.iter().find(|i| predicate(i)).cloned().unwrap_or_else(|| default.to_string());
+	let icon_path = config
+		.millennium
+		.bundle
+		.icon
+		.iter()
+		.find(|i| predicate(i))
+		.cloned()
+		.unwrap_or_else(|| default.to_string());
 	config_parent.join(icon_path).display().to_string()
 }
 

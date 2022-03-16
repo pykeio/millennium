@@ -115,7 +115,15 @@ impl Menu {
 		Self::new()
 	}
 
-	pub fn add_item(&mut self, menu_id: MenuId, title: &str, accelerators: Option<Accelerator>, enabled: bool, selected: bool, menu_type: MenuType) -> CustomMenuItem {
+	pub fn add_item(
+		&mut self,
+		menu_id: MenuId,
+		title: &str,
+		accelerators: Option<Accelerator>,
+		enabled: bool,
+		selected: bool,
+		menu_type: MenuType
+	) -> CustomMenuItem {
 		let menu_item = make_custom_menu_item(menu_id, title, None, accelerators, menu_type);
 
 		unsafe {
@@ -160,51 +168,36 @@ impl Menu {
 				Some((None, make_menu_item(title.as_str(), Some(selector("orderFrontStandardAboutPanel:")), None, menu_type)))
 			}
 			// Close window
-			MenuItem::CloseWindow => Some((
-				None,
-				make_menu_item("Close Window", Some(selector("performClose:")), Some(Accelerator::new(RawMods::Meta, KeyCode::KeyW)), menu_type)
-			)),
-			MenuItem::Quit => Some((
-				None,
-				make_menu_item("Quit", Some(selector("terminate:")), Some(Accelerator::new(RawMods::Meta, KeyCode::KeyQ)), menu_type)
-			)),
+			MenuItem::CloseWindow => {
+				Some((None, make_menu_item("Close Window", Some(selector("performClose:")), Some(Accelerator::new(RawMods::Meta, KeyCode::KeyW)), menu_type)))
+			}
+			MenuItem::Quit => {
+				Some((None, make_menu_item("Quit", Some(selector("terminate:")), Some(Accelerator::new(RawMods::Meta, KeyCode::KeyQ)), menu_type)))
+			}
 			MenuItem::Hide => Some((None, make_menu_item("Hide", Some(selector("hide:")), Some(Accelerator::new(RawMods::Meta, KeyCode::KeyH)), menu_type))),
 			MenuItem::HideOthers => Some((
 				None,
-				make_menu_item(
-					"Hide Others",
-					Some(selector("hideOtherApplications:")),
-					Some(Accelerator::new(RawMods::AltMeta, KeyCode::KeyW)),
-					menu_type
-				)
+				make_menu_item("Hide Others", Some(selector("hideOtherApplications:")), Some(Accelerator::new(RawMods::AltMeta, KeyCode::KeyW)), menu_type)
 			)),
 			MenuItem::ShowAll => Some((None, make_menu_item("Show All", Some(selector("unhideAllApplications:")), None, menu_type))),
 			MenuItem::EnterFullScreen => Some((
 				None,
-				make_menu_item(
-					"Enter Full Screen",
-					Some(selector("toggleFullScreen:")),
-					Some(Accelerator::new(RawMods::CtrlMeta, KeyCode::KeyF)),
-					menu_type
-				)
+				make_menu_item("Enter Full Screen", Some(selector("toggleFullScreen:")), Some(Accelerator::new(RawMods::CtrlMeta, KeyCode::KeyF)), menu_type)
 			)),
-			MenuItem::Minimize => Some((
-				None,
-				make_menu_item("Minimize", Some(selector("performMiniaturize:")), Some(Accelerator::new(RawMods::Meta, KeyCode::KeyM)), menu_type)
-			)),
+			MenuItem::Minimize => {
+				Some((None, make_menu_item("Minimize", Some(selector("performMiniaturize:")), Some(Accelerator::new(RawMods::Meta, KeyCode::KeyM)), menu_type)))
+			}
 			MenuItem::Zoom => Some((None, make_menu_item("Zoom", Some(selector("performZoom:")), None, menu_type))),
 			MenuItem::Copy => Some((None, make_menu_item("Copy", Some(selector("copy:")), Some(Accelerator::new(RawMods::Meta, KeyCode::KeyC)), menu_type))),
 			MenuItem::Cut => Some((None, make_menu_item("Cut", Some(selector("cut:")), Some(Accelerator::new(RawMods::Meta, KeyCode::KeyX)), menu_type))),
 			MenuItem::Paste => Some((None, make_menu_item("Paste", Some(selector("paste:")), Some(Accelerator::new(RawMods::Meta, KeyCode::KeyV)), menu_type))),
 			MenuItem::Undo => Some((None, make_menu_item("Undo", Some(selector("undo:")), Some(Accelerator::new(RawMods::Meta, KeyCode::KeyZ)), menu_type))),
-			MenuItem::Redo => Some((
-				None,
-				make_menu_item("Redo", Some(selector("redo:")), Some(Accelerator::new(RawMods::MetaShift, KeyCode::KeyZ)), menu_type)
-			)),
-			MenuItem::SelectAll => Some((
-				None,
-				make_menu_item("Select All", Some(selector("selectAll:")), Some(Accelerator::new(RawMods::Meta, KeyCode::KeyA)), menu_type)
-			)),
+			MenuItem::Redo => {
+				Some((None, make_menu_item("Redo", Some(selector("redo:")), Some(Accelerator::new(RawMods::MetaShift, KeyCode::KeyZ)), menu_type)))
+			}
+			MenuItem::SelectAll => {
+				Some((None, make_menu_item("Select All", Some(selector("selectAll:")), Some(Accelerator::new(RawMods::Meta, KeyCode::KeyA)), menu_type)))
+			}
 			MenuItem::Services => unsafe {
 				let item = make_menu_item("Services", None, None, MenuType::MenuBar);
 				let app_class = class!(NSApplication);
@@ -262,7 +255,13 @@ pub(crate) fn make_menu_item(title: &str, selector: Option<Sel>, accelerator: Op
 	}
 }
 
-fn make_menu_item_from_alloc(alloc: *mut Object, title: *mut Object, selector: Option<Sel>, accelerator: Option<Accelerator>, menu_type: MenuType) -> *mut Object {
+fn make_menu_item_from_alloc(
+	alloc: *mut Object,
+	title: *mut Object,
+	selector: Option<Sel>,
+	accelerator: Option<Accelerator>,
+	menu_type: MenuType
+) -> *mut Object {
 	unsafe {
 		// build our Accelerator string
 		let key_equivalent = accelerator.clone().map(Accelerator::key_equivalent).unwrap_or_else(|| "".into());
@@ -279,7 +278,9 @@ fn make_menu_item_from_alloc(alloc: *mut Object, title: *mut Object, selector: O
 		// allocate our item to our class
 		let item: id = msg_send![alloc, initWithTitle: title action: selector keyEquivalent: key_equivalent];
 
-		let mask = accelerator.map(Accelerator::key_modifier_mask).unwrap_or_else(NSEventModifierFlags::empty);
+		let mask = accelerator
+			.map(Accelerator::key_modifier_mask)
+			.unwrap_or_else(NSEventModifierFlags::empty);
 		item.setKeyEquivalentModifierMask_(mask);
 		item
 	}

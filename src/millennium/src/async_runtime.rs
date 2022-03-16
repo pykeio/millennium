@@ -51,11 +51,7 @@ struct GlobalRuntime {
 
 impl GlobalRuntime {
 	fn handle(&self) -> RuntimeHandle {
-		if let Some(r) = &self.runtime {
-			r.handle()
-		} else {
-			self.handle.clone()
-		}
+		if let Some(r) = &self.runtime { r.handle() } else { self.handle.clone() }
 	}
 
 	fn spawn<F: Future>(&self, task: F) -> JoinHandle<F::Output>
@@ -63,11 +59,7 @@ impl GlobalRuntime {
 		F: Future + Send + 'static,
 		F::Output: Send + 'static
 	{
-		if let Some(r) = &self.runtime {
-			r.spawn(task)
-		} else {
-			self.handle.spawn(task)
-		}
+		if let Some(r) = &self.runtime { r.spawn(task) } else { self.handle.spawn(task) }
 	}
 
 	pub fn spawn_blocking<F, R>(&self, func: F) -> JoinHandle<R>
@@ -83,11 +75,7 @@ impl GlobalRuntime {
 	}
 
 	fn block_on<F: Future>(&self, task: F) -> F::Output {
-		if let Some(r) = &self.runtime {
-			r.block_on(task)
-		} else {
-			self.handle.block_on(task)
-		}
+		if let Some(r) = &self.runtime { r.block_on(task) } else { self.handle.block_on(task) }
 	}
 }
 

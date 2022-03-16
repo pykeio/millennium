@@ -32,7 +32,9 @@ impl Cmd {
 	#[module_command_handler(cli, "CLI definition not set under .millenniumrc > millennium > cli")]
 	fn cli_matches<R: Runtime>(context: InvokeContext<R>) -> super::Result<InvokeResponse> {
 		if let Some(cli) = &context.config.millennium.cli {
-			crate::api::cli::get_matches(cli, &context.package_info).map(Into::into).map_err(Into::into)
+			crate::api::cli::get_matches(cli, &context.package_info)
+				.map(Into::into)
+				.map_err(Into::into)
 		} else {
 			Err(crate::Error::ApiNotAllowlisted("CLI definition not set under .millenniumrc > millennium > cli".into()).into_anyhow())
 		}

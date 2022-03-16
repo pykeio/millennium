@@ -49,7 +49,9 @@ impl SystemTrayBuilder {
 	#[inline]
 	pub fn new(icon: Vec<u8>, tray_menu: Option<Menu>) -> Self {
 		unsafe {
-			let ns_status_bar = NSStatusBar::systemStatusBar(nil).statusItemWithLength_(NSSquareStatusItemLength).autorelease();
+			let ns_status_bar = NSStatusBar::systemStatusBar(nil)
+				.statusItemWithLength_(NSSquareStatusItemLength)
+				.autorelease();
 
 			Self {
 				system_tray: SystemTray {

@@ -144,7 +144,8 @@ fn get_function_impl(library: &str, function: &str) -> Option<FARPROC> {
 
 macro_rules! get_function {
 	($lib:expr, $func:ident) => {
-		get_function_impl(concat!($lib, '\0'), concat!(stringify!($func), '\0')).map(|f| unsafe { std::mem::transmute::<::windows_sys::Win32::Foundation::FARPROC, $func>(f) })
+		get_function_impl(concat!($lib, '\0'), concat!(stringify!($func), '\0'))
+			.map(|f| unsafe { std::mem::transmute::<::windows_sys::Win32::Foundation::FARPROC, $func>(f) })
 	};
 }
 
@@ -164,11 +165,7 @@ fn get_windows_ver() -> Option<(u32, u32, u32)> {
 			};
 
 			let status = (rtl_get_version)(&mut vi as _);
-			if status >= 0 {
-				Some((vi.dwMajorVersion, vi.dwMinorVersion, vi.dwBuildNumber))
-			} else {
-				None
-			}
+			if status >= 0 { Some((vi.dwMajorVersion, vi.dwMinorVersion, vi.dwBuildNumber)) } else { None }
 		}
 	} else {
 		None

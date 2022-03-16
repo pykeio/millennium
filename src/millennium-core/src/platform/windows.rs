@@ -197,8 +197,7 @@ pub trait WindowBuilderExtWindows {
 	///
 	/// From MSDN:
 	/// - An owned window is always above its owner in the z-order.
-	/// - The system automatically destroys an owned window when its owner is
-	///   destroyed.
+	/// - The system automatically destroys an owned window when its owner is destroyed.
 	/// - An owned window is hidden when its owner is minimized.
 	///
 	/// For more information, see <https://docs.microsoft.com/en-us/windows/win32/winmsg/window-features#owned-windows>

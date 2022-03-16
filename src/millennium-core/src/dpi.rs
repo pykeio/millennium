@@ -93,24 +93,18 @@
 //!
 //! Scale factor is calculated differently on different platforms:
 //!
-//! - **Windows:** On Windows 8 and 10, per-monitor scaling is readily
-//!   configured by users from the display settings. While users are free to
-//!   select any option they want, they're only given a selection of "nice"
-//!   scale factors, i.e. 1.0, 1.25, 1.5... on Windows 7, the scale factor is
-//!   global and changing it requires logging out. See [this article][windows_1]
-//!   for technical details.
-//! - **macOS:** Recent versions of macOS allow the user to change the scaling
-//!   factor for certain displays. When this is available, the user may pick a
-//!   per-monitor scaling factor from a set of pre-defined settings. All "retina
-//!   displays" have a scaling factor above 1.0 by default but the specific
-//!   value varies across devices.
+//! - **Windows:** On Windows 8 and 10, per-monitor scaling is readily configured by users from the display settings.
+//!   While users are free to select any option they want, they're only given a selection of "nice" scale factors, i.e.
+//!   1.0, 1.25, 1.5... on Windows 7, the scale factor is global and changing it requires logging out. See [this
+//!   article][windows_1] for technical details.
+//! - **macOS:** Recent versions of macOS allow the user to change the scaling factor for certain displays. When this is
+//!   available, the user may pick a per-monitor scaling factor from a set of pre-defined settings. All "retina
+//!   displays" have a scaling factor above 1.0 by default but the specific value varies across devices.
 //! - **Linux:** TODO
-//! - **iOS:** Scale factors are set by Apple to the value that best suits the
-//!   device, and range from `1.0` to `3.0`. See [this article][apple_1] and
-//!   [this article][apple_2] for more information.
-//! - **Android:** Scale factors are set by the manufacturer to the value that
-//!   best suits the device, and range from `1.0` to `4.0`. See [this
-//!   article][android_1] for more information.
+//! - **iOS:** Scale factors are set by Apple to the value that best suits the device, and range from `1.0` to `3.0`.
+//!   See [this article][apple_1] and [this article][apple_2] for more information.
+//! - **Android:** Scale factors are set by the manufacturer to the value that best suits the device, and range from
+//!   `1.0` to `4.0`. See [this article][android_1] for more information.
 //!
 //! [points]: https://en.wikipedia.org/wiki/Point_(typography)
 //! [picas]: https://en.wikipedia.org/wiki/Pica_(typography)

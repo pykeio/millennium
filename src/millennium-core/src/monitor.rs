@@ -62,7 +62,11 @@ impl Ord for VideoMode {
 		let other_size: (u32, u32) = other.size().into();
 		self.monitor().cmp(&other.monitor()).then(
 			size.cmp(&other_size)
-				.then(self.refresh_rate().cmp(&other.refresh_rate()).then(self.bit_depth().cmp(&other.bit_depth())))
+				.then(
+					self.refresh_rate()
+						.cmp(&other.refresh_rate())
+						.then(self.bit_depth().cmp(&other.bit_depth()))
+				)
 				.reverse()
 		)
 	}

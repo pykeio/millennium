@@ -130,6 +130,10 @@ impl RequestParts {
 
 impl fmt::Debug for RequestParts {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		f.debug_struct("Parts").field("method", &self.method).field("uri", &self.uri).field("headers", &self.headers).finish()
+		f.debug_struct("Parts")
+			.field("method", &self.method)
+			.field("uri", &self.uri)
+			.field("headers", &self.headers)
+			.finish()
 	}
 }

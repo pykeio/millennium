@@ -369,7 +369,12 @@ impl Command {
 	}
 }
 
-fn spawn_pipe_reader<F: Fn(String) -> CommandEvent + Send + Copy + 'static>(tx: Sender<CommandEvent>, guard: Arc<RwLock<()>>, pipe_reader: PipeReader, wrapper: F) {
+fn spawn_pipe_reader<F: Fn(String) -> CommandEvent + Send + Copy + 'static>(
+	tx: Sender<CommandEvent>,
+	guard: Arc<RwLock<()>>,
+	pipe_reader: PipeReader,
+	wrapper: F
+) {
 	spawn(move || {
 		let _lock = guard.read().unwrap();
 		let mut reader = BufReader::new(pipe_reader);

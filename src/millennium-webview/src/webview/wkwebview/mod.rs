@@ -186,7 +186,8 @@ impl InnerWebView {
 						let () = msg_send![task, didReceiveData: data];
 					} else {
 						let urlresponse: id = msg_send![class!(NSHTTPURLResponse), alloc];
-						let response: id = msg_send![urlresponse, initWithURL:url statusCode:404 HTTPVersion:NSString::new("HTTP/1.1") headerFields:null::<c_void>()];
+						let response: id =
+							msg_send![urlresponse, initWithURL:url statusCode:404 HTTPVersion:NSString::new("HTTP/1.1") headerFields:null::<c_void>()];
 						let () = msg_send![task, didReceiveResponse: response];
 					}
 					// Finish
@@ -437,8 +438,7 @@ impl InnerWebView {
 			// Allow the modal to detach from the current thread and be non-blocker
 			let () = msg_send![print_operation, setCanSpawnSeparateThread: YES];
 			// Launch the modal
-			let () =
-				msg_send![print_operation, runOperationModalForWindow: self.ns_window delegate: null::<*const c_void>() didRunSelector: null::<*const c_void>() contextInfo: null::<*const c_void>()];
+			let () = msg_send![print_operation, runOperationModalForWindow: self.ns_window delegate: null::<*const c_void>() didRunSelector: null::<*const c_void>() contextInfo: null::<*const c_void>()];
 		}
 	}
 

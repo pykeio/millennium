@@ -34,8 +34,8 @@ use crate::{
 	platform_impl::platform::{
 		event_loop::{EventHandler, EventProxy, EventWrapper, Never},
 		ffi::{
-			id, kCFRunLoopCommonModes, CFAbsoluteTimeGetCurrent, CFRelease, CFRunLoopAddTimer, CFRunLoopGetMain, CFRunLoopRef, CFRunLoopTimerCreate, CFRunLoopTimerInvalidate, CFRunLoopTimerRef,
-			CFRunLoopTimerSetNextFireDate, CGRect, CGSize, NSInteger, NSOperatingSystemVersion, NSUInteger
+			id, kCFRunLoopCommonModes, CFAbsoluteTimeGetCurrent, CFRelease, CFRunLoopAddTimer, CFRunLoopGetMain, CFRunLoopRef, CFRunLoopTimerCreate,
+			CFRunLoopTimerInvalidate, CFRunLoopTimerRef, CFRunLoopTimerSetNextFireDate, CGRect, CGSize, NSInteger, NSOperatingSystemVersion, NSUInteger
 		}
 	},
 	window::WindowId as RootWindowId
@@ -249,11 +249,12 @@ impl AppState {
 		}
 
 		let (event_handler, event) = match (self.control_flow, self.take_state()) {
-			(ControlFlow::Poll, AppStateImpl::PollFinished { waiting_event_handler }) => (waiting_event_handler, EventWrapper::StaticEvent(Event::NewEvents(StartCause::Poll))),
-			(ControlFlow::Wait, AppStateImpl::Waiting { waiting_event_handler, start }) => (
-				waiting_event_handler,
-				EventWrapper::StaticEvent(Event::NewEvents(StartCause::WaitCancelled { start, requested_resume: None }))
-			),
+			(ControlFlow::Poll, AppStateImpl::PollFinished { waiting_event_handler }) => {
+				(waiting_event_handler, EventWrapper::StaticEvent(Event::NewEvents(StartCause::Poll)))
+			}
+			(ControlFlow::Wait, AppStateImpl::Waiting { waiting_event_handler, start }) => {
+				(waiting_event_handler, EventWrapper::StaticEvent(Event::NewEvents(StartCause::WaitCancelled { start, requested_resume: None })))
+			}
 			(ControlFlow::WaitUntil(requested_resume), AppStateImpl::Waiting { waiting_event_handler, start }) => {
 				let event = if Instant::now() >= requested_resume {
 					EventWrapper::StaticEvent(Event::NewEvents(StartCause::ResumeTimeReached { start, requested_resume }))
@@ -286,7 +287,11 @@ impl AppState {
 			| &mut AppStateImpl::InUserCallback { ref mut queued_events, .. } => {
 				// A lifetime cast: early returns are not currently handled well with NLL, but
 				// polonius handles them well. This transmute is a safe workaround.
-				return unsafe { mem::transmute::<UserCallbackTransitionResult<'_>, UserCallbackTransitionResult<'_>>(UserCallbackTransitionResult::ReentrancyPrevented { queued_events }) };
+				return unsafe {
+					mem::transmute::<UserCallbackTransitionResult<'_>, UserCallbackTransitionResult<'_>>(UserCallbackTransitionResult::ReentrancyPrevented {
+						queued_events
+					})
+				};
 			}
 
 			&mut AppStateImpl::ProcessingEvents { .. } | &mut AppStateImpl::ProcessingRedraws { .. } => {}
@@ -731,7 +736,13 @@ fn handle_event_proxy(event_handler: &mut Box<dyn EventHandler>, control_flow: C
 	};
 }
 
-fn handle_hidpi_proxy(event_handler: &mut Box<dyn EventHandler>, mut control_flow: ControlFlow, suggested_size: LogicalSize<f64>, scale_factor: f64, window_id: id) {
+fn handle_hidpi_proxy(
+	event_handler: &mut Box<dyn EventHandler>,
+	mut control_flow: ControlFlow,
+	suggested_size: LogicalSize<f64>,
+	scale_factor: f64,
+	window_id: id
+) {
 	let mut size = suggested_size.to_physical(scale_factor);
 	let new_inner_size = &mut size;
 	let event = Event::WindowEvent {

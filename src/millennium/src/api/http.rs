@@ -101,7 +101,11 @@ impl Client {
 	/// async fn run_request() {
 	/// 	let client = ClientBuilder::new().build().unwrap();
 	/// 	let response = client
-	/// 		.send(HttpRequestBuilder::new("GET", "https://www.rust-lang.org").unwrap().response_type(ResponseType::Binary))
+	/// 		.send(
+	/// 			HttpRequestBuilder::new("GET", "https://www.rust-lang.org")
+	/// 				.unwrap()
+	/// 				.response_type(ResponseType::Binary)
+	/// 		)
 	/// 		.await;
 	/// 	if let Ok(response) = response {
 	/// 		let bytes = response.bytes();
@@ -263,7 +267,9 @@ pub enum Body {
 /// use millennium::api::http::{ClientBuilder, HttpRequestBuilder, ResponseType};
 /// async fn run() {
 /// 	let client = ClientBuilder::new().max_redirections(3).build().unwrap();
-/// 	let request = HttpRequestBuilder::new("GET", "http://example.com").unwrap().response_type(ResponseType::Text);
+/// 	let request = HttpRequestBuilder::new("GET", "http://example.com")
+/// 		.unwrap()
+/// 		.response_type(ResponseType::Text);
 /// 	if let Ok(response) = client.send(request).await {
 /// 		println!("got response");
 /// 	} else {

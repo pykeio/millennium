@@ -39,8 +39,8 @@ use millennium_runtime::{
 		dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize, Position, Size},
 		DetachedWindow, FileDropEvent, JsEventListenerKey, PendingWindow, WindowEvent
 	},
-	ClipboardManager, Dispatch, Error, EventLoopProxy, ExitRequestedEventAction, GlobalShortcutManager, Result, RunEvent, RunIteration, Runtime, RuntimeHandle, UserAttentionType, UserEvent,
-	WindowIcon
+	ClipboardManager, Dispatch, Error, EventLoopProxy, ExitRequestedEventAction, GlobalShortcutManager, Result, RunEvent, RunIteration, Runtime, RuntimeHandle,
+	UserAttentionType, UserEvent, WindowIcon
 };
 #[cfg(target_os = "macos")]
 use millennium_runtime::{menu::NativeImage, ActivationPolicy};
@@ -68,17 +68,22 @@ use millennium_webview::{
 		accelerator::{Accelerator, AcceleratorId},
 		clipboard::Clipboard,
 		dpi::{
-			LogicalPosition as MillenniumLogicalPosition, LogicalSize as MillenniumLogicalSize, PhysicalPosition as MillenniumPhysicalPosition, PhysicalSize as MillenniumPhysicalSize,
-			Position as MillenniumPosition, Size as MillenniumSize
+			LogicalPosition as MillenniumLogicalPosition, LogicalSize as MillenniumLogicalSize, PhysicalPosition as MillenniumPhysicalPosition,
+			PhysicalSize as MillenniumPhysicalSize, Position as MillenniumPosition, Size as MillenniumSize
 		},
 		event::{Event, StartCause, WindowEvent as MillenniumWindowEvent},
 		event_loop::{ControlFlow, EventLoop, EventLoopProxy as MillenniumEventLoopProxy, EventLoopWindowTarget},
 		global_shortcut::{GlobalShortcut, ShortcutManager as MillenniumShortcutManager},
-		menu::{CustomMenuItem as MillenniumCustomMenuItem, MenuBar, MenuId as MillenniumMenuId, MenuItem as MillenniumMenuItem, MenuItemAttributes as MillenniumMenuItemAttributes, MenuType},
+		menu::{
+			CustomMenuItem as MillenniumCustomMenuItem, MenuBar, MenuId as MillenniumMenuId, MenuItem as MillenniumMenuItem,
+			MenuItemAttributes as MillenniumMenuItemAttributes, MenuType
+		},
 		monitor::MonitorHandle,
 		window::{Fullscreen, Icon as MillenniumWindowIcon, UserAttentionType as MillenniumUserAttentionType}
 	},
-	http::{Request as MillenniumHttpRequest, RequestParts as MillenniumRequestParts, Response as MillenniumHttpResponse, ResponseParts as MillenniumResponseParts},
+	http::{
+		Request as MillenniumHttpRequest, RequestParts as MillenniumRequestParts, Response as MillenniumHttpResponse, ResponseParts as MillenniumResponseParts
+	},
 	webview::{FileDropEvent as MillenniumFileDropEvent, WebContext, WebView, WebViewBuilder}
 };
 use uuid::Uuid;
@@ -390,11 +395,7 @@ impl<T: UserEvent> fmt::Debug for GlobalShortcutManagerHandle<T> {
 impl<T: UserEvent> GlobalShortcutManager for GlobalShortcutManagerHandle<T> {
 	fn is_registered(&self, accelerator: &str) -> Result<bool> {
 		let (tx, rx) = channel();
-		getter!(
-			self,
-			rx,
-			Message::GlobalShortcut(GlobalShortcutMessage::IsRegistered(accelerator.parse().expect("invalid accelerator"), tx))
-		)
+		getter!(self, rx, Message::GlobalShortcut(GlobalShortcutMessage::IsRegistered(accelerator.parse().expect("invalid accelerator"), tx)))
 	}
 
 	fn register<F: Fn() + Send + 'static>(&mut self, accelerator: &str, handler: F) -> Result<()> {
@@ -461,7 +462,9 @@ fn icon_err<E: std::error::Error + Send + 'static>(e: E) -> Error {
 impl TryFrom<WindowIcon> for MillenniumIcon {
 	type Error = Error;
 	fn try_from(icon: WindowIcon) -> std::result::Result<Self, Self::Error> {
-		MillenniumWindowIcon::from_rgba(icon.rgba, icon.width, icon.height).map(Self).map_err(icon_err)
+		MillenniumWindowIcon::from_rgba(icon.rgba, icon.width, icon.height)
+			.map(Self)
+			.map_err(icon_err)
 	}
 }
 
@@ -641,7 +644,9 @@ impl WindowBuilder for WindowBuilderWrapper {
 		}
 		#[cfg(all(target_os = "macos", not(feature = "macos-private-api"), debug_assertions))]
 		if config.transparent {
-			eprintln!("The window is set to be transparent but the `macos-private-api` is not enabled. This can be enabled via the `millennium.macOSPrivateApi` configuration property.");
+			eprintln!(
+				"The window is set to be transparent but the `macos-private-api` is not enabled. This can be enabled via the `millennium.macOSPrivateApi` configuration property."
+			);
 		}
 		#[cfg(target_os = "windows")]
 		{
@@ -978,7 +983,15 @@ impl<T: UserEvent> Dispatch<T> for MillenniumDispatcher<T> {
 
 	fn on_menu_event<F: Fn(&MenuEvent) + Send + 'static>(&self, f: F) -> Uuid {
 		let id = Uuid::new_v4();
-		self.context.menu_event_listeners.lock().unwrap().get(&self.window_id).unwrap().lock().unwrap().insert(id, Box::new(f));
+		self.context
+			.menu_event_listeners
+			.lock()
+			.unwrap()
+			.get(&self.window_id)
+			.unwrap()
+			.lock()
+			.unwrap()
+			.insert(id, Box::new(f));
 		id
 	}
 
@@ -1044,7 +1057,10 @@ impl<T: UserEvent> Dispatch<T> for MillenniumDispatcher<T> {
 	}
 
 	fn available_monitors(&self) -> Result<Vec<Monitor>> {
-		Ok(window_getter!(self, WindowMessage::AvailableMonitors)?.into_iter().map(|m| MonitorHandleWrapper(m).into()).collect())
+		Ok(window_getter!(self, WindowMessage::AvailableMonitors)?
+			.into_iter()
+			.map(|m| MonitorHandleWrapper(m).into())
+			.collect())
 	}
 
 	#[cfg(target_os = "macos")]
@@ -1704,7 +1720,12 @@ struct UserMessageContext<'a> {
 	tray_context: &'a TrayContext
 }
 
-fn handle_user_message<T: UserEvent>(event_loop: &EventLoopWindowTarget<Message<T>>, message: Message<T>, context: UserMessageContext<'_>, web_context: &WebContextStore) -> RunIteration {
+fn handle_user_message<T: UserEvent>(
+	event_loop: &EventLoopWindowTarget<Message<T>>,
+	message: Message<T>,
+	context: UserMessageContext<'_>,
+	web_context: &WebContextStore
+) -> RunIteration {
 	let UserMessageContext {
 		window_event_listeners,
 		menu_event_listeners,
@@ -1729,10 +1750,20 @@ fn handle_user_message<T: UserEvent>(event_loop: &EventLoopWindowTarget<Message<
 					// Getters
 					WindowMessage::ScaleFactor(tx) => tx.send(window.scale_factor()).unwrap(),
 					WindowMessage::InnerPosition(tx) => tx
-						.send(window.inner_position().map(|p| PhysicalPositionWrapper(p).into()).map_err(|_| Error::FailedToSendMessage))
+						.send(
+							window
+								.inner_position()
+								.map(|p| PhysicalPositionWrapper(p).into())
+								.map_err(|_| Error::FailedToSendMessage)
+						)
 						.unwrap(),
 					WindowMessage::OuterPosition(tx) => tx
-						.send(window.outer_position().map(|p| PhysicalPositionWrapper(p).into()).map_err(|_| Error::FailedToSendMessage))
+						.send(
+							window
+								.outer_position()
+								.map(|p| PhysicalPositionWrapper(p).into())
+								.map_err(|_| Error::FailedToSendMessage)
+						)
 						.unwrap(),
 					WindowMessage::InnerSize(tx) => tx.send(PhysicalSizeWrapper(webview.inner.inner_size()).into()).unwrap(),
 					WindowMessage::OuterSize(tx) => tx.send(PhysicalSizeWrapper(window.outer_size()).into()).unwrap(),
@@ -1857,9 +1888,15 @@ fn handle_user_message<T: UserEvent>(event_loop: &EventLoopWindowTarget<Message<
 			if let Ok(window) = builder.build(event_loop) {
 				let window_id = window.id();
 
-				window_event_listeners.lock().unwrap().insert(window.id(), WindowEventListenersMap::default());
+				window_event_listeners
+					.lock()
+					.unwrap()
+					.insert(window.id(), WindowEventListenersMap::default());
 
-				menu_event_listeners.lock().unwrap().insert(window.id(), WindowMenuEventListeners::default());
+				menu_event_listeners
+					.lock()
+					.unwrap()
+					.insert(window.id(), WindowMenuEventListeners::default());
 
 				let w = Arc::new(window);
 
@@ -1927,10 +1964,22 @@ fn handle_user_message<T: UserEvent>(event_loop: &EventLoopWindowTarget<Message<
 				)
 				.unwrap(),
 			GlobalShortcutMessage::Unregister(shortcut, tx) => tx
-				.send(global_shortcut_manager.lock().unwrap().unregister(shortcut.0).map_err(|e| Error::GlobalShortcut(Box::new(e))))
+				.send(
+					global_shortcut_manager
+						.lock()
+						.unwrap()
+						.unregister(shortcut.0)
+						.map_err(|e| Error::GlobalShortcut(Box::new(e)))
+				)
 				.unwrap(),
 			GlobalShortcutMessage::UnregisterAll(tx) => tx
-				.send(global_shortcut_manager.lock().unwrap().unregister_all().map_err(|e| Error::GlobalShortcut(Box::new(e))))
+				.send(
+					global_shortcut_manager
+						.lock()
+						.unwrap()
+						.unregister_all()
+						.map_err(|e| Error::GlobalShortcut(Box::new(e)))
+				)
 				.unwrap()
 		},
 		Message::Clipboard(message) => match message {
@@ -2109,7 +2158,7 @@ fn handle_event_loop<T: UserEvent>(
 					web_context
 				);
 			}
-		}
+		},
 		_ => ()
 	}
 
@@ -2239,7 +2288,12 @@ fn to_millennium_menu(custom_menu_items: &mut HashMap<MenuHash, MillenniumCustom
 	millennium_menu
 }
 
-fn create_webview<T: UserEvent>(event_loop: &EventLoopWindowTarget<Message<T>>, web_context: &WebContextStore, context: Context<T>, pending: PendingWindow<T, MillenniumWebview<T>>) -> Result<WindowWrapper> {
+fn create_webview<T: UserEvent>(
+	event_loop: &EventLoopWindowTarget<Message<T>>,
+	web_context: &WebContextStore,
+	context: Context<T>,
+	pending: PendingWindow<T, MillenniumWebview<T>>
+) -> Result<WindowWrapper> {
 	#[allow(unused_mut)]
 	let PendingWindow {
 		webview_attributes,
@@ -2264,9 +2318,17 @@ fn create_webview<T: UserEvent>(event_loop: &EventLoopWindowTarget<Message<T>>, 
 	};
 	let window = window_builder.inner.build(event_loop).unwrap();
 
-	context.window_event_listeners.lock().unwrap().insert(window.id(), WindowEventListenersMap::default());
+	context
+		.window_event_listeners
+		.lock()
+		.unwrap()
+		.insert(window.id(), WindowEventListenersMap::default());
 
-	context.menu_event_listeners.lock().unwrap().insert(window.id(), WindowMenuEventListeners::default());
+	context
+		.menu_event_listeners
+		.lock()
+		.unwrap()
+		.insert(window.id(), WindowMenuEventListeners::default());
 
 	if window_builder.center {
 		let _ = center_window(&window, window.inner_size());
@@ -2324,7 +2386,10 @@ fn create_webview<T: UserEvent>(event_loop: &EventLoopWindowTarget<Message<T>>, 
 		webview_builder = webview_builder.with_dev_tool(true);
 	}
 
-	let webview = webview_builder.with_web_context(web_context).build().map_err(|e| Error::CreateWebview(Box::new(e)))?;
+	let webview = webview_builder
+		.with_web_context(web_context)
+		.build()
+		.map_err(|e| Error::CreateWebview(Box::new(e)))?;
 
 	Ok(WindowWrapper {
 		label,

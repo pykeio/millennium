@@ -218,7 +218,10 @@ impl Inner {
 			} else if self.uiscreen == mirrored_uiscreen(&main).uiscreen {
 				return Some("Mirrored".to_string());
 			} else {
-				return uiscreens().iter().position(|rhs| rhs.uiscreen == self.uiscreen).map(|idx| idx.to_string());
+				return uiscreens()
+					.iter()
+					.position(|rhs| rhs.uiscreen == self.uiscreen)
+					.map(|idx| idx.to_string());
 			}
 		}
 	}

@@ -24,7 +24,8 @@ use std::path::Path;
 pub use fs::{Event as FsScopeEvent, Pattern as GlobPattern, Scope as FsScope};
 #[cfg(shell_scope)]
 pub use shell::{
-	ExecuteArgs, Scope as ShellScope, ScopeAllowedArg as ShellScopeAllowedArg, ScopeAllowedCommand as ShellScopeAllowedCommand, ScopeConfig as ShellScopeConfig, ScopeError as ShellScopeError
+	ExecuteArgs, Scope as ShellScope, ScopeAllowedArg as ShellScopeAllowedArg, ScopeAllowedCommand as ShellScopeAllowedCommand,
+	ScopeConfig as ShellScopeConfig, ScopeError as ShellScopeError
 };
 
 pub use self::http::Scope as HttpScope;

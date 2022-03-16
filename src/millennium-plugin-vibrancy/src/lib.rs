@@ -20,8 +20,7 @@
 //!
 //! - **Windows:** Yes!
 //! - **macOS:** Yes!
-//! - **Linux:** No, blur effects are controlled by the compositor and they can
-//!   enable it for your app if they want.
+//! - **Linux:** No, blur effects are controlled by the compositor and they can enable it for your app if they want.
 //!
 //! # Example with Millennium Core:
 //!
@@ -53,9 +52,8 @@ pub type Color = (u8, u8, u8, u8);
 /// or newer, and Windows 11.
 ///
 /// - *`color`* is ignored on Windows 7 and has no effect.
-/// - This may be laggy when the window is resized or moved on some Windows 11
-///   installs. For recent Windows versions, use `apply_acrylic` or `apply_mica`
-///   instead.
+/// - This may be laggy when the window is resized or moved on some Windows 11 installs. For recent Windows versions,
+///   use `apply_acrylic` or `apply_mica` instead.
 pub fn apply_blur(window: impl raw_window_handle::HasRawWindowHandle, #[allow(unused)] color: Option<Color>) -> Result<(), Error> {
 	match window.raw_window_handle() {
 		#[cfg(target_os = "windows")]
@@ -77,11 +75,10 @@ pub fn clear_blur(window: impl raw_window_handle::HasRawWindowHandle) -> Result<
 /// Applies Acrylic effect to the window. Works only on Windows 10 v1809 or
 /// newer and Windows 11.
 ///
-/// - *`color`* is ignored on Windows 11 build 22523 and newer and has no
-///   effect. Instead, you should set the background color of the webview to
-///   some transparent color if you want to tint the window.
-/// - This may also be laggy on Windows 10 v1903+ and Windows 11 builds prior to
-///   build 22523, the window may lag when resizing or dragging.
+/// - *`color`* is ignored on Windows 11 build 22523 and newer and has no effect. Instead, you should set the background
+///   color of the webview to some transparent color if you want to tint the window.
+/// - This may also be laggy on Windows 10 v1903+ and Windows 11 builds prior to build 22523, the window may lag when
+///   resizing or dragging.
 pub fn apply_acrylic(window: impl raw_window_handle::HasRawWindowHandle, #[allow(unused)] color: Option<Color>) -> Result<(), Error> {
 	match window.raw_window_handle() {
 		#[cfg(target_os = "windows")]
@@ -102,9 +99,8 @@ pub fn clear_acrylic(window: impl raw_window_handle::HasRawWindowHandle) -> Resu
 
 /// Applies Mica effect to the window. Works only on Windows 11.
 ///
-/// - *`color`* is not supported, though you shouldn't have to worry about
-///   tinting; the window will be quite dark if a dark system theme is enabled
-///   and very light if a light theme is enabled.
+/// - *`color`* is not supported, though you shouldn't have to worry about tinting; the window will be quite dark if a
+///   dark system theme is enabled and very light if a light theme is enabled.
 pub fn apply_mica(window: impl raw_window_handle::HasRawWindowHandle) -> Result<(), Error> {
 	match window.raw_window_handle() {
 		#[cfg(target_os = "windows")]

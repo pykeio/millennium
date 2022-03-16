@@ -39,7 +39,11 @@ impl Parse for Attributes {
 pub(crate) fn default_runtime(attributes: Attributes, input: DeriveInput) -> TokenStream {
 	// create a new copy to manipulate for the Millennium Webview feature flag
 	let mut webview = input.clone();
-	let webview_runtime = webview.generics.params.last_mut().expect("default_runtime requires the item to have at least 1 generic parameter");
+	let webview_runtime = webview
+		.generics
+		.params
+		.last_mut()
+		.expect("default_runtime requires the item to have at least 1 generic parameter");
 
 	// set the default value of the last generic parameter to the provided runtime
 	// type

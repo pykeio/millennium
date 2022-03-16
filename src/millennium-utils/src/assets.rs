@@ -136,7 +136,11 @@ pub struct EmbeddedAssets {
 
 impl EmbeddedAssets {
 	/// Creates a new instance from the given asset map and script hash list.
-	pub const fn new(map: phf::Map<&'static str, &'static [u8]>, global_hashes: &'static [CspHash<'static>], html_hashes: phf::Map<&'static str, &'static [CspHash<'static>]>) -> Self {
+	pub const fn new(
+		map: phf::Map<&'static str, &'static [u8]>,
+		global_hashes: &'static [CspHash<'static>],
+		html_hashes: phf::Map<&'static str, &'static [CspHash<'static>]>
+	) -> Self {
 		Self {
 			assets: map,
 			global_hashes,
@@ -148,7 +152,12 @@ impl EmbeddedAssets {
 impl Assets for EmbeddedAssets {
 	#[cfg(feature = "compression")]
 	fn get(&self, key: &AssetKey) -> Option<Cow<'_, [u8]>> {
-		self.assets.get(key.as_ref()).copied().map(zstd::decode_all).and_then(Result::ok).map(Cow::Owned)
+		self.assets
+			.get(key.as_ref())
+			.copied()
+			.map(zstd::decode_all)
+			.and_then(Result::ok)
+			.map(Cow::Owned)
 	}
 
 	#[cfg(not(feature = "compression"))]

@@ -89,14 +89,7 @@ impl WinIcon {
 
 		let handle = HICON(
 			unsafe {
-				LoadImageW(
-					HINSTANCE::default(),
-					PWSTR(wide_path.as_mut_ptr()),
-					IMAGE_ICON,
-					width as i32,
-					height as i32,
-					LR_DEFAULTSIZE | LR_LOADFROMFILE
-				)
+				LoadImageW(HINSTANCE::default(), PWSTR(wide_path.as_mut_ptr()), IMAGE_ICON, width as i32, height as i32, LR_DEFAULTSIZE | LR_LOADFROMFILE)
 			}
 			.0
 		);
@@ -108,15 +101,7 @@ impl WinIcon {
 		// default icon size
 		let (width, height) = size.map(Into::into).unwrap_or((0, 0));
 		let handle = HICON(unsafe {
-			LoadImageW(
-				GetModuleHandleW(PWSTR::default()),
-				PWSTR(resource_id as usize as *mut u16),
-				IMAGE_ICON,
-				width as i32,
-				height as i32,
-				LR_DEFAULTSIZE
-			)
-			.0
+			LoadImageW(GetModuleHandleW(PWSTR::default()), PWSTR(resource_id as usize as *mut u16), IMAGE_ICON, width as i32, height as i32, LR_DEFAULTSIZE).0
 		});
 		Ok(WinIcon::from_handle(handle.ok().map_err(|_| BadIcon::OsError(io::Error::last_os_error()))?))
 	}

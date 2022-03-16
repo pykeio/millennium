@@ -266,7 +266,12 @@ pub mod blocking {
 	}
 
 	#[allow(unused_variables)]
-	fn run_message_dialog<R: Runtime>(parent_window: Option<&Window<R>>, title: impl AsRef<str>, message: impl AsRef<str>, buttons: rfd::MessageButtons) -> bool {
+	fn run_message_dialog<R: Runtime>(
+		parent_window: Option<&Window<R>>,
+		title: impl AsRef<str>,
+		message: impl AsRef<str>,
+		buttons: rfd::MessageButtons
+	) -> bool {
 		let (tx, rx) = sync_channel(1);
 		super::nonblocking::run_message_dialog(parent_window, title, message, buttons, move |response| {
 			tx.send(response).unwrap();

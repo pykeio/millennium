@@ -207,7 +207,10 @@ impl<R: Runtime> WindowBuilder<R> {
 	/// 				if let Some(csp) = response.headers_mut().get_mut("Content-Security-Policy") {
 	/// 					// use the Millennium helper to parse the CSP policy to a map
 	/// 					let mut csp_map: HashMap<String, CspDirectiveSources> = Csp::Policy(csp.to_str().unwrap().to_string()).into();
-	/// 					csp_map.entry("script-src".to_string()).or_insert_with(Default::default).push("'unsafe-inline'");
+	/// 					csp_map
+	/// 						.entry("script-src".to_string())
+	/// 						.or_insert_with(Default::default)
+	/// 						.push("'unsafe-inline'");
 	/// 					// use the Millennium helper to get a CSP string from the map
 	/// 					let csp_string = Csp::from(csp_map).to_string();
 	/// 					*csp = HeaderValue::from_str(&csp_string).unwrap();
@@ -229,7 +232,9 @@ impl<R: Runtime> WindowBuilder<R> {
 		let web_resource_request_handler = self.web_resource_request_handler.take();
 		let pending = PendingWindow::new(self.window_builder.clone(), self.webview_attributes.clone(), self.label.clone())?;
 		let labels = self.manager.labels().into_iter().collect::<Vec<_>>();
-		let pending = self.manager().prepare_window(self.managed_app_handle(), pending, &labels, web_resource_request_handler)?;
+		let pending = self
+			.manager()
+			.prepare_window(self.managed_app_handle(), pending, &labels, web_resource_request_handler)?;
 		let window = match self.runtime() {
 			RuntimeOrDispatch::Runtime(runtime) => runtime.create_window(pending),
 			RuntimeOrDispatch::RuntimeHandle(handle) => handle.create_window(pending),
@@ -390,8 +395,7 @@ impl<R: Runtime> WindowBuilder<R> {
 	///
 	/// From MSDN:
 	/// - An owned window is always above its owner in the z-order.
-	/// - The system automatically destroys an owned window when its owner is
-	///   destroyed.
+	/// - The system automatically destroys an owned window when its owner is destroyed.
 	/// - An owned window is hidden when its owner is minimized.
 	///
 	/// For more information, see <https://docs.microsoft.com/en-us/windows/win32/winmsg/window-features#owned-windows>
@@ -538,7 +542,10 @@ impl<R: Runtime> Window<R> {
 	#[deprecated(since = "1.0.0-rc.4", note = "The `builder` function offers an easier API with extended functionality")]
 	pub fn create_window<F>(&mut self, label: String, url: WindowUrl, setup: F) -> crate::Result<Window<R>>
 	where
-		F: FnOnce(<R::Dispatcher as Dispatch<EventLoopMessage>>::WindowBuilder, WebviewAttributes) -> (<R::Dispatcher as Dispatch<EventLoopMessage>>::WindowBuilder, WebviewAttributes)
+		F: FnOnce(
+			<R::Dispatcher as Dispatch<EventLoopMessage>>::WindowBuilder,
+			WebviewAttributes
+		) -> (<R::Dispatcher as Dispatch<EventLoopMessage>>::WindowBuilder, WebviewAttributes)
 	{
 		let mut builder = WindowBuilder::<R>::new(self, label, url);
 		let (window_builder, webview_attributes) = setup(builder.window_builder, builder.webview_attributes);
@@ -616,9 +623,8 @@ impl<R: Runtime> Window<R> {
 	/// `WebviewWindow#listen` method on the @pyke/millennium-api `window`
 	/// module.
 	pub fn emit<S: Serialize + Clone>(&self, event: &str, payload: S) -> crate::Result<()> {
-		self.manager.emit_filter(event, Some(self.label()), payload, |w| {
-			w.has_js_listener(None, event) || w.has_js_listener(Some(self.label().into()), event)
-		})?;
+		self.manager
+			.emit_filter(event, Some(self.label()), payload, |w| w.has_js_listener(None, event) || w.has_js_listener(Some(self.label().into()), event))?;
 		Ok(())
 	}
 
@@ -711,7 +717,11 @@ impl<R: Runtime> Window<R> {
 	/// Whether this window registered a listener to an event from the given
 	/// window and event name.
 	pub(crate) fn has_js_listener(&self, window_label: Option<String>, event: &str) -> bool {
-		self.window.js_event_listeners.lock().unwrap().contains_key(&JsEventListenerKey { window_label, event: event.into() })
+		self.window
+			.js_event_listeners
+			.lock()
+			.unwrap()
+			.contains_key(&JsEventListenerKey { window_label, event: event.into() })
 	}
 
 	/// Opens the developer tools window (Web Inspector).
@@ -825,7 +835,11 @@ impl<R: Runtime> Window<R> {
 
 	/// Returns the list of all the monitors available on the system.
 	pub fn available_monitors(&self) -> crate::Result<Vec<Monitor>> {
-		self.window.dispatcher.available_monitors().map(|m| m.into_iter().map(Into::into).collect()).map_err(Into::into)
+		self.window
+			.dispatcher
+			.available_monitors()
+			.map(|m| m.into_iter().map(Into::into).collect())
+			.map_err(Into::into)
 	}
 
 	/// Returns the native handle that is used by this window.
@@ -921,10 +935,9 @@ impl<R: Runtime> Window<R> {
 	/// Closes this window.
 	/// # Panics
 	///
-	/// - Panics if the event loop is not running yet, usually when called on
-	///   the [`setup`](crate::Builder#method.setup) closure.
-	/// - Panics when called on the main thread, usually on the
-	///   [`run`](crate::App#method.run) closure.
+	/// - Panics if the event loop is not running yet, usually when called on the [`setup`](crate::Builder#method.setup)
+	///   closure.
+	/// - Panics when called on the main thread, usually on the [`run`](crate::App#method.run) closure.
 	///
 	/// You can spawn a task to use the API using
 	/// [`crate::async_runtime::spawn`] or [`std::thread::spawn`] to prevent the

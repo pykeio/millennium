@@ -244,7 +244,15 @@ impl Scope {
 		}?;
 
 		let command_s = sidecar
-			.map(|s| std::path::PathBuf::from(s).components().last().unwrap().as_os_str().to_string_lossy().into_owned())
+			.map(|s| {
+				std::path::PathBuf::from(s)
+					.components()
+					.last()
+					.unwrap()
+					.as_os_str()
+					.to_string_lossy()
+					.into_owned()
+			})
 			.unwrap_or_else(|| command.command.to_string_lossy().into_owned());
 		let command = if command.sidecar {
 			Command::new_sidecar(command_s).map_err(ScopeError::Sidecar)?

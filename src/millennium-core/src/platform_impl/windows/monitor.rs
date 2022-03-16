@@ -132,11 +132,7 @@ pub(crate) fn get_monitor_info(hmonitor: HMONITOR) -> Result<MONITORINFOEXW, io:
 	let mut monitor_info = MONITORINFOEXW::default();
 	monitor_info.monitorInfo.cbSize = mem::size_of::<MONITORINFOEXW>() as u32;
 	let status = unsafe { GetMonitorInfoW(hmonitor, &mut monitor_info as *mut MONITORINFOEXW as *mut MONITORINFO) };
-	if !status.as_bool() {
-		Err(io::Error::last_os_error())
-	} else {
-		Ok(monitor_info)
-	}
+	if !status.as_bool() { Err(io::Error::last_os_error()) } else { Ok(monitor_info) }
 }
 
 impl MonitorHandle {

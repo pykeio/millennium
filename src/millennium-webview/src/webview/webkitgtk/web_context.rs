@@ -28,7 +28,9 @@ use std::{
 use glib::FileError;
 use url::Url;
 // use webkit2gtk_sys::webkit_uri_request_get_http_headers;
-use webkit2gtk::{traits::*, ApplicationInfo, CookiePersistentStorage, LoadEvent, UserContentManager, WebContext, WebContextBuilder, WebView, WebsiteDataManagerBuilder};
+use webkit2gtk::{
+	traits::*, ApplicationInfo, CookiePersistentStorage, LoadEvent, UserContentManager, WebContext, WebContextBuilder, WebView, WebsiteDataManagerBuilder
+};
 
 use crate::{
 	http::{Request as HttpRequest, RequestBuilder as HttpRequestBuilder, Response as HttpResponse},
@@ -211,7 +213,10 @@ where
 	use webkit2gtk::traits::*;
 	let context = &context.os.context;
 	// Enable secure context
-	context.security_manager().ok_or(Error::MissingManager)?.register_uri_scheme_as_secure(name);
+	context
+		.security_manager()
+		.ok_or(Error::MissingManager)?
+		.register_uri_scheme_as_secure(name);
 
 	context.register_uri_scheme(name, move |request| {
 		if let Some(uri) = request.uri() {

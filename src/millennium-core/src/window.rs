@@ -145,21 +145,18 @@ pub struct WindowAttributes {
 	///
 	/// ## Platform-specific
 	///
-	/// - **macOS**: The top left corner position of the window content, the
-	///   window's "inner"
+	/// - **macOS**: The top left corner position of the window content, the window's "inner"
 	/// position. The window title bar will be placed above it.
 	/// The window will be positioned such that it fits on screen, maintaining
 	/// set `inner_size` if any.
 	/// If you need to precisely position the top left corner of the whole
 	/// window you have to use [`Window::set_outer_position`] after creating the
 	/// window.
-	/// - **Windows**: The top left corner position of the window title bar, the
-	///   window's "outer"
+	/// - **Windows**: The top left corner position of the window title bar, the window's "outer"
 	/// position.
 	/// There may be a small gap between this position and the window due to the
 	/// specifics of the Window Manager.
-	/// - **Linux**: The top left corner of the window, the window's "outer"
-	///   position.
+	/// - **Linux**: The top left corner of the window, the window's "outer" position.
 	/// - **Others**: Ignored.
 	///
 	/// See [`Window::set_outer_position`].
@@ -448,8 +445,7 @@ impl Window {
 	/// ## Platform-specific
 	///
 	/// - **Android:** Always returns 1.0.
-	/// - **iOS:** Can only be called on the main thread. Returns the underlying
-	///   `UIView`'s [`contentScaleFactor`].
+	/// - **iOS:** Can only be called on the main thread. Returns the underlying `UIView`'s [`contentScaleFactor`].
 	///
 	/// [`contentScaleFactor`]: https://developer.apple.com/documentation/uikit/uiview/1622657-contentscalefactor?language=objc
 	#[inline]
@@ -468,9 +464,8 @@ impl Window {
 	/// `Event::MainEventsCleared` but before `Event::NewEvents` if called in
 	/// the following circumstances:
 	/// * While processing `MainEventsCleared`.
-	/// * While processing a `RedrawRequested` event that was sent during
-	///   `MainEventsCleared` or any directly subsequent `RedrawRequested`
-	///   event.
+	/// * While processing a `RedrawRequested` event that was sent during `MainEventsCleared` or any directly subsequent
+	///   `RedrawRequested` event.
 	///
 	/// ## Platform-specific
 	///
@@ -491,9 +486,8 @@ impl Window {
 	///
 	/// ## Platform-specific
 	///
-	/// - **iOS:** Can only be called on the main thread. Returns the top left
-	///   coordinates of the window's [safe area] in the screen space coordinate
-	///   system.
+	/// - **iOS:** Can only be called on the main thread. Returns the top left coordinates of the window's [safe area]
+	///   in the screen space coordinate system.
 	/// - **Android:** Always returns [`NotSupportedError`].
 	///
 	/// [safe area]: https://developer.apple.com/documentation/uikit/uiview/2891103-safeareainsets?language=objc
@@ -515,8 +509,8 @@ impl Window {
 	///
 	/// ## Platform-specific
 	///
-	/// - **iOS:** Can only be called on the main thread. Returns the top left
-	///   coordinates of the window in the screen space coordinate system.
+	/// - **iOS:** Can only be called on the main thread. Returns the top left coordinates of the window in the screen
+	///   space coordinate system.
 	/// - **Android:** Always returns [`NotSupportedError`].
 	#[inline]
 	pub fn outer_position(&self) -> Result<PhysicalPosition<i32>, NotSupportedError> {
@@ -530,8 +524,8 @@ impl Window {
 	///
 	/// ## Platform-specific
 	///
-	/// - **iOS:** Can only be called on the main thread. Sets the top left
-	///   coordinates of the window in the screen space coordinate system.
+	/// - **iOS:** Can only be called on the main thread. Sets the top left coordinates of the window in the screen
+	///   space coordinate system.
 	/// - **Android:** Unsupported.
 	#[inline]
 	pub fn set_outer_position<P: Into<Position>>(&self, position: P) {
@@ -545,9 +539,8 @@ impl Window {
 	///
 	/// ## Platform-specific
 	///
-	/// - **iOS:** Can only be called on the main thread. Returns the
-	///   `PhysicalSize` of the window's [safe area] in screen space
-	///   coordinates.
+	/// - **iOS:** Can only be called on the main thread. Returns the `PhysicalSize` of the window's [safe area] in
+	///   screen space coordinates.
 	///
 	/// [safe area]: https://developer.apple.com/documentation/uikit/uiview/2891103-safeareainsets?language=objc
 	#[inline]
@@ -575,8 +568,8 @@ impl Window {
 	///
 	/// ## Platform-specific
 	///
-	/// - **iOS:** Can only be called on the main thread. Returns the
-	///   `PhysicalSize` of the window in screen space coordinates.
+	/// - **iOS:** Can only be called on the main thread. Returns the `PhysicalSize` of the window in screen space
+	///   coordinates.
 	#[inline]
 	pub fn outer_size(&self) -> PhysicalSize<u32> {
 		self.window.outer_size()
@@ -735,11 +728,9 @@ impl Window {
 	///
 	/// ## Platform-specific
 	///
-	/// - **macOS:** `Fullscreen::Exclusive` provides true exclusive mode with a
-	///   video mode change. *Caveat!* macOS doesn't provide task switching (or
-	///   spaces!) while in exclusive fullscreen mode. This mode should be used
-	///   when a video mode change is desired, but for a better user experience,
-	///   borderless fullscreen might be preferred.
+	/// - **macOS:** `Fullscreen::Exclusive` provides true exclusive mode with a video mode change. *Caveat!* macOS
+	///   doesn't provide task switching (or spaces!) while in exclusive fullscreen mode. This mode should be used when
+	///   a video mode change is desired, but for a better user experience, borderless fullscreen might be preferred.
 	///
 	///   `Fullscreen::Borderless` provides a borderless fullscreen window on a
 	///   separate space. This is the idiomatic way for fullscreen games to work
@@ -749,8 +740,7 @@ impl Window {
 	///   The dock and the menu bar are always disabled in fullscreen mode.
 	/// - **iOS:** Can only be called on the main thread.
 	/// - **Windows:** Screen saver is disabled in fullscreen mode.
-	/// - **Linux:** The window will only fullscreen to current monitor no
-	///   matter which enum variant.
+	/// - **Linux:** The window will only fullscreen to current monitor no matter which enum variant.
 	/// - **Android:** Unsupported.
 	#[inline]
 	pub fn set_fullscreen(&self, fullscreen: Option<Fullscreen>) {
@@ -894,8 +884,7 @@ impl Window {
 	///
 	/// ## Platform-specific
 	///
-	/// - **macOS:** This locks the cursor in a fixed location, which looks
-	///   visually awkward.
+	/// - **macOS:** This locks the cursor in a fixed location, which looks visually awkward.
 	/// - **iOS / Android:** Always returns an [`ExternalError::NotSupported`].
 	#[inline]
 	pub fn set_cursor_grab(&self, grab: bool) -> Result<(), ExternalError> {
@@ -909,10 +898,9 @@ impl Window {
 	///
 	/// ## Platform-specific
 	///
-	/// - **Windows:** The cursor is only hidden within the confines of the
+	/// - **Windows:** The cursor is only hidden within the confines of the window.
+	/// - **macOS:** The cursor is hidden as long as the window has input focus, even if the cursor is outside of the
 	///   window.
-	/// - **macOS:** The cursor is hidden as long as the window has input focus,
-	///   even if the cursor is outside of the window.
 	/// - **iOS / Android:** Unsupported.
 	#[inline]
 	pub fn set_cursor_visible(&self, visible: bool) {
@@ -984,8 +972,7 @@ unsafe impl raw_window_handle::HasRawWindowHandle for Window {
 	///
 	/// ## Platform-specific
 	///
-	/// - **Android:** Only available after receiving the Resumed event and
-	///   before Suspended. *If you*
+	/// - **Android:** Only available after receiving the Resumed event and before Suspended. *If you*
 	/// *try to get the handle outside of that period, this function will
 	/// panic*!
 	fn raw_window_handle(&self) -> raw_window_handle::RawWindowHandle {
@@ -1082,13 +1069,11 @@ pub enum Theme {
 pub enum UserAttentionType {
 	/// ## Platform-specific
 	/// - **macOS:** Bounces the dock icon until the application is in focus.
-	/// - **Windows:** Flashes both the window and the taskbar button until the
-	///   application is in focus.
+	/// - **Windows:** Flashes both the window and the taskbar button until the application is in focus.
 	Critical,
 	/// ## Platform-specific
 	/// - **macOS:** Bounces the dock icon once.
-	/// - **Windows:** Flashes the taskbar button until the application is in
-	///   focus.
+	/// - **Windows:** Flashes the taskbar button until the application is in focus.
 	Informational
 }
 

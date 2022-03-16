@@ -83,7 +83,11 @@ pub struct Window {
 }
 
 impl Window {
-	pub fn new<T: 'static>(event_loop: &EventLoopWindowTarget<T>, w_attr: WindowAttributes, pl_attr: PlatformSpecificWindowBuilderAttributes) -> Result<Window, RootOsError> {
+	pub fn new<T: 'static>(
+		event_loop: &EventLoopWindowTarget<T>,
+		w_attr: WindowAttributes,
+		pl_attr: PlatformSpecificWindowBuilderAttributes
+	) -> Result<Window, RootOsError> {
 		// We dispatch an `init` function because of code style.
 		// First person to remove the need for cloning here gets a cookie!
 		//
@@ -204,15 +208,7 @@ impl Window {
 		});
 
 		unsafe {
-			SetWindowPos(
-				self.window.0,
-				HWND::default(),
-				x as i32,
-				y as i32,
-				0,
-				0,
-				SWP_ASYNCWINDOWPOS | SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE
-			);
+			SetWindowPos(self.window.0, HWND::default(), x as i32, y as i32, 0, 0, SWP_ASYNCWINDOWPOS | SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 			InvalidateRgn(self.window.0, HRGN::default(), false);
 		}
 	}
@@ -287,7 +283,7 @@ impl Window {
 	#[inline]
 	pub fn raw_window_handle(&self) -> RawWindowHandle {
 		let mut handle = Win32Handle::empty();
-		handle.hwnd = self.window.0 .0 as *mut _;
+		handle.hwnd = self.window.0.0 as *mut _;
 		handle.hinstance = self.hinstance().0 as *mut _;
 		RawWindowHandle::Win32(handle)
 	}
@@ -371,7 +367,7 @@ impl Window {
 
 	#[inline]
 	pub fn id(&self) -> WindowId {
-		WindowId(self.window.0 .0)
+		WindowId(self.window.0.0)
 	}
 
 	#[inline]
@@ -453,7 +449,9 @@ impl Window {
 
 					let native_video_mode = video_mode.video_mode.native_video_mode;
 
-					let res = unsafe { ChangeDisplaySettingsExW(PWSTR(display_name.as_mut_ptr()), &native_video_mode, HWND::default(), CDS_FULLSCREEN, std::ptr::null_mut()) };
+					let res = unsafe {
+						ChangeDisplaySettingsExW(PWSTR(display_name.as_mut_ptr()), &native_video_mode, HWND::default(), CDS_FULLSCREEN, std::ptr::null_mut())
+					};
 
 					debug_assert!(res != DISP_CHANGE_BADFLAGS);
 					debug_assert!(res != DISP_CHANGE_BADMODE);
@@ -462,7 +460,8 @@ impl Window {
 					assert_eq!(res, DISP_CHANGE_SUCCESSFUL);
 				}
 				(&Some(Fullscreen::Exclusive(_)), &None) | (&Some(Fullscreen::Exclusive(_)), &Some(Fullscreen::Borderless(_))) => {
-					let res = unsafe { ChangeDisplaySettingsExW(PWSTR::default(), std::ptr::null_mut(), HWND::default(), CDS_FULLSCREEN, std::ptr::null_mut()) };
+					let res =
+						unsafe { ChangeDisplaySettingsExW(PWSTR::default(), std::ptr::null_mut(), HWND::default(), CDS_FULLSCREEN, std::ptr::null_mut()) };
 
 					debug_assert!(res != DISP_CHANGE_BADFLAGS);
 					debug_assert!(res != DISP_CHANGE_BADMODE);
@@ -720,7 +719,11 @@ pub struct WindowWrapper(HWND);
 unsafe impl Sync for WindowWrapper {}
 unsafe impl Send for WindowWrapper {}
 
-unsafe fn init<T: 'static>(attributes: WindowAttributes, pl_attribs: PlatformSpecificWindowBuilderAttributes, event_loop: &EventLoopWindowTarget<T>) -> Result<Window, RootOsError> {
+unsafe fn init<T: 'static>(
+	attributes: WindowAttributes,
+	pl_attribs: PlatformSpecificWindowBuilderAttributes,
+	event_loop: &EventLoopWindowTarget<T>
+) -> Result<Window, RootOsError> {
 	// registering the window class
 	let mut class_name = register_window_class(&attributes.window_icon, &pl_attribs.taskbar_icon);
 

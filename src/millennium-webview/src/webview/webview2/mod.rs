@@ -86,7 +86,11 @@ impl InnerWebView {
 	fn create_environment(web_context: &Option<&mut WebContext>) -> webview2_com::Result<ICoreWebView2Environment> {
 		let (tx, rx) = mpsc::channel();
 
-		let data_directory = web_context.as_deref().and_then(|context| context.data_directory()).and_then(|path| path.to_str()).map(String::from);
+		let data_directory = web_context
+			.as_deref()
+			.and_then(|context| context.data_directory())
+			.and_then(|path| path.to_str())
+			.map(String::from);
 
 		CreateCoreWebView2EnvironmentCompletedHandler::wait_for_async_operation(
 			Box::new(move |environmentcreatedhandler| unsafe {
@@ -96,7 +100,8 @@ impl InnerWebView {
 					// `CreateCoreWebView2Environment`.
 					let options: ICoreWebView2EnvironmentOptions = CoreWebView2EnvironmentOptions::default().into();
 					let data_directory = pwstr_from_str(&data_directory);
-					let result = CreateCoreWebView2EnvironmentWithOptions(PWSTR::default(), data_directory, options, environmentcreatedhandler).map_err(webview2_com::Error::WindowsError);
+					let result = CreateCoreWebView2EnvironmentWithOptions(PWSTR::default(), data_directory, options, environmentcreatedhandler)
+						.map_err(webview2_com::Error::WindowsError);
 					let _ = take_pwstr(data_directory);
 
 					return result;
@@ -106,12 +111,15 @@ impl InnerWebView {
 			}),
 			Box::new(move |error_code, environment| {
 				error_code?;
-				tx.send(environment.ok_or_else(|| windows::core::Error::fast_error(E_POINTER))).expect("send over mpsc channel");
+				tx.send(environment.ok_or_else(|| windows::core::Error::fast_error(E_POINTER)))
+					.expect("send over mpsc channel");
 				Ok(())
 			})
 		)?;
 
-		rx.recv().map_err(|_| webview2_com::Error::SendError)?.map_err(webview2_com::Error::WindowsError)
+		rx.recv()
+			.map_err(|_| webview2_com::Error::SendError)?
+			.map_err(webview2_com::Error::WindowsError)
 	}
 
 	fn create_controller(hwnd: HWND, env: &ICoreWebView2Environment) -> webview2_com::Result<ICoreWebView2Controller> {
@@ -122,15 +130,24 @@ impl InnerWebView {
 			Box::new(move |handler| unsafe { env.CreateCoreWebView2Controller(hwnd, handler).map_err(webview2_com::Error::WindowsError) }),
 			Box::new(move |error_code, controller| {
 				error_code?;
-				tx.send(controller.ok_or_else(|| windows::core::Error::fast_error(E_POINTER))).expect("send over mpsc channel");
+				tx.send(controller.ok_or_else(|| windows::core::Error::fast_error(E_POINTER)))
+					.expect("send over mpsc channel");
 				Ok(())
 			})
 		)?;
 
-		rx.recv().map_err(|_| webview2_com::Error::SendError)?.map_err(webview2_com::Error::WindowsError)
+		rx.recv()
+			.map_err(|_| webview2_com::Error::SendError)?
+			.map_err(webview2_com::Error::WindowsError)
 	}
 
-	fn init_webview(window: Rc<Window>, hwnd: HWND, mut attributes: WebViewAttributes, env: &ICoreWebView2Environment, controller: &ICoreWebView2Controller) -> webview2_com::Result<ICoreWebView2> {
+	fn init_webview(
+		window: Rc<Window>,
+		hwnd: HWND,
+		mut attributes: WebViewAttributes,
+		env: &ICoreWebView2Environment,
+		controller: &ICoreWebView2Controller
+	) -> webview2_com::Result<ICoreWebView2> {
 		let webview = unsafe { controller.CoreWebView2() }.map_err(webview2_com::Error::WindowsError)?;
 
 		// Transparent
@@ -154,11 +171,15 @@ impl InnerWebView {
 		unsafe {
 			let handler: ICoreWebView2WindowCloseRequestedEventHandler =
 				WindowCloseRequestedEventHandler::create(Box::new(move |_, _| if DestroyWindow(hwnd).as_bool() { Ok(()) } else { Err(E_FAIL.into()) }));
-			webview.WindowCloseRequested(handler, &mut token).map_err(webview2_com::Error::WindowsError)?;
+			webview
+				.WindowCloseRequested(handler, &mut token)
+				.map_err(webview2_com::Error::WindowsError)?;
 
 			let settings = webview.Settings().map_err(webview2_com::Error::WindowsError)?;
 			settings.SetIsStatusBarEnabled(false).map_err(webview2_com::Error::WindowsError)?;
-			settings.SetAreDefaultContextMenusEnabled(true).map_err(webview2_com::Error::WindowsError)?;
+			settings
+				.SetAreDefaultContextMenusEnabled(true)
+				.map_err(webview2_com::Error::WindowsError)?;
 			settings.SetIsZoomControlEnabled(false).map_err(webview2_com::Error::WindowsError)?;
 			settings.SetAreDevToolsEnabled(false).map_err(webview2_com::Error::WindowsError)?;
 			if attributes.devtool {
@@ -253,7 +274,8 @@ impl InnerWebView {
 				// WebView2 doesn't support non-standard protocols yet, so we have to use this
 				// workaround See https://github.com/MicrosoftEdge/WebView2Feedback/issues/73
 				custom_protocol_names.insert(name.clone());
-				unsafe { webview.AddWebResourceRequestedFilter(format!("https://{}.*", name), COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL) }.map_err(webview2_com::Error::WindowsError)?;
+				unsafe { webview.AddWebResourceRequestedFilter(format!("https://{}.*", name), COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL) }
+					.map_err(webview2_com::Error::WindowsError)?;
 			}
 
 			let custom_protocols = attributes.custom_protocols;
@@ -426,7 +448,9 @@ impl InnerWebView {
 
 		unsafe {
 			controller.SetIsVisible(true).map_err(webview2_com::Error::WindowsError)?;
-			controller.MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC).map_err(webview2_com::Error::WindowsError)?;
+			controller
+				.MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC)
+				.map_err(webview2_com::Error::WindowsError)?;
 		}
 
 		Ok(webview)
@@ -435,7 +459,11 @@ impl InnerWebView {
 	fn add_script_to_execute_on_document_created(webview: &ICoreWebView2, js: String) -> webview2_com::Result<()> {
 		let handler_webview = webview.clone();
 		AddScriptToExecuteOnDocumentCreatedCompletedHandler::wait_for_async_operation(
-			Box::new(move |handler| unsafe { handler_webview.AddScriptToExecuteOnDocumentCreated(js, handler).map_err(webview2_com::Error::WindowsError) }),
+			Box::new(move |handler| unsafe {
+				handler_webview
+					.AddScriptToExecuteOnDocumentCreated(js, handler)
+					.map_err(webview2_com::Error::WindowsError)
+			}),
 			Box::new(|_, _| Ok(()))
 		)
 	}
@@ -503,7 +531,8 @@ fn get_function_impl(library: &str, function: &str) -> Option<FARPROC> {
 
 macro_rules! get_function {
 	($lib:expr, $func:ident) => {
-		get_function_impl(concat!($lib, '\0'), concat!(stringify!($func), '\0')).map(|f| unsafe { std::mem::transmute::<windows::Win32::Foundation::FARPROC, $func>(f) })
+		get_function_impl(concat!($lib, '\0'), concat!(stringify!($func), '\0'))
+			.map(|f| unsafe { std::mem::transmute::<windows::Win32::Foundation::FARPROC, $func>(f) })
 	};
 }
 
@@ -524,11 +553,7 @@ fn get_windows_ver() -> Option<(u32, u32, u32)> {
 
 			let status = (rtl_get_version)(&mut vi as _);
 
-			if status >= 0 {
-				Some((vi.dwMajorVersion, vi.dwMinorVersion, vi.dwBuildNumber))
-			} else {
-				None
-			}
+			if status >= 0 { Some((vi.dwMajorVersion, vi.dwMinorVersion, vi.dwBuildNumber)) } else { None }
 		}
 	} else {
 		None

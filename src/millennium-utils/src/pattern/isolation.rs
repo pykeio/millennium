@@ -153,7 +153,11 @@ impl Keys {
 	pub fn decrypt(&self, raw: RawIsolationPayload<'_>) -> Result<String, Error> {
 		let RawIsolationPayload { nonce, payload } = raw;
 		let nonce: [u8; 12] = nonce.as_ref().try_into()?;
-		let bytes = self.aes_gcm.key.decrypt(Nonce::from_slice(&nonce), payload.as_ref()).map_err(|_| self::Error::Aes)?;
+		let bytes = self
+			.aes_gcm
+			.key
+			.decrypt(Nonce::from_slice(&nonce), payload.as_ref())
+			.map_err(|_| self::Error::Aes)?;
 
 		String::from_utf8(bytes).map_err(Into::into)
 	}

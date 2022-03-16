@@ -59,10 +59,7 @@ impl<'r, 'de: 'r, T: Send + Sync + 'static, R: Runtime> CommandArg<'de, R> for S
 	/// Grabs the [`State`] from the [`CommandItem`]. This will never fail.
 	fn from_command(command: CommandItem<'de, R>) -> Result<Self, InvokeError> {
 		Ok(command.message.state_ref().try_get().unwrap_or_else(|| {
-			panic!(
-				"state not managed for field `{}` on command `{}`. You muse call `.manage()` before using this command",
-				command.key, command.name
-			)
+			panic!("state not managed for field `{}` on command `{}`. You muse call `.manage()` before using this command", command.key, command.name)
 		}))
 	}
 }

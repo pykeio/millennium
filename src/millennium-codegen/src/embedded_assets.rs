@@ -109,7 +109,11 @@ impl RawEmbeddedAssets {
 					path.parent().expect("embedded file asset has no parent").to_path_buf()
 				};
 
-				WalkDir::new(&path).follow_links(true).contents_first(true).into_iter().map(move |entry| (prefix.clone(), entry))
+				WalkDir::new(&path)
+					.follow_links(true)
+					.contents_first(true)
+					.into_iter()
+					.map(move |entry| (prefix.clone(), entry))
 			})
 			.filter_map(|(prefix, entry)| {
 				match entry {
@@ -212,7 +216,10 @@ impl EmbeddedAssets {
 	/// into [`Assets`].
 	///
 	/// [`Assets`]: millennium_utils::assets::Assets
-	pub fn new(input: impl Into<EmbeddedAssetsInput>, map: impl Fn(&AssetKey, &Path, &mut Vec<u8>, &mut CspHashes) -> Result<(), EmbeddedAssetsError>) -> Result<Self, EmbeddedAssetsError> {
+	pub fn new(
+		input: impl Into<EmbeddedAssetsInput>,
+		map: impl Fn(&AssetKey, &Path, &mut Vec<u8>, &mut CspHashes) -> Result<(), EmbeddedAssetsError>
+	) -> Result<Self, EmbeddedAssetsError> {
 		// we need to pre-compute all files now, so that we can inject data from all
 		// files into a few
 		let RawEmbeddedAssets { paths, csp_hashes } = RawEmbeddedAssets::new(input.into())?;
@@ -222,11 +229,14 @@ impl EmbeddedAssets {
 			assets: HashMap<AssetKey, (PathBuf, PathBuf)>
 		}
 
-		let CompressState { assets, csp_hashes } = paths.into_iter().try_fold(CompressState { csp_hashes, assets: HashMap::new() }, move |mut state, (prefix, entry)| {
-			let (key, asset) = Self::compress_file(&prefix, entry.path(), &map, &mut state.csp_hashes)?;
-			state.assets.insert(key, asset);
-			Ok(state)
-		})?;
+		let CompressState { assets, csp_hashes } =
+			paths
+				.into_iter()
+				.try_fold(CompressState { csp_hashes, assets: HashMap::new() }, move |mut state, (prefix, entry)| {
+					let (key, asset) = Self::compress_file(&prefix, entry.path(), &map, &mut state.csp_hashes)?;
+					state.assets.insert(key, asset);
+					Ok(state)
+				})?;
 
 		Ok(Self { assets, csp_hashes })
 	}
@@ -236,11 +246,7 @@ impl EmbeddedAssets {
 	#[cfg(feature = "compression")]
 	fn compression_level() -> i32 {
 		let levels = zstd::compression_level_range();
-		if cfg!(debug_assertions) {
-			*levels.start()
-		} else {
-			*levels.end()
-		}
+		if cfg!(debug_assertions) { *levels.start() } else { *levels.end() }
 	}
 
 	/// Compress a file and spit out the information in a [`HashMap`] friendly
@@ -301,12 +307,15 @@ impl EmbeddedAssets {
 			#[cfg(not(feature = "compression"))]
 			{
 				use std::io::Write;
-				out_file.write_all(&input).map_err(|error| EmbeddedAssetsError::AssetWrite { path: path.to_owned(), error })?;
+				out_file
+					.write_all(&input)
+					.map_err(|error| EmbeddedAssetsError::AssetWrite { path: path.to_owned(), error })?;
 			}
 
 			#[cfg(feature = "compression")]
 			// entirely write input to the output file path with compression
-			zstd::stream::copy_encode(&*input, out_file, Self::compression_level()).map_err(|error| EmbeddedAssetsError::AssetWrite { path: path.to_owned(), error })?;
+			zstd::stream::copy_encode(&*input, out_file, Self::compression_level())
+				.map_err(|error| EmbeddedAssetsError::AssetWrite { path: path.to_owned(), error })?;
 		}
 
 		Ok((key, (path.into(), out_path)))

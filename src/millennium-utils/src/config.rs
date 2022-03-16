@@ -423,8 +423,7 @@ pub struct CliArg {
 	pub max_values: Option<usize>,
 	/// Sets whether or not the argument is required by default.
 	///
-	/// - Required by default means it is required, when no other conflicting
-	///   rules have been evaluated
+	/// - Required by default means it is required, when no other conflicting rules have been evaluated
 	/// - Conflicting rules take precedence over being required.
 	pub required: Option<bool>,
 	/// Sets an arg that override this arg's required setting
@@ -1387,10 +1386,8 @@ impl Allowlist for DialogAllowlistConfig {
 /// # Examples
 ///
 /// - "https://**": allows all HTTPS urls
-/// - "https://*.github.com/pykeio/millennium": allows any subdomain of
-///   "github.com" with the "pykeio/millennium" path
-/// - "https://myapi.service.com/users/*": allows access to any URLs that begins
-///   with "https://myapi.service.com/users/"
+/// - "https://*.github.com/pykeio/millennium": allows any subdomain of "github.com" with the "pykeio/millennium" path
+/// - "https://myapi.service.com/users/*": allows access to any URLs that begins with "https://myapi.service.com/users/"
 #[allow(rustdoc::bare_urls)]
 #[derive(Debug, Default, PartialEq, Clone, Deserialize, Serialize)]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
@@ -1454,11 +1451,7 @@ impl Allowlist for NotificationAllowlistConfig {
 	}
 
 	fn to_features(&self) -> Vec<&'static str> {
-		if self.all {
-			vec!["notification-all"]
-		} else {
-			vec![]
-		}
+		if self.all { vec!["notification-all"] } else { vec![] }
 	}
 }
 
@@ -1481,11 +1474,7 @@ impl Allowlist for GlobalShortcutAllowlistConfig {
 	}
 
 	fn to_features(&self) -> Vec<&'static str> {
-		if self.all {
-			vec!["global-shortcut-all"]
-		} else {
-			vec![]
-		}
+		if self.all { vec!["global-shortcut-all"] } else { vec![] }
 	}
 }
 
@@ -1508,11 +1497,7 @@ impl Allowlist for OsAllowlistConfig {
 	}
 
 	fn to_features(&self) -> Vec<&'static str> {
-		if self.all {
-			vec!["os-all"]
-		} else {
-			vec![]
-		}
+		if self.all { vec!["os-all"] } else { vec![] }
 	}
 }
 
@@ -1535,11 +1520,7 @@ impl Allowlist for PathAllowlistConfig {
 	}
 
 	fn to_features(&self) -> Vec<&'static str> {
-		if self.all {
-			vec!["path-all"]
-		} else {
-			vec![]
-		}
+		if self.all { vec!["path-all"] } else { vec![] }
 	}
 }
 
@@ -2061,7 +2042,8 @@ impl<'d> serde::Deserialize<'d> for PackageVersion {
 				let path = PathBuf::from(value);
 				if path.exists() {
 					let json_str = read_to_string(&path).map_err(|e| DeError::custom(format!("failed to read version JSON file: {}", e)))?;
-					let package_json: serde_json::Value = serde_json::from_str(&json_str).map_err(|e| DeError::custom(format!("failed to read version JSON file: {}", e)))?;
+					let package_json: serde_json::Value =
+						serde_json::from_str(&json_str).map_err(|e| DeError::custom(format!("failed to read version JSON file: {}", e)))?;
 					if let Some(obj) = package_json.as_object() {
 						let version = obj
 							.get("version")
@@ -2229,7 +2211,12 @@ mod build {
 	///
 	/// This function is pretty generic because the types of keys AND values get
 	/// transformed.
-	fn map_lit<Map, Key, Value, TokenStreamKey, TokenStreamValue, FuncKey, FuncValue>(map_type: TokenStream, map: Map, map_key: FuncKey, map_value: FuncValue) -> TokenStream
+	fn map_lit<Map, Key, Value, TokenStreamKey, TokenStreamValue, FuncKey, FuncValue>(
+		map_type: TokenStream,
+		map: Map,
+		map_key: FuncKey,
+		map_value: FuncValue
+	) -> TokenStream
 	where
 		<Map as IntoIterator>::IntoIter: ExactSizeIterator,
 		Map: IntoIterator<Item = (Key, Value)>,
@@ -2459,7 +2446,12 @@ mod build {
 				});
 				opt_lit(args.as_ref())
 			};
-			let subcommands = opt_lit(self.subcommands.as_ref().map(|map| map_lit(quote! { ::std::collections::HashMap }, map, str_lit, identity)).as_ref());
+			let subcommands = opt_lit(
+				self.subcommands
+					.as_ref()
+					.map(|map| map_lit(quote! { ::std::collections::HashMap }, map, str_lit, identity))
+					.as_ref()
+			);
 
 			literal_struct!(tokens, CliConfig, description, long_description, before_help, after_help, args, subcommands);
 		}
@@ -2552,17 +2544,7 @@ mod build {
 			let before_build_command = quote!(None);
 			let features = quote!(None);
 
-			literal_struct!(
-				tokens,
-				BuildConfig,
-				runner,
-				dev_path,
-				dist_dir,
-				with_global_millennium,
-				before_dev_command,
-				before_build_command,
-				features
-			);
+			literal_struct!(tokens, BuildConfig, runner, dev_path, dist_dir, with_global_millennium, before_dev_command, before_build_command, features);
 		}
 	}
 
@@ -2759,7 +2741,9 @@ mod build {
 			let protocol = &self.protocol;
 			let http = &self.http;
 			let shell = &self.shell;
-			tokens.append_all(quote! { ::millennium::utils::config::AllowlistConfig { fs: #fs, protocol: #protocol, http: #http, shell: #shell, ..Default::default() } })
+			tokens.append_all(
+				quote! { ::millennium::utils::config::AllowlistConfig { fs: #fs, protocol: #protocol, http: #http, shell: #shell, ..Default::default() } }
+			)
 		}
 	}
 

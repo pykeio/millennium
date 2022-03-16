@@ -82,7 +82,11 @@ pub fn generate_run_fn(input: DeriveInput) -> TokenStream {
 				});
 			}
 		}
-		_ => return Error::new(Span::call_site(), "CommandModule is only implemented for enums").to_compile_error().into()
+		_ => {
+			return Error::new(Span::call_site(), "CommandModule is only implemented for enums")
+				.to_compile_error()
+				.into();
+		}
 	};
 
 	let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();

@@ -134,7 +134,15 @@ impl Menu {
 	pub fn new_popup_menu() -> Self {
 		return Self::new();
 	}
-	pub fn add_item(&mut self, _menu_id: MenuId, _title: &str, _accelerator: Option<Accelerator>, _enabled: bool, _selected: bool, _menu_type: MenuType) -> CustomMenuItem {
+	pub fn add_item(
+		&mut self,
+		_menu_id: MenuId,
+		_title: &str,
+		_accelerator: Option<Accelerator>,
+		_enabled: bool,
+		_selected: bool,
+		_menu_type: MenuType
+	) -> CustomMenuItem {
 		return CustomMenuItem(MenuItemAttributes {});
 	}
 	pub fn add_submenu(&mut self, _title: &str, _enabled: bool, _submenu: Menu) {}

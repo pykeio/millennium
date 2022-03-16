@@ -175,7 +175,10 @@ pub fn resource_dir(package_info: &PackageInfo, env: &Env) -> crate::Result<Path
 	let exe_dir = exe.parent().expect("failed to get exe directory");
 	let curr_dir = exe_dir.display().to_string();
 
-	if curr_dir.ends_with(format!("{S}target{S}debug", S = MAIN_SEPARATOR).as_str()) || curr_dir.ends_with(format!("{S}target{S}release", S = MAIN_SEPARATOR).as_str()) || cfg!(target_os = "windows") {
+	if curr_dir.ends_with(format!("{S}target{S}debug", S = MAIN_SEPARATOR).as_str())
+		|| curr_dir.ends_with(format!("{S}target{S}release", S = MAIN_SEPARATOR).as_str())
+		|| cfg!(target_os = "windows")
+	{
 		// running from the out dir or windows
 		return Ok(exe_dir.to_path_buf());
 	}

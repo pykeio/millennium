@@ -56,8 +56,7 @@ pub struct CommandItem<'a, R: Runtime> {
 /// * [`crate::Window`]
 /// * [`crate::State`]
 /// * `T where T: serde::Deserialize`
-///   * Any type that implements `Deserialize` can automatically be used as a
-///     [`CommandArg`].
+///   * Any type that implements `Deserialize` can automatically be used as a [`CommandArg`].
 pub trait CommandArg<'de, R: Runtime>: Sized {
 	/// Derives an instance of `Self` from the [`CommandItem`].
 	///
@@ -235,7 +234,11 @@ pub mod private {
 			T: Serialize,
 			E: Into<InvokeError>
 		{
-			std::future::ready(value.map_err(Into::into).and_then(|value| serde_json::to_value(value).map_err(InvokeError::from_serde_json)))
+			std::future::ready(
+				value
+					.map_err(Into::into)
+					.and_then(|value| serde_json::to_value(value).map_err(InvokeError::from_serde_json))
+			)
 		}
 	}
 

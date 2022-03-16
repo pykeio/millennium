@@ -94,7 +94,13 @@ pub enum Cmd {
 
 impl Cmd {
 	#[allow(unused_variables)]
-	fn execute<R: Runtime>(context: InvokeContext<R>, program: String, args: ExecuteArgs, on_event_fn: CallbackFn, options: CommandOptions) -> super::Result<ChildId> {
+	fn execute<R: Runtime>(
+		context: InvokeContext<R>,
+		program: String,
+		args: ExecuteArgs,
+		on_event_fn: CallbackFn,
+		options: CommandOptions
+	) -> super::Result<ChildId> {
 		let mut command = if options.sidecar {
 			#[cfg(not(shell_sidecar))]
 			return Err(crate::Error::ApiNotAllowlisted("shell > sidecar".to_string()).into_anyhow());

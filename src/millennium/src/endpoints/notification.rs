@@ -76,11 +76,7 @@ impl Cmd {
 
 	#[cfg(notification_all)]
 	fn request_notification_permission<R: Runtime>(context: InvokeContext<R>) -> super::Result<&'static str> {
-		if request_permission(&context) {
-			Ok(PERMISSION_GRANTED)
-		} else {
-			Ok(PERMISSION_DENIED)
-		}
+		if request_permission(&context) { Ok(PERMISSION_GRANTED) } else { Ok(PERMISSION_DENIED) }
 	}
 
 	#[cfg(not(notification_all))]

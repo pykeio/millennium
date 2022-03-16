@@ -115,7 +115,9 @@ impl RemoteRelease {
 				// make sure we have our target available
 				if let Some(current_target_data) = platforms.get(target) {
 					// use provided signature if available
-					signature = current_target_data.get("signature").map(|found_signature| found_signature.as_str().unwrap_or("").to_string());
+					signature = current_target_data
+						.get("signature")
+						.map(|found_signature| found_signature.as_str().unwrap_or("").to_string());
 					// Download URL is required
 					download_url = current_target_data
 						.get("url")
@@ -125,7 +127,10 @@ impl RemoteRelease {
 						.to_string();
 					#[cfg(target_os = "windows")]
 					{
-						with_elevated_task = current_target_data.get("with_elevated_task").and_then(|v| v.as_bool()).unwrap_or_default();
+						with_elevated_task = current_target_data
+							.get("with_elevated_task")
+							.and_then(|v| v.as_bool())
+							.unwrap_or_default();
 					}
 				} else {
 					// make sure we have an available platform from the static
@@ -193,7 +198,8 @@ impl<'a> UpdateBuilder<'a> {
 
 	#[allow(dead_code)]
 	pub fn url(mut self, url: String) -> Self {
-		self.urls.push(percent_encoding::percent_decode(url.as_bytes()).decode_utf8_lossy().to_string());
+		self.urls
+			.push(percent_encoding::percent_decode(url.as_bytes()).decode_utf8_lossy().to_string());
 		self
 	}
 
@@ -539,7 +545,11 @@ fn copy_files_and_run<R: Read + Seek>(archive_buffer: R, _extract_path: &Path, w
 			exit(0);
 		} else if found_path.extension() == Some(OsStr::new("msi")) {
 			if with_elevated_task {
-				if let Some(bin_name) = current_exe().ok().and_then(|pb| pb.file_name().map(|s| s.to_os_string())).and_then(|s| s.into_string().ok()) {
+				if let Some(bin_name) = current_exe()
+					.ok()
+					.and_then(|pb| pb.file_name().map(|s| s.to_os_string()))
+					.and_then(|s| s.into_string().ok())
+				{
 					let product_name = bin_name.replace(".exe", "");
 
 					// Check if there is a task that enables the updater to skip the UAC prompt
@@ -549,7 +559,12 @@ fn copy_files_and_run<R: Read + Seek>(archive_buffer: R, _extract_path: &Path, w
 							// Rename the MSI to the match file name the Skip UAC task is expecting it to be
 							let temp_msi = tmp_dir.with_file_name(bin_name).with_extension("msi");
 							Move::from_source(&found_path).to_dest(&temp_msi).expect("Unable to move update MSI");
-							let exit_status = Command::new("schtasks").arg("/RUN").arg("/TN").arg(update_task_name).status().expect("failed to start updater task");
+							let exit_status = Command::new("schtasks")
+								.arg("/RUN")
+								.arg("/TN")
+								.arg(update_task_name)
+								.status()
+								.expect("failed to start updater task");
 
 							if exit_status.success() {
 								// Successfully launched task that skips the UAC prompt
@@ -638,11 +653,7 @@ pub fn get_updater_target() -> Option<String> {
 	} else if cfg!(target_os = "macos") {
 		Some("darwin".into())
 	} else if cfg!(target_os = "windows") {
-		if cfg!(target_pointer_width = "32") {
-			Some("win32".into())
-		} else {
-			Some("win64".into())
-		}
+		if cfg!(target_pointer_width = "32") { Some("win32".into()) } else { Some("win64".into()) }
 	} else {
 		None
 	}

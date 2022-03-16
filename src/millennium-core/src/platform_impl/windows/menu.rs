@@ -168,7 +168,15 @@ impl Menu {
 		Some(self.accels.values().cloned().map(|d| d.0).collect())
 	}
 
-	pub fn add_item(&mut self, menu_id: MenuId, title: &str, accelerators: Option<Accelerator>, enabled: bool, selected: bool, _menu_type: MenuType) -> CustomMenuItem {
+	pub fn add_item(
+		&mut self,
+		menu_id: MenuId,
+		title: &str,
+		accelerators: Option<Accelerator>,
+		enabled: bool,
+		selected: bool,
+		_menu_type: MenuType
+	) -> CustomMenuItem {
 		unsafe {
 			let mut flags = MF_STRING;
 			if !enabled {

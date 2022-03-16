@@ -29,7 +29,11 @@ impl Clipboard {
 		let display = gdk::Display::default().unwrap();
 		let clipboard = gtk::Clipboard::default(&display).unwrap();
 
-		let targets: Vec<TargetEntry> = CLIPBOARD_TARGETS.iter().enumerate().map(|(i, target)| TargetEntry::new(target, TargetFlags::all(), i as u32)).collect();
+		let targets: Vec<TargetEntry> = CLIPBOARD_TARGETS
+			.iter()
+			.enumerate()
+			.map(|(i, target)| TargetEntry::new(target, TargetFlags::all(), i as u32))
+			.collect();
 
 		clipboard.set_with_data(&targets, move |_, selection, _| {
 			selection.set(&selection.target(), 8i32, string.as_bytes());

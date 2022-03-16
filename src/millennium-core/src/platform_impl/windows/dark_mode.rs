@@ -176,7 +176,9 @@ fn should_apps_use_dark_mode() -> bool {
 		};
 	}
 
-	SHOULD_APPS_USE_DARK_MODE.map(|should_apps_use_dark_mode| unsafe { (should_apps_use_dark_mode)() }).unwrap_or(false)
+	SHOULD_APPS_USE_DARK_MODE
+		.map(|should_apps_use_dark_mode| unsafe { (should_apps_use_dark_mode)() })
+		.unwrap_or(false)
 }
 
 const HCF_HIGHCONTRASTON: u32 = 1;

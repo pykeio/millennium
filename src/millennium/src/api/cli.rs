@@ -167,7 +167,10 @@ fn map_matches(config: &CliConfig, matches: &ArgMatches, cli_matches: &mut Match
 					})
 					.unwrap_or(Value::Null)
 			} else {
-				matches.value_of(arg.name.clone()).map(|v| Value::String(v.to_string())).unwrap_or(Value::Null)
+				matches
+					.value_of(arg.name.clone())
+					.map(|v| Value::String(v.to_string()))
+					.unwrap_or(Value::Null)
 			};
 
 			cli_matches.set_arg(arg.name.clone(), ArgData { value, occurrences });

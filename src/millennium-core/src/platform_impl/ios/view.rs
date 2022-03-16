@@ -109,7 +109,8 @@ unsafe fn get_view_class(root_view_class: &'static Class) -> &'static Class {
 				let window: id = msg_send![object, window];
 				assert!(!window.is_null());
 				app_state::handle_nonuser_events(
-					std::iter::once(EventWrapper::StaticEvent(Event::RedrawRequested(RootWindowId(window.into())))).chain(std::iter::once(EventWrapper::StaticEvent(Event::RedrawEventsCleared)))
+					std::iter::once(EventWrapper::StaticEvent(Event::RedrawRequested(RootWindowId(window.into()))))
+						.chain(std::iter::once(EventWrapper::StaticEvent(Event::RedrawEventsCleared)))
 				);
 				let superclass: &'static Class = msg_send![object, superclass];
 				let () = msg_send![super(object, superclass), drawRect: rect];
@@ -419,7 +420,12 @@ pub unsafe fn create_view_controller(_window_attributes: &WindowAttributes, plat
 }
 
 // requires main thread
-pub unsafe fn create_window(window_attributes: &WindowAttributes, _platform_attributes: &PlatformSpecificWindowBuilderAttributes, frame: CGRect, view_controller: id) -> id {
+pub unsafe fn create_window(
+	window_attributes: &WindowAttributes,
+	_platform_attributes: &PlatformSpecificWindowBuilderAttributes,
+	frame: CGRect,
+	view_controller: id
+) -> id {
 	let class = get_window_class();
 
 	let window: id = msg_send![class, alloc];
@@ -496,10 +502,7 @@ pub fn create_delegate_class() {
 	let mut decl = ClassDecl::new("AppDelegate", ui_responder).expect("Failed to declare class `AppDelegate`");
 
 	unsafe {
-		decl.add_method(
-			sel!(application:didFinishLaunchingWithOptions:),
-			did_finish_launching as extern "C" fn(&mut Object, Sel, id, id) -> BOOL
-		);
+		decl.add_method(sel!(application:didFinishLaunchingWithOptions:), did_finish_launching as extern "C" fn(&mut Object, Sel, id, id) -> BOOL);
 
 		decl.add_method(sel!(applicationDidBecomeActive:), did_become_active as extern "C" fn(&Object, Sel, id));
 		decl.add_method(sel!(applicationWillResignActive:), will_resign_active as extern "C" fn(&Object, Sel, id));

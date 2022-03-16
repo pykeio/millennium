@@ -152,10 +152,7 @@ lazy_static! {
 		decl.add_method(sel!(hasMarkedText), has_marked_text as extern "C" fn(&Object, Sel) -> BOOL);
 		decl.add_method(sel!(markedRange), marked_range as extern "C" fn(&Object, Sel) -> NSRange);
 		decl.add_method(sel!(selectedRange), selected_range as extern "C" fn(&Object, Sel) -> NSRange);
-		decl.add_method(
-			sel!(setMarkedText:selectedRange:replacementRange:),
-			set_marked_text as extern "C" fn(&mut Object, Sel, id, NSRange, NSRange)
-		);
+		decl.add_method(sel!(setMarkedText:selectedRange:replacementRange:), set_marked_text as extern "C" fn(&mut Object, Sel, id, NSRange, NSRange));
 		decl.add_method(sel!(unmarkText), unmark_text as extern "C" fn(&mut Object, Sel));
 		decl.add_method(sel!(validAttributesForMarkedText), valid_attributes_for_marked_text as extern "C" fn(&Object, Sel) -> id);
 		decl.add_method(
@@ -334,11 +331,7 @@ extern "C" fn marked_range(this: &Object, _sel: Sel) -> NSRange {
 		let marked_text: id = *this.get_ivar("markedText");
 		let length = marked_text.length();
 		trace!("Completed `markedRange`");
-		if length > 0 {
-			NSRange::new(0, length - 1)
-		} else {
-			util::EMPTY_RANGE
-		}
+		if length > 0 { NSRange::new(0, length - 1) } else { util::EMPTY_RANGE }
 	}
 }
 
@@ -474,7 +467,14 @@ extern "C" fn do_command_by_selector(_this: &Object, _sel: Sel, _command: Sel) {
 fn is_corporate_character(c: char) -> bool {
 	#[allow(clippy::match_like_matches_macro)]
 	match c {
-		'\u{F700}'..='\u{F747}' | '\u{F802}'..='\u{F84F}' | '\u{F850}' | '\u{F85C}' | '\u{F85D}' | '\u{F85F}' | '\u{F860}'..='\u{F86B}' | '\u{F870}'..='\u{F8FF}' => true,
+		'\u{F700}'..='\u{F747}'
+		| '\u{F802}'..='\u{F84F}'
+		| '\u{F850}'
+		| '\u{F85C}'
+		| '\u{F85D}'
+		| '\u{F85F}'
+		| '\u{F860}'..='\u{F86B}'
+		| '\u{F870}'..='\u{F8FF}' => true,
 		_ => false
 	}
 }

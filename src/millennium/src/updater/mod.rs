@@ -396,7 +396,9 @@ mod core;
 mod error;
 
 pub use self::error::Error;
-use crate::{api::dialog::blocking::ask, runtime::EventLoopProxy, utils::config::UpdaterConfig, AppHandle, Env, EventLoopMessage, Manager, Runtime, UpdaterEvent};
+use crate::{
+	api::dialog::blocking::ask, runtime::EventLoopProxy, utils::config::UpdaterConfig, AppHandle, Env, EventLoopMessage, Manager, Runtime, UpdaterEvent
+};
 
 /// Check for new updates
 pub const EVENT_CHECK_UPDATE: &str = "millennium://update";
@@ -439,7 +441,12 @@ pub(crate) async fn check_update_with_dialog<R: Runtime>(updater_config: Updater
 		let endpoints = endpoints.iter().map(|e| e.to_string()).collect::<Vec<String>>();
 		let env = handle.state::<Env>().inner().clone();
 		// check updates
-		match self::core::builder(env).urls(&endpoints[..]).current_version(&package_info.version).build().await {
+		match self::core::builder(env)
+			.urls(&endpoints[..])
+			.current_version(&package_info.version)
+			.build()
+			.await
+		{
 			Ok(updater) => {
 				let pubkey = updater_config.pubkey.clone();
 
@@ -489,7 +496,12 @@ pub(crate) fn listener<R: Runtime>(updater_config: UpdaterConfig, package_info: 
 			let pubkey = pubkey.clone();
 			let env = handle.state::<Env>().inner().clone();
 
-			match self::core::builder(env).urls(&endpoints[..]).current_version(&package_info.version).build().await {
+			match self::core::builder(env)
+				.urls(&endpoints[..])
+				.current_version(&package_info.version)
+				.build()
+				.await
+			{
 				Ok(updater) => {
 					// send notification if we need to update
 					if updater.should_update {

@@ -87,11 +87,17 @@ impl Default for Env {
 				// note that it is safe to use `std::env::current_exe` here since we just loaded
 				// an AppImage.
 				let is_temp = std::env::current_exe()
-					.map(|p| p.display().to_string().starts_with(&format!("{}/.mount_", std::env::temp_dir().display())))
+					.map(|p| {
+						p.display()
+							.to_string()
+							.starts_with(&format!("{}/.mount_", std::env::temp_dir().display()))
+					})
 					.unwrap_or(true);
 
 				if !is_temp {
-					panic!("`APPDIR` or `APPIMAGE` environment variable found but this application was not detected as an AppImage; this might be a security issue.");
+					panic!(
+						"`APPDIR` or `APPIMAGE` environment variable found but this application was not detected as an AppImage; this might be a security issue."
+					);
 				}
 			}
 			env

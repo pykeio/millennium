@@ -66,11 +66,7 @@ impl IdRef {
 	}
 
 	pub fn non_nil(self) -> Option<IdRef> {
-		if self.0 == nil {
-			None
-		} else {
-			Some(self)
-		}
+		if self.0 == nil { None } else { Some(self) }
 	}
 }
 
@@ -146,11 +142,7 @@ pub unsafe fn app_name() -> Option<id> {
 	let dict: id = msg_send![bundle, infoDictionary];
 	let key = ns_string_id_ref("CFBundleName");
 	let app_name: id = msg_send![dict, objectForKey:*key];
-	if app_name != nil {
-		Some(app_name)
-	} else {
-		None
-	}
+	if app_name != nil { Some(app_name) } else { None }
 }
 
 pub unsafe fn superclass<'a>(this: &'a Object) -> &'a Class {

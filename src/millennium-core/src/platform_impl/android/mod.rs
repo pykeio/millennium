@@ -90,7 +90,15 @@ impl Menu {
 	pub fn new_popup_menu() -> Self {
 		Self::new()
 	}
-	pub fn add_item(&mut self, _menu_id: MenuId, _title: &str, _accelerator: Option<Accelerator>, _enabled: bool, _selected: bool, _menu_type: MenuType) -> CustomMenuItem {
+	pub fn add_item(
+		&mut self,
+		_menu_id: MenuId,
+		_title: &str,
+		_accelerator: Option<Accelerator>,
+		_enabled: bool,
+		_selected: bool,
+		_menu_type: MenuType
+	) -> CustomMenuItem {
 		CustomMenuItem(MenuItemAttributes {})
 	}
 	pub fn add_submenu(&mut self, _title: &str, _enabled: bool, _submenu: Menu) {}
@@ -238,7 +246,9 @@ impl<T: 'static> EventLoop<T> {
 										};
 										if let Some(phase) = phase {
 											let pointers: Box<dyn Iterator<Item = ndk::event::Pointer<'_>>> = match phase {
-												event::TouchPhase::Started | event::TouchPhase::Ended => Box::new(std::iter::once(motion_event.pointer_at_index(motion_event.pointer_index()))),
+												event::TouchPhase::Started | event::TouchPhase::Ended => {
+													Box::new(std::iter::once(motion_event.pointer_at_index(motion_event.pointer_index())))
+												}
 												event::TouchPhase::Moved | event::TouchPhase::Cancelled => Box::new(motion_event.pointers())
 											};
 
@@ -440,7 +450,11 @@ pub struct PlatformSpecificWindowBuilderAttributes;
 pub struct Window;
 
 impl Window {
-	pub fn new<T: 'static>(_el: &EventLoopWindowTarget<T>, _window_attrs: window::WindowAttributes, _: PlatformSpecificWindowBuilderAttributes) -> Result<Self, error::OsError> {
+	pub fn new<T: 'static>(
+		_el: &EventLoopWindowTarget<T>,
+		_window_attrs: window::WindowAttributes,
+		_: PlatformSpecificWindowBuilderAttributes
+	) -> Result<Self, error::OsError> {
 		// FIXME this ignores requested window attributes
 		Ok(Self)
 	}
@@ -583,7 +597,9 @@ impl Window {
 		if let Some(native_window) = ndk_glue::native_window().as_ref() {
 			handle.a_native_window = unsafe { native_window.ptr().as_mut() as *mut _ as *mut _ }
 		} else {
-			panic!("Cannot get the native window, it's null and will always be null before Event::Resumed and after Event::Suspended. Make sure you only call this function between those events.");
+			panic!(
+				"Cannot get the native window, it's null and will always be null before Event::Resumed and after Event::Suspended. Make sure you only call this function between those events."
+			);
 		};
 		RawWindowHandle::AndroidNdk(handle)
 	}

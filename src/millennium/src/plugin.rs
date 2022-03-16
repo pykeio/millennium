@@ -525,7 +525,9 @@ impl<R: Runtime> PluginStore<R> {
 
 	/// Runs the on_page_load hook for all plugins in the store.
 	pub(crate) fn on_page_load(&mut self, window: Window<R>, payload: PageLoadPayload) {
-		self.store.values_mut().for_each(|plugin| plugin.on_page_load(window.clone(), payload.clone()))
+		self.store
+			.values_mut()
+			.for_each(|plugin| plugin.on_page_load(window.clone(), payload.clone()))
 	}
 
 	/// Runs the on_event hook for all plugins in the store.

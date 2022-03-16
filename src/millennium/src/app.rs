@@ -244,13 +244,22 @@ impl<R: Runtime> AppHandle<R> {
 impl AppHandle<crate::MillenniumWebview> {
 	/// Create a new Millennium Core window using a callback. The event loop
 	/// must be running at this point.
-	pub fn create_core_window<F: FnOnce() -> (String, millennium_runtime_webview::MillenniumWindowBuilder) + Send + 'static>(&self, f: F) -> crate::Result<Weak<millennium_runtime_webview::Window>> {
+	pub fn create_core_window<F: FnOnce() -> (String, millennium_runtime_webview::MillenniumWindowBuilder) + Send + 'static>(
+		&self,
+		f: F
+	) -> crate::Result<Weak<millennium_runtime_webview::Window>> {
 		self.runtime_handle.create_core_window(f).map_err(Into::into)
 	}
 
 	/// Sends a window message to the event loop.
-	pub fn send_core_window_event(&self, window_id: millennium_runtime_webview::WindowId, message: millennium_runtime_webview::WindowMessage) -> crate::Result<()> {
-		self.runtime_handle.send_event(millennium_runtime_webview::Message::Window(window_id, message)).map_err(Into::into)
+	pub fn send_core_window_event(
+		&self,
+		window_id: millennium_runtime_webview::WindowId,
+		message: millennium_runtime_webview::WindowMessage
+	) -> crate::Result<()> {
+		self.runtime_handle
+			.send_event(millennium_runtime_webview::Message::Window(window_id, message))
+			.map_err(Into::into)
 	}
 }
 
@@ -382,7 +391,10 @@ macro_rules! shared_app_impl {
 			#[deprecated(since = "1.0.0-rc.4", note = "The `window_builder` function offers an easier API with extended functionality")]
 			pub fn create_window<F>(&self, label: impl Into<String>, url: WindowUrl, setup: F) -> crate::Result<Window<R>>
 			where
-				F: FnOnce(<R::Dispatcher as Dispatch<EventLoopMessage>>::WindowBuilder, WebviewAttributes) -> (<R::Dispatcher as Dispatch<EventLoopMessage>>::WindowBuilder, WebviewAttributes)
+				F: FnOnce(
+					<R::Dispatcher as Dispatch<EventLoopMessage>>::WindowBuilder,
+					WebviewAttributes
+				) -> (<R::Dispatcher as Dispatch<EventLoopMessage>>::WindowBuilder, WebviewAttributes)
 			{
 				let mut builder = WindowBuilder::<R>::new(self, label, url);
 				let (window_builder, webview_attributes) = setup(builder.window_builder, builder.webview_attributes);
@@ -395,7 +407,9 @@ macro_rules! shared_app_impl {
 			#[cfg_attr(doc_cfg, doc(cfg(feature = "system-tray")))]
 			/// Gets a handle handle to the system tray.
 			pub fn tray_handle(&self) -> tray::SystemTrayHandle<R> {
-				self.tray_handle.clone().expect("tray not configured; use the `Builder#system_tray` API first.")
+				self.tray_handle
+					.clone()
+					.expect("tray not configured; use the `Builder#system_tray` API first.")
 			}
 
 			/// The path resolver for the application.
@@ -634,7 +648,8 @@ impl<R: Runtime> Builder<R> {
 			setup: Box::new(|_| Ok(())),
 			invoke_handler: Box::new(|_| ()),
 			invoke_responder: Arc::new(window_invoke_responder),
-			invoke_initialization_script: "Object.defineProperty(window, '__MILLENNIUM_POST_MESSAGE__', { value: message => window.ipc.postMessage(JSON.stringify(message)) })".into(),
+			invoke_initialization_script:
+				"Object.defineProperty(window, '__MILLENNIUM_POST_MESSAGE__', { value: message => window.ipc.postMessage(JSON.stringify(message)) })".into(),
 			on_page_load: Box::new(|_, _| ()),
 			pending_windows: Default::default(),
 			plugins: PluginStore::default(),
@@ -655,8 +670,7 @@ impl<R: Runtime> Builder<R> {
 	///
 	/// ## Platform-specific
 	///
-	/// - **macOS**: on macOS the application *must* be executed on the main
-	///   thread, so this function is not exposed.
+	/// - **macOS**: on macOS the application *must* be executed on the main thread, so this function is not exposed.
 	#[cfg(any(windows, target_os = "linux"))]
 	#[cfg_attr(doc_cfg, doc(any(windows, target_os = "linux")))]
 	#[must_use]
@@ -713,7 +727,10 @@ impl<R: Runtime> Builder<R> {
 	/// millennium::Builder::default()
 	/// 	.setup(|app| {
 	/// 		let main_window = app.get_window("main").unwrap();
-	#[cfg_attr(feature = "dialog", doc = r#"		millennium::api::dialog::blocking::message(Some(&main_window), "Hello", "Welcome back!");"#)]
+	#[cfg_attr(
+		feature = "dialog",
+		doc = r#"		millennium::api::dialog::blocking::message(Some(&main_window), "Hello", "Welcome back!");"#
+	)]
 	/// 		Ok(())
 	/// 	});
 	/// ```
@@ -838,13 +855,20 @@ impl<R: Runtime> Builder<R> {
 	/// ```rust,no_run
 	/// use millennium::WindowBuilder;
 	/// millennium::Builder::default().create_window("main", millennium::WindowUrl::default(), |win, webview| {
-	/// 	let win = win.title("My Main Window").resizable(true).set_inner_size(800.0, 550.0).min_inner_size(400.0, 200.0);
+	/// 	let win = win
+	/// 		.title("My Main Window")
+	/// 		.resizable(true)
+	/// 		.set_inner_size(800.0, 550.0)
+	/// 		.min_inner_size(400.0, 200.0);
 	/// 	return (win, webview);
 	/// });
 	/// ```
 	pub fn create_window<F>(mut self, label: impl Into<String>, url: WindowUrl, setup: F) -> crate::Result<Self>
 	where
-		F: FnOnce(<R::Dispatcher as Dispatch<EventLoopMessage>>::WindowBuilder, WebviewAttributes) -> (<R::Dispatcher as Dispatch<EventLoopMessage>>::WindowBuilder, WebviewAttributes)
+		F: FnOnce(
+			<R::Dispatcher as Dispatch<EventLoopMessage>>::WindowBuilder,
+			WebviewAttributes
+		) -> (<R::Dispatcher as Dispatch<EventLoopMessage>>::WindowBuilder, WebviewAttributes)
 	{
 		let (window_builder, webview_attributes) = setup(<R::Dispatcher as Dispatch<EventLoopMessage>>::WindowBuilder::new(), WebviewAttributes::new(url));
 		self.pending_windows.push(PendingWindow::new(window_builder, webview_attributes, label)?);
@@ -970,15 +994,19 @@ impl<R: Runtime> Builder<R> {
 	/// # Arguments
 	///
 	/// * `uri_scheme` The URI scheme to register, such as `example`.
-	/// * `protocol` the protocol associated with the given URI scheme. It's a
-	///   function that takes an URL such as `example://localhost/asset.css`.
+	/// * `protocol` the protocol associated with the given URI scheme. It's a function that takes an URL such as
+	///   `example://localhost/asset.css`.
 	#[must_use]
-	pub fn register_uri_scheme_protocol<N: Into<String>, H: Fn(&AppHandle<R>, &HttpRequest) -> Result<HttpResponse, Box<dyn std::error::Error>> + Send + Sync + 'static>(
+	pub fn register_uri_scheme_protocol<
+		N: Into<String>,
+		H: Fn(&AppHandle<R>, &HttpRequest) -> Result<HttpResponse, Box<dyn std::error::Error>> + Send + Sync + 'static
+	>(
 		mut self,
 		uri_scheme: N,
 		protocol: H
 	) -> Self {
-		self.uri_scheme_protocols.insert(uri_scheme.into(), Arc::new(CustomProtocol { protocol: Box::new(protocol) }));
+		self.uri_scheme_protocols
+			.insert(uri_scheme.into(), Arc::new(CustomProtocol { protocol: Box::new(protocol) }));
 		self
 	}
 
@@ -994,10 +1022,7 @@ impl<R: Runtime> Builder<R> {
 				use std::io::{Error, ErrorKind};
 				#[cfg(target_os = "linux")]
 				if let Some(TrayIcon::Raw(..)) = icon {
-					return Err(crate::Error::InvalidIcon(Box::new(Error::new(
-						ErrorKind::InvalidInput,
-						"system tray icons on linux must be a file path"
-					))));
+					return Err(crate::Error::InvalidIcon(Box::new(Error::new(ErrorKind::InvalidInput, "system tray icons on linux must be a file path"))));
 				}
 
 				#[cfg(not(target_os = "linux"))]
@@ -1013,7 +1038,13 @@ impl<R: Runtime> Builder<R> {
 		};
 
 		#[cfg(all(feature = "system-tray", target_os = "macos"))]
-		let system_tray_icon_as_template = context.config.millennium.system_tray.as_ref().map(|t| t.icon_as_template).unwrap_or_default();
+		let system_tray_icon_as_template = context
+			.config
+			.millennium
+			.system_tray
+			.as_ref()
+			.map(|t| t.icon_as_template)
+			.unwrap_or_default();
 
 		#[cfg(shell_scope)]
 		let shell_scope = context.shell_scope.clone();
@@ -1112,7 +1143,14 @@ impl<R: Runtime> Builder<R> {
 				.runtime
 				.as_ref()
 				.unwrap()
-				.system_tray(tray.with_icon(system_tray.icon.or(system_tray_icon).expect("tray icon not found; please configure it in .millenniumrc")))
+				.system_tray(
+					tray.with_icon(
+						system_tray
+							.icon
+							.or(system_tray_icon)
+							.expect("tray icon not found; please configure it in .millenniumrc")
+					)
+				)
 				.expect("failed to run tray");
 
 			#[cfg(target_os = "macos")]
@@ -1121,8 +1159,13 @@ impl<R: Runtime> Builder<R> {
 				.as_ref()
 				.unwrap()
 				.system_tray(
-					tray.with_icon(system_tray.icon.or(system_tray_icon).expect("tray icon not found; please configure it in .millenniumrc"))
-						.with_icon_as_template(system_tray_icon_as_template)
+					tray.with_icon(
+						system_tray
+							.icon
+							.or(system_tray_icon)
+							.expect("tray icon not found; please configure it in .millenniumrc")
+					)
+					.with_icon_as_template(system_tray_icon_as_template)
 				)
 				.expect("failed to run tray");
 

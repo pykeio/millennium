@@ -26,34 +26,31 @@
 //!
 //! The following are a list of [Cargo features](https://doc.rust-lang.org/stable/cargo/reference/manifest.html#the-features-section) that can be enabled or disabled:
 //!
-//! - **millennium_webview** *(enabled by default)*: Enables the Millennium
-//!   Webview runtime. Only disable it if you want a custom runtime.
-//! - **isolation**: Enables the isolation pattern. Enabled by default if the
-//!   `millennium > pattern > use` config option is set to `isolation` in the
+//! - **millennium_webview** *(enabled by default)*: Enables the Millennium Webview runtime. Only disable it if you want
+//!   a custom runtime.
+//! - **isolation**: Enables the isolation pattern. Enabled by default if the `millennium > pattern > use` config option
+//!   is set to `isolation` in the `.millenniumrc` file.
+//! - **custom-protocol**: Feature managed by the Millennium CLI. When enabled, Millennium assumes a production
+//!   environment instead of a development one.
+//! - **updater**: Enables the application auto updater. Enabled by default if the `updater` config is defined in the
 //!   `.millenniumrc` file.
-//! - **custom-protocol**: Feature managed by the Millennium CLI. When enabled,
-//!   Millennium assumes a production environment instead of a development one.
-//! - **updater**: Enables the application auto updater. Enabled by default if
-//!   the `updater` config is defined in the `.millenniumrc` file.
-//! - **devtools**: Enables the developer tools (Web inspector) and
-//!   [`Window::open_devtools`]. Enabled by default on debug builds.
+//! - **devtools**: Enables the developer tools (Web inspector) and [`Window::open_devtools`]. Enabled by default on
+//!   debug builds.
 //! On macOS it uses private APIs, so you can't enable it if your app will be
 //! published to the App Store.
 //! - **http-api**: Enables the [`api::http`] module.
-//! - **reqwest-client**: Uses `reqwest` as HTTP client on the `http` APIs.
-//!   Improves performance, but increases the bundle size.
+//! - **reqwest-client**: Uses `reqwest` as HTTP client on the `http` APIs. Improves performance, but increases the
+//!   bundle size.
 //! - **command**: Enables the [`api::process::Command`] APIs.
 //! - **dialog**: Enables the [`api::dialog`] module.
 //! - **notification**: Enables the [`api::notification`] module.
-//! - **cli**: Enables usage of `clap` for CLI argument parsing. Enabled by
-//!   default if the `cli` config is defined on the `.millenniumrc` file.
-//! - **system-tray**: Enables application system tray API. Enabled by default
-//!   if the `systemTray` config is defined on the `.millenniumrc` file.
-//! - **macos-private-api**: Enables features only available in **macOS**'s
-//!   private APIs, currently the `transparent` window functionality and the
-//!   `fullScreenEnabled` preference setting to `true`. Enabled by default if
-//!   the `millennium > macosPrivateApi` config flag is set to `true` on the
-//!   `.millenniumrc` file.
+//! - **cli**: Enables usage of `clap` for CLI argument parsing. Enabled by default if the `cli` config is defined on
+//!   the `.millenniumrc` file.
+//! - **system-tray**: Enables application system tray API. Enabled by default if the `systemTray` config is defined on
+//!   the `.millenniumrc` file.
+//! - **macos-private-api**: Enables features only available in **macOS**'s private APIs, currently the `transparent`
+//!   window functionality and the `fullScreenEnabled` preference setting to `true`. Enabled by default if the
+//!   `millennium > macosPrivateApi` config flag is set to `true` on the `.millenniumrc` file.
 //! - **window-data-url**: Enables usage of data URLs on the webview.
 //!
 //! ## Cargo allowlist features
@@ -85,13 +82,13 @@
 //! - **fs-copy-file**: Enables the [`copyFile` API](https://tauri.studio/en/docs/api/js/modules/fs#copyfile).
 //! - **fs-create-dir**: Enables the [`createDir` API](https://tauri.studio/en/docs/api/js/modules/fs#createdir).
 //! - **fs-read-dir**: Enables the [`readDir` API](https://tauri.studio/en/docs/api/js/modules/fs#readdir).
-//! - **fs-read-file**: Enables the [`readTextFile` API](https://tauri.studio/en/docs/api/js/modules/fs#readtextfile)
-//!   and the [`readBinaryFile` API](https://tauri.studio/en/docs/api/js/modules/fs#readbinaryfile).
+//! - **fs-read-file**: Enables the [`readTextFile` API](https://tauri.studio/en/docs/api/js/modules/fs#readtextfile) and
+//!   the [`readBinaryFile` API](https://tauri.studio/en/docs/api/js/modules/fs#readbinaryfile).
 //! - **fs-remove-dir**: Enables the [`removeDir` API](https://tauri.studio/en/docs/api/js/modules/fs#removedir).
 //! - **fs-remove-file**: Enables the [`removeFile` API](https://tauri.studio/en/docs/api/js/modules/fs#removefile).
 //! - **fs-rename-file**: Enables the [`renameFile` API](https://tauri.studio/en/docs/api/js/modules/fs#renamefile).
-//! - **fs-write-file**: Enables the [`writeFile` API](https://tauri.studio/en/docs/api/js/modules/fs#writefile)
-//!   and the [`writeBinaryFile` API](https://tauri.studio/en/docs/api/js/modules/fs#writebinaryfile).
+//! - **fs-write-file**: Enables the [`writeFile` API](https://tauri.studio/en/docs/api/js/modules/fs#writefile) and the
+//!   [`writeBinaryFile` API](https://tauri.studio/en/docs/api/js/modules/fs#writebinaryfile).
 //!
 //! ### Global shortcut allowlist
 //!
@@ -251,7 +248,10 @@ pub use {
 };
 pub use {
 	self::app::{App, AppHandle, AssetResolver, Builder, CloseRequestApi, GlobalWindowEvent, PathResolver, RunEvent},
-	self::hooks::{Invoke, InvokeError, InvokeHandler, InvokeMessage, InvokePayload, InvokeResolver, InvokeResponder, InvokeResponse, OnPageLoad, PageLoadPayload, SetupHook},
+	self::hooks::{
+		Invoke, InvokeError, InvokeHandler, InvokeMessage, InvokePayload, InvokeResolver, InvokeResponder, InvokeResponse, OnPageLoad, PageLoadPayload,
+		SetupHook
+	},
 	self::manager::Asset,
 	self::runtime::{
 		webview::{WebviewAttributes, WindowBuilder},
@@ -699,7 +699,11 @@ pub trait Manager<R: Runtime>: sealed::ManagerBase<R> {
 	where
 		T: Send + Sync + 'static
 	{
-		self.manager().inner.state.try_get().expect("state() called before manage() for given type")
+		self.manager()
+			.inner
+			.state
+			.try_get()
+			.expect("state() called before manage() for given type")
 	}
 
 	/// Attempts to retrieve the managed state for the type `T`.

@@ -145,9 +145,8 @@ impl Attributes {
 /// platform:
 /// * New helpers may target more platforms in the future.
 /// * Platform specific code is handled by the helpers automatically.
-/// * A build script is required in order to activate some cargo environmental
-///   variables that are used when generating code and embedding assets - so
-///   [`build()`] may as well be called.
+/// * A build script is required in order to activate some cargo environmental variables that are used when generating
+///   code and embedding assets - so [`build()`] may as well be called.
 ///
 /// In short, this is saying don't put the call to [`build()`] behind a
 /// `#[cfg(windows)]`.
@@ -190,7 +189,10 @@ pub fn try_build(attributes: Attributes) -> Result<()> {
 
 		let all_cli_managed_features = MillenniumConfig::all_features();
 		let diff = features_diff(
-			&features.into_iter().filter(|f| all_cli_managed_features.contains(&f.as_str())).collect::<Vec<String>>(),
+			&features
+				.into_iter()
+				.filter(|f| all_cli_managed_features.contains(&f.as_str()))
+				.collect::<Vec<String>>(),
 			&config.millennium.features().into_iter().map(|f| f.to_string()).collect::<Vec<String>>()
 		);
 
@@ -264,10 +266,7 @@ pub fn try_build(attributes: Attributes) -> Result<()> {
 			res.compile()
 				.with_context(|| format!("failed to compile `{}` into a Windows Resource file during millennium-build", icon_path_string))?;
 		} else {
-			return Err(anyhow!(format!(
-				"`{}` not found; required for generating a Windows Resource file during millennium-build",
-				icon_path_string
-			)));
+			return Err(anyhow!(format!("`{}` not found; required for generating a Windows Resource file during millennium-build", icon_path_string)));
 		}
 	}
 
