@@ -396,7 +396,7 @@ mod core;
 mod error;
 
 pub use self::error::Error;
-use crate::{api::dialog::blocking::ask, runtime::EventLoopProxy, utils::config::UpdaterConfig, Env, EventLoopMessage, Manager, Runtime, UpdaterEvent, Window};
+use crate::{api::dialog::blocking::ask, runtime::EventLoopProxy, utils::config::UpdaterConfig, AppHandle, Env, EventLoopMessage, Manager, Runtime, UpdaterEvent};
 
 /// Check for new updates
 pub const EVENT_CHECK_UPDATE: &str = "millennium://update";
@@ -434,10 +434,10 @@ struct UpdateManifest {
 }
 
 /// Check if there is any new update with builtin dialog.
-pub(crate) async fn check_update_with_dialog<R: Runtime>(updater_config: UpdaterConfig, package_info: crate::PackageInfo, window: Window<R>) {
+pub(crate) async fn check_update_with_dialog<R: Runtime>(updater_config: UpdaterConfig, package_info: crate::PackageInfo, handle: AppHandle<R>) {
 	if let Some(endpoints) = updater_config.endpoints.clone() {
 		let endpoints = endpoints.iter().map(|e| e.to_string()).collect::<Vec<String>>();
-		let env = window.state::<Env>().inner().clone();
+		let env = handle.state::<Env>().inner().clone();
 		// check updates
 		match self::core::builder(env).urls(&endpoints[..]).current_version(&package_info.version).build().await {
 			Ok(updater) => {
@@ -446,16 +446,16 @@ pub(crate) async fn check_update_with_dialog<R: Runtime>(updater_config: Updater
 				// if dialog enabled only
 				if updater.should_update && updater_config.dialog {
 					let body = updater.body.clone().unwrap_or_else(|| String::from(""));
-					let window_ = window.clone();
-					let dialog = prompt_for_install(window_, &updater.clone(), &package_info.name, &body.clone(), pubkey).await;
+					let handle_ = handle.clone();
+					let dialog = prompt_for_install(handle_, &updater.clone(), &package_info.name, &body.clone(), pubkey).await;
 
 					if let Err(e) = dialog {
-						send_status_update(window.clone(), UpdaterEvent::Error(e.to_string()));
+						send_status_update(&handle, UpdaterEvent::Error(e.to_string()));
 					}
 				}
 			}
 			Err(e) => {
-				send_status_update(window.clone(), UpdaterEvent::Error(e.to_string()));
+				send_status_update(&handle, UpdaterEvent::Error(e.to_string()));
 			}
 		}
 	}
@@ -463,12 +463,12 @@ pub(crate) async fn check_update_with_dialog<R: Runtime>(updater_config: Updater
 
 /// Experimental listener
 /// This function should be run on the main thread once.
-pub(crate) fn listener<R: Runtime>(updater_config: UpdaterConfig, package_info: crate::PackageInfo, window: &Window<R>) {
-	let isolated_window = window.clone();
+pub(crate) fn listener<R: Runtime>(updater_config: UpdaterConfig, package_info: crate::PackageInfo, handle: &AppHandle<R>) {
+	let handle_ = handle.clone();
 
 	// Wait to receive the event `"millennium://update"`
-	window.listen(EVENT_CHECK_UPDATE, move |_msg| {
-		let window = isolated_window.clone();
+	handle.listen_global(EVENT_CHECK_UPDATE, move |_msg| {
+		let handle = handle_.clone();
 		let package_info = package_info.clone();
 
 		// prepare our endpoints
@@ -484,10 +484,10 @@ pub(crate) fn listener<R: Runtime>(updater_config: UpdaterConfig, package_info: 
 
 		// check updates
 		crate::async_runtime::spawn(async move {
-			let window = window.clone();
-			let window_isolation = window.clone();
+			let handle = handle.clone();
+			let handle_ = handle.clone();
 			let pubkey = pubkey.clone();
-			let env = window.state::<Env>().inner().clone();
+			let env = handle.state::<Env>().inner().clone();
 
 			match self::core::builder(env).urls(&endpoints[..]).current_version(&package_info.version).build().await {
 				Ok(updater) => {
@@ -496,7 +496,7 @@ pub(crate) fn listener<R: Runtime>(updater_config: UpdaterConfig, package_info: 
 						let body = updater.body.clone().unwrap_or_else(|| String::from(""));
 
 						// Emit `millennium://update-available`
-						let _ = window.emit(
+						let _ = handle.emit_all(
 							EVENT_UPDATE_AVAILABLE,
 							UpdateManifest {
 								body,
@@ -504,17 +504,17 @@ pub(crate) fn listener<R: Runtime>(updater_config: UpdaterConfig, package_info: 
 								version: updater.version.clone()
 							}
 						);
-						let _ = window.app_handle.create_proxy().send_event(EventLoopMessage::Updater(UpdaterEvent::UpdateAvailable));
+						let _ = handle.create_proxy().send_event(EventLoopMessage::Updater(UpdaterEvent::UpdateAvailable));
 
 						// Listen for `millennium://update-install`
-						window.once(EVENT_INSTALL_UPDATE, move |_msg| {
-							let window = window_isolation.clone();
+						handle.once_global(EVENT_INSTALL_UPDATE, move |_msg| {
+							let handle = handle_.clone();
 							let updater = updater.clone();
 
 							// Start installation
 							crate::async_runtime::spawn(async move {
 								// emit {"status": "PENDING"}
-								send_status_update(window.clone(), UpdaterEvent::Pending);
+								send_status_update(&handle, UpdaterEvent::Pending);
 
 								// Launch updater download process
 								// macOS we display the `Ready to restart dialog` asking to restart
@@ -526,19 +526,19 @@ pub(crate) fn listener<R: Runtime>(updater_config: UpdaterConfig, package_info: 
 
 								if let Err(err) = update_result {
 									// emit {"status": "ERROR", "error": "The error message"}
-									send_status_update(window.clone(), UpdaterEvent::Error(err.to_string()));
+									send_status_update(&handle, UpdaterEvent::Error(err.to_string()));
 								} else {
 									// emit {"status": "DONE"}
-									send_status_update(window.clone(), UpdaterEvent::Updated);
+									send_status_update(&handle, UpdaterEvent::Updated);
 								}
 							});
 						});
 					} else {
-						send_status_update(window.clone(), UpdaterEvent::AlreadyUpToDate);
+						send_status_update(&handle, UpdaterEvent::AlreadyUpToDate);
 					}
 				}
 				Err(e) => {
-					send_status_update(window.clone(), UpdaterEvent::Error(e.to_string()));
+					send_status_update(&handle, UpdaterEvent::Error(e.to_string()));
 				}
 			}
 		});
@@ -546,8 +546,8 @@ pub(crate) fn listener<R: Runtime>(updater_config: UpdaterConfig, package_info: 
 }
 
 // Send a status update via `millennium://update-status` event.
-fn send_status_update<R: Runtime>(window: Window<R>, message: UpdaterEvent) {
-	let _ = window.emit(
+fn send_status_update<R: Runtime>(handle: &AppHandle<R>, message: UpdaterEvent) {
+	let _ = handle.emit_all(
 		EVENT_STATUS_UPDATE,
 		if let UpdaterEvent::Error(error) = &message {
 			StatusEvent {
@@ -561,19 +561,21 @@ fn send_status_update<R: Runtime>(window: Window<R>, message: UpdaterEvent) {
 			}
 		}
 	);
-	let _ = window.app_handle.create_proxy().send_event(EventLoopMessage::Updater(message));
+	let _ = handle.create_proxy().send_event(EventLoopMessage::Updater(message));
 }
 
 // Prompt a dialog asking if the user want to install the new version
 // Maybe we should add an option to customize it in future versions.
-async fn prompt_for_install<R: Runtime>(window: Window<R>, updater: &self::core::Update, app_name: &str, body: &str, pubkey: String) -> crate::Result<()> {
+async fn prompt_for_install<R: Runtime>(handle: AppHandle<R>, updater: &self::core::Update, app_name: &str, body: &str, pubkey: String) -> crate::Result<()> {
 	// remove single & double quote
 	let escaped_body = body.replace(&['\"', '\''][..], "");
+	let windows = handle.windows();
+	let parent_window = windows.values().next();
 
 	// todo(lemarier): We should review this and make sure we have
 	// something more conventional.
 	let should_install = ask(
-		Some(&window),
+		parent_window,
 		format!(r#"A new version of {} is available! "#, app_name),
 		format!(
 			r#"{} {} is now available -- you have {}.
@@ -596,9 +598,9 @@ Release Notes:
 		updater.download_and_install(pubkey.clone()).await?;
 
 		// Ask user if we need to restart the application
-		let should_exit = ask(Some(&window), "Ready to Restart", "The installation was successful, do you want to restart the application now?");
+		let should_exit = ask(parent_window, "Ready to Restart", "The installation was successful, do you want to restart the application now?");
 		if should_exit {
-			window.app_handle().restart();
+			handle.restart();
 		}
 	}
 
