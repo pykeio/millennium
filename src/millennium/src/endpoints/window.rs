@@ -23,10 +23,10 @@ use crate::runtime::{webview::WindowBuilder, Dispatch};
 use crate::{
 	runtime::{
 		window::dpi::{Position, Size},
-		Runtime, UserAttentionType
+		UserAttentionType
 	},
 	utils::config::WindowConfig,
-	Icon, Manager
+	Icon, Manager, Runtime
 };
 
 #[derive(Deserialize)]
@@ -154,7 +154,7 @@ impl Cmd {
 		let url = options.url.clone();
 
 		let mut builder = crate::window::Window::builder(&context.window, label, url);
-		builder.window_builder = <<R::Dispatcher as Dispatch>::WindowBuilder>::with_config(*options);
+		builder.window_builder = <<R::Dispatcher as Dispatch<crate::EventLoopMessage>>::WindowBuilder>::with_config(*options);
 		builder.build().map_err(crate::error::into_anyhow)?;
 
 		Ok(())

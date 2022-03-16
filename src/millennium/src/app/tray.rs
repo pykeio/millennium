@@ -21,10 +21,13 @@ use std::{
 
 use millennium_macros::default_runtime;
 
-pub use crate::runtime::{
-	menu::{MenuHash, MenuId, MenuIdRef, MenuUpdate, SystemTrayMenu, SystemTrayMenuEntry, TrayHandle},
-	window::dpi::{PhysicalPosition, PhysicalSize},
-	Runtime, SystemTray, TrayIcon
+pub use crate::{
+	runtime::{
+		menu::{MenuHash, MenuId, MenuIdRef, MenuUpdate, SystemTrayMenu, SystemTrayMenuEntry, TrayHandle},
+		window::dpi::{PhysicalPosition, PhysicalSize},
+		SystemTray, TrayIcon
+	},
+	Runtime
 };
 
 pub(crate) fn get_menu_ids(map: &mut HashMap<MenuHash, MenuId>, menu: &SystemTrayMenu) {

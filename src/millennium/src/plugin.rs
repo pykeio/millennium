@@ -24,7 +24,7 @@ use millennium_macros::default_runtime;
 use serde::de::DeserializeOwned;
 use serde_json::Value as JsonValue;
 
-use crate::{runtime::Runtime, utils::config::PluginConfig, AppHandle, Invoke, InvokeHandler, PageLoadPayload, RunEvent, Window};
+use crate::{utils::config::PluginConfig, AppHandle, Invoke, InvokeHandler, PageLoadPayload, RunEvent, Runtime, Window};
 
 /// The result type of Millennium plugin module.
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -89,7 +89,7 @@ type OnPageLoad<R> = dyn FnMut(Window<R>, PageLoadPayload) + Send;
 /// ```rust
 /// use millennium::{
 /// 	plugin::{Builder, MillenniumPlugin},
-/// 	runtime::Runtime
+/// 	Runtime
 /// };
 ///
 /// pub fn init<R: Runtime>() -> MillenniumPlugin<R> {
@@ -103,7 +103,7 @@ type OnPageLoad<R> = dyn FnMut(Window<R>, PageLoadPayload) + Send;
 /// ```rust
 /// use millennium::{
 /// 	plugin::{Builder as PluginBuilder, MillenniumPlugin},
-/// 	runtime::Runtime
+/// 	Runtime
 /// };
 ///
 /// pub struct Builder {
@@ -189,7 +189,7 @@ impl<R: Runtime, C: DeserializeOwned> Builder<R, C> {
 	/// ```rust
 	/// use millennium::{
 	/// 	plugin::{Builder, MillenniumPlugin},
-	/// 	runtime::Runtime
+	/// 	Runtime
 	/// };
 	///
 	/// #[millennium::command]
@@ -224,7 +224,7 @@ impl<R: Runtime, C: DeserializeOwned> Builder<R, C> {
 	/// ```rust
 	/// use millennium::{
 	/// 	plugin::{Builder, MillenniumPlugin},
-	/// 	runtime::Runtime
+	/// 	Runtime
 	/// };
 	///
 	/// const INIT_SCRIPT: &str = r#"
@@ -256,8 +256,7 @@ impl<R: Runtime, C: DeserializeOwned> Builder<R, C> {
 	///
 	/// use millennium::{
 	/// 	plugin::{Builder, MillenniumPlugin},
-	/// 	runtime::Runtime,
-	/// 	Manager
+	/// 	Manager, Runtime
 	/// };
 	///
 	/// #[derive(Debug, Default)]
@@ -330,7 +329,7 @@ impl<R: Runtime, C: DeserializeOwned> Builder<R, C> {
 	/// ```rust
 	/// use millennium::{
 	/// 	plugin::{Builder, MillenniumPlugin},
-	/// 	runtime::Runtime
+	/// 	Runtime
 	/// };
 	///
 	/// fn init<R: Runtime>() -> MillenniumPlugin<R> {
@@ -357,7 +356,7 @@ impl<R: Runtime, C: DeserializeOwned> Builder<R, C> {
 	/// ```rust
 	/// use millennium::{
 	/// 	plugin::{Builder, MillenniumPlugin},
-	/// 	runtime::Runtime
+	/// 	Runtime
 	/// };
 	///
 	/// fn init<R: Runtime>() -> MillenniumPlugin<R> {
@@ -384,8 +383,7 @@ impl<R: Runtime, C: DeserializeOwned> Builder<R, C> {
 	/// ```rust
 	/// use millennium::{
 	/// 	plugin::{Builder, MillenniumPlugin},
-	/// 	runtime::Runtime,
-	/// 	RunEvent
+	/// 	RunEvent, Runtime
 	/// };
 	///
 	/// fn init<R: Runtime>() -> MillenniumPlugin<R> {

@@ -48,12 +48,12 @@ use crate::{
 			dpi::{PhysicalPosition, PhysicalSize, Position, Size},
 			DetachedWindow, JsEventListenerKey, PendingWindow, WindowEvent
 		},
-		Dispatch, Runtime, RuntimeHandle, UserAttentionType
+		Dispatch, RuntimeHandle, UserAttentionType
 	},
 	sealed::ManagerBase,
 	sealed::RuntimeOrDispatch,
 	utils::config::WindowUrl,
-	Icon, Invoke, InvokeError, InvokeMessage, InvokeResolver, Manager, PageLoadPayload
+	EventLoopMessage, Icon, Invoke, InvokeError, InvokeMessage, InvokeResolver, Manager, PageLoadPayload, Runtime
 };
 
 #[derive(Clone, Serialize)]
@@ -123,7 +123,7 @@ pub struct WindowBuilder<R: Runtime> {
 	runtime: RuntimeHandleOrDispatch<R>,
 	app_handle: AppHandle<R>,
 	label: String,
-	pub(crate) window_builder: <R::Dispatcher as Dispatch>::WindowBuilder,
+	pub(crate) window_builder: <R::Dispatcher as Dispatch<EventLoopMessage>>::WindowBuilder,
 	pub(crate) webview_attributes: WebviewAttributes,
 	web_resource_request_handler: Option<Box<dyn Fn(&HttpRequest, &mut HttpResponse) + Send + Sync>>
 }
@@ -173,7 +173,7 @@ impl<R: Runtime> WindowBuilder<R> {
 			runtime,
 			app_handle,
 			label: label.into(),
-			window_builder: <R::Dispatcher as Dispatch>::WindowBuilder::new(),
+			window_builder: <R::Dispatcher as Dispatch<EventLoopMessage>>::WindowBuilder::new(),
 			webview_attributes: WebviewAttributes::new(url),
 			web_resource_request_handler: None
 		}
@@ -445,7 +445,7 @@ impl<R: Runtime> WindowBuilder<R> {
 #[derive(Debug)]
 pub struct Window<R: Runtime> {
 	/// The webview window created by the runtime.
-	window: DetachedWindow<R>,
+	window: DetachedWindow<EventLoopMessage, R>,
 	/// The manager to associate this webview window with.
 	manager: WindowManager<R>,
 	pub(crate) app_handle: AppHandle<R>
@@ -518,7 +518,7 @@ impl<'de, R: Runtime> CommandArg<'de, R> for Window<R> {
 
 impl<R: Runtime> Window<R> {
 	/// Create a new window that is attached to the manager.
-	pub(crate) fn new(manager: WindowManager<R>, window: DetachedWindow<R>, app_handle: AppHandle<R>) -> Self {
+	pub(crate) fn new(manager: WindowManager<R>, window: DetachedWindow<EventLoopMessage, R>, app_handle: AppHandle<R>) -> Self {
 		Self { window, manager, app_handle }
 	}
 
@@ -538,7 +538,7 @@ impl<R: Runtime> Window<R> {
 	#[deprecated(since = "1.0.0-rc.4", note = "The `builder` function offers an easier API with extended functionality")]
 	pub fn create_window<F>(&mut self, label: String, url: WindowUrl, setup: F) -> crate::Result<Window<R>>
 	where
-		F: FnOnce(<R::Dispatcher as Dispatch>::WindowBuilder, WebviewAttributes) -> (<R::Dispatcher as Dispatch>::WindowBuilder, WebviewAttributes)
+		F: FnOnce(<R::Dispatcher as Dispatch<EventLoopMessage>>::WindowBuilder, WebviewAttributes) -> (<R::Dispatcher as Dispatch<EventLoopMessage>>::WindowBuilder, WebviewAttributes)
 	{
 		let mut builder = WindowBuilder::<R>::new(self, label, url);
 		let (window_builder, webview_attributes) = setup(builder.window_builder, builder.webview_attributes);

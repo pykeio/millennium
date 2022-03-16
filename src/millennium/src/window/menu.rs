@@ -21,9 +21,12 @@ use std::{
 
 use millennium_macros::default_runtime;
 
-use crate::runtime::{
-	menu::{MenuHash, MenuId, MenuIdRef, MenuUpdate},
-	Dispatch, Runtime
+use crate::{
+	runtime::{
+		menu::{MenuHash, MenuId, MenuIdRef, MenuUpdate},
+		Dispatch
+	},
+	Runtime
 };
 
 /// The window menu event.

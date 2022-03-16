@@ -24,8 +24,8 @@ use serde::de::Visitor;
 use serde::{Deserialize, Deserializer};
 
 use crate::hooks::InvokeError;
-use crate::runtime::Runtime;
 use crate::InvokeMessage;
+use crate::Runtime;
 
 /// Represents a custom command.
 pub struct CommandItem<'a, R: Runtime> {
@@ -161,7 +161,7 @@ pub mod private {
 	use serde::Serialize;
 	use serde_json::Value;
 
-	use crate::{runtime::Runtime, InvokeError, InvokeResolver};
+	use crate::{InvokeError, InvokeResolver, Runtime};
 
 	// ===== impl Serialize =====
 

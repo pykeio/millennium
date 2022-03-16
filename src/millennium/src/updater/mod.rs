@@ -396,7 +396,7 @@ mod core;
 mod error;
 
 pub use self::error::Error;
-use crate::{api::dialog::blocking::ask, runtime::Runtime, utils::config::UpdaterConfig, Env, Manager, Window};
+use crate::{api::dialog::blocking::ask, runtime::EventLoopProxy, utils::config::UpdaterConfig, Env, EventLoopMessage, Manager, Runtime, UpdaterEvent, Window};
 
 /// Check for new updates
 pub const EVENT_CHECK_UPDATE: &str = "millennium://update";
@@ -449,13 +449,13 @@ pub(crate) async fn check_update_with_dialog<R: Runtime>(updater_config: Updater
 					let window_ = window.clone();
 					let dialog = prompt_for_install(window_, &updater.clone(), &package_info.name, &body.clone(), pubkey).await;
 
-					if dialog.is_err() {
-						send_status_update(window.clone(), EVENT_STATUS_ERROR, Some(dialog.err().unwrap().to_string()));
+					if let Err(e) = dialog {
+						send_status_update(window.clone(), UpdaterEvent::Error(e.to_string()));
 					}
 				}
 			}
 			Err(e) => {
-				send_status_update(window.clone(), EVENT_STATUS_ERROR, Some(e.to_string()));
+				send_status_update(window.clone(), UpdaterEvent::Error(e.to_string()));
 			}
 		}
 	}
@@ -496,7 +496,7 @@ pub(crate) fn listener<R: Runtime>(updater_config: UpdaterConfig, package_info: 
 						let body = updater.body.clone().unwrap_or_else(|| String::from(""));
 
 						// Emit `millennium://update-available`
-						let _ = window.emit_and_trigger(
+						let _ = window.emit(
 							EVENT_UPDATE_AVAILABLE,
 							UpdateManifest {
 								body,
@@ -504,6 +504,7 @@ pub(crate) fn listener<R: Runtime>(updater_config: UpdaterConfig, package_info: 
 								version: updater.version.clone()
 							}
 						);
+						let _ = window.app_handle.create_proxy().send_event(EventLoopMessage::Updater(UpdaterEvent::UpdateAvailable));
 
 						// Listen for `millennium://update-install`
 						window.once(EVENT_INSTALL_UPDATE, move |_msg| {
@@ -513,7 +514,7 @@ pub(crate) fn listener<R: Runtime>(updater_config: UpdaterConfig, package_info: 
 							// Start installation
 							crate::async_runtime::spawn(async move {
 								// emit {"status": "PENDING"}
-								send_status_update(window.clone(), EVENT_STATUS_PENDING, None);
+								send_status_update(window.clone(), UpdaterEvent::Pending);
 
 								// Launch updater download process
 								// macOS we display the `Ready to restart dialog` asking to restart
@@ -525,19 +526,19 @@ pub(crate) fn listener<R: Runtime>(updater_config: UpdaterConfig, package_info: 
 
 								if let Err(err) = update_result {
 									// emit {"status": "ERROR", "error": "The error message"}
-									send_status_update(window.clone(), EVENT_STATUS_ERROR, Some(err.to_string()));
+									send_status_update(window.clone(), UpdaterEvent::Error(err.to_string()));
 								} else {
 									// emit {"status": "DONE"}
-									send_status_update(window.clone(), EVENT_STATUS_SUCCESS, None);
+									send_status_update(window.clone(), UpdaterEvent::Updated);
 								}
 							});
 						});
 					} else {
-						send_status_update(window.clone(), EVENT_STATUS_UPTODATE, None);
+						send_status_update(window.clone(), UpdaterEvent::AlreadyUpToDate);
 					}
 				}
 				Err(e) => {
-					send_status_update(window.clone(), EVENT_STATUS_ERROR, Some(e.to_string()));
+					send_status_update(window.clone(), UpdaterEvent::Error(e.to_string()));
 				}
 			}
 		});
@@ -545,8 +546,22 @@ pub(crate) fn listener<R: Runtime>(updater_config: UpdaterConfig, package_info: 
 }
 
 // Send a status update via `millennium://update-status` event.
-fn send_status_update<R: Runtime>(window: Window<R>, status: &str, error: Option<String>) {
-	let _ = window.emit_and_trigger(EVENT_STATUS_UPDATE, StatusEvent { error, status: String::from(status) });
+fn send_status_update<R: Runtime>(window: Window<R>, message: UpdaterEvent) {
+	let _ = window.emit(
+		EVENT_STATUS_UPDATE,
+		if let UpdaterEvent::Error(error) = &message {
+			StatusEvent {
+				error: Some(error.clone()),
+				status: message.clone().status_message().into()
+			}
+		} else {
+			StatusEvent {
+				error: None,
+				status: message.clone().status_message().into()
+			}
+		}
+	);
+	let _ = window.app_handle.create_proxy().send_event(EventLoopMessage::Updater(message));
 }
 
 // Prompt a dialog asking if the user want to install the new version

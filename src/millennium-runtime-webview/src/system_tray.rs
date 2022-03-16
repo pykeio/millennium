@@ -19,7 +19,7 @@ use std::{
 	sync::{Arc, Mutex}
 };
 
-use millennium_runtime::menu::MenuHash;
+use millennium_runtime::{menu::MenuHash, UserEvent};
 pub use millennium_runtime::{
 	menu::{Menu, MenuEntry, MenuItem, MenuUpdate, Submenu, SystemTrayMenu, SystemTrayMenuEntry, SystemTrayMenuItem, TrayHandle},
 	SystemTrayEvent, TrayIcon
@@ -40,11 +40,11 @@ pub type SystemTrayEventListeners = Arc<Mutex<HashMap<Uuid, SystemTrayEventHandl
 pub type SystemTrayItems = Arc<Mutex<HashMap<u16, MillenniumCustomMenuItem>>>;
 
 #[derive(Debug, Clone)]
-pub struct SystemTrayHandle {
-	pub(crate) proxy: EventLoopProxy<super::Message>
+pub struct SystemTrayHandle<T: UserEvent> {
+	pub(crate) proxy: EventLoopProxy<super::Message<T>>
 }
 
-impl TrayHandle for SystemTrayHandle {
+impl<T: UserEvent> TrayHandle for SystemTrayHandle<T> {
 	fn set_icon(&self, icon: TrayIcon) -> Result<()> {
 		self.proxy.send_event(Message::Tray(TrayMessage::UpdateIcon(icon))).map_err(|_| Error::FailedToSendMessage)
 	}
