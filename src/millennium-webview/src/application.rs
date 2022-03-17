@@ -19,4 +19,27 @@
 //! This module re-export Millennium Core APIs for the user to create
 //! application windows
 
+#[cfg(not(target_os = "android"))]
 pub use millennium_core::*;
+
+// TODO: implement actual windowing library for Android
+#[cfg(target_os = "android")]
+pub use millennium_core::{dpi, error};
+
+#[cfg(target_os = "android")]
+pub mod window {
+	use millennium_core::dpi::PhysicalSize;
+	pub use millennium_core::window::BadIcon;
+
+	pub struct Window;
+
+	impl Window {
+		pub fn new() -> Self {
+			Self
+		}
+
+		pub fn inner_size(&self) -> PhysicalSize<u32> {
+			todo!()
+		}
+	}
+}

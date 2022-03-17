@@ -173,5 +173,8 @@ pub enum Error {
 	#[error("Invalid method: {0}")]
 	InvalidMethod(#[from] InvalidMethod),
 	#[error("Infallible error, something went really wrong: {0}")]
-	Infallible(#[from] std::convert::Infallible)
+	Infallible(#[from] std::convert::Infallible),
+	#[cfg(target_os = "android")]
+	#[error("JNI error: {0}")]
+	JNIError(#[from] jni::errors::Error)
 }
