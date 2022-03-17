@@ -511,12 +511,16 @@ pub(crate) fn listener<R: Runtime>(updater_config: UpdaterConfig, package_info: 
 						let _ = handle.emit_all(
 							EVENT_UPDATE_AVAILABLE,
 							UpdateManifest {
-								body,
+								body: body.clone(),
 								date: updater.date.clone(),
 								version: updater.version.clone()
 							}
 						);
-						let _ = handle.create_proxy().send_event(EventLoopMessage::Updater(UpdaterEvent::UpdateAvailable));
+						let _ = handle.create_proxy().send_event(EventLoopMessage::Updater(UpdaterEvent::UpdateAvailable {
+							body,
+							date: updater.date.clone(),
+							version: updater.version.clone()
+						}));
 
 						// Listen for `millennium://update-install`
 						handle.once_global(EVENT_INSTALL_UPDATE, move |_msg| {
