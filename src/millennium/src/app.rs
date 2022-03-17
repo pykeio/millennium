@@ -258,7 +258,7 @@ impl AppHandle<crate::MillenniumWebview> {
 		message: millennium_runtime_webview::WindowMessage
 	) -> crate::Result<()> {
 		self.runtime_handle
-			.send_event(millennium_runtime_webview::Message::Window(window_id, message))
+			.send_event(millennium_runtime_webview::Message::Window(self.runtime_handle.window_id(window_id), message))
 			.map_err(Into::into)
 	}
 }

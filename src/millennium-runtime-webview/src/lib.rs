@@ -60,8 +60,7 @@ use millennium_webview::application::platform::windows::{WindowBuilderExtWindows
 #[cfg(feature = "system-tray")]
 use millennium_webview::application::system_tray::{SystemTray as MillenniumSystemTray, SystemTrayBuilder};
 pub use millennium_webview::application::window::{Window, WindowBuilder as MillenniumWindowBuilder, WindowId};
-#[cfg(target_os = "windows")]
-#[allow(unused_imports)]
+#[cfg(windows)]
 use millennium_webview::webview::WebviewExtWindows;
 use millennium_webview::{
 	application::{
@@ -87,11 +86,13 @@ use millennium_webview::{
 	webview::{FileDropEvent as MillenniumFileDropEvent, WebContext, WebView, WebViewBuilder}
 };
 use uuid::Uuid;
-#[cfg(all(windows, not(feature = "__rust_analyzer_hack")))]
+#[cfg(windows)]
 use webview2_com::FocusChangedEventHandler;
 #[cfg(windows)]
 #[allow(unused_imports)]
 use windows::Win32::{Foundation::HWND, System::WinRT::EventRegistrationToken};
+
+type WebviewId = u64;
 
 #[cfg(feature = "system-tray")]
 mod system_tray;
@@ -102,13 +103,26 @@ type WebContextStore = Arc<Mutex<HashMap<Option<PathBuf>, WebContext>>>;
 // window
 type WindowEventHandler = Box<dyn Fn(&WindowEvent) + Send>;
 type WindowEventListenersMap = Arc<Mutex<HashMap<Uuid, WindowEventHandler>>>;
-type WindowEventListeners = Arc<Mutex<HashMap<WindowId, WindowEventListenersMap>>>;
+type WindowEventListeners = Arc<Mutex<HashMap<WebviewId, WindowEventListenersMap>>>;
 // global shortcut
 type GlobalShortcutListeners = Arc<Mutex<HashMap<AcceleratorId, Box<dyn Fn() + Send>>>>;
 // menu
 pub type MenuEventHandler = Box<dyn Fn(&MenuEvent) + Send>;
-pub type MenuEventListeners = Arc<Mutex<HashMap<WindowId, WindowMenuEventListeners>>>;
+pub type MenuEventListeners = Arc<Mutex<HashMap<WebviewId, WindowMenuEventListeners>>>;
 pub type WindowMenuEventListeners = Arc<Mutex<HashMap<Uuid, MenuEventHandler>>>;
+
+#[derive(Debug, Clone, Default)]
+struct WebviewIdStore(Arc<Mutex<HashMap<WindowId, WebviewId>>>);
+
+impl WebviewIdStore {
+	fn insert(&self, w: WindowId, id: WebviewId) {
+		self.0.lock().unwrap().insert(w, id);
+	}
+
+	fn get(&self, w: &WindowId) -> WebviewId {
+		*self.0.lock().unwrap().get(w).unwrap()
+	}
+}
 
 macro_rules! getter {
 	($self: ident, $rx: expr, $message: expr) => {{
@@ -148,11 +162,50 @@ fn send_user_message<T: UserEvent>(context: &Context<T>, message: Message<T>) ->
 
 #[derive(Clone)]
 struct Context<T: UserEvent> {
+	webview_id_map: WebviewIdStore,
 	main_thread_id: ThreadId,
 	proxy: MillenniumEventLoopProxy<Message<T>>,
 	window_event_listeners: WindowEventListeners,
 	menu_event_listeners: MenuEventListeners,
 	main_thread: DispatcherMainThreadContext<T>
+}
+
+impl<T: UserEvent> Context<T> {
+	fn prepare_window(&self, window_id: WebviewId) {
+		self.window_event_listeners
+			.lock()
+			.unwrap()
+			.insert(window_id, WindowEventListenersMap::default());
+		self.menu_event_listeners
+			.lock()
+			.unwrap()
+			.insert(window_id, WindowMenuEventListeners::default());
+	}
+
+	fn create_webview(&self, pending: PendingWindow<T, MillenniumWebview<T>>) -> Result<DetachedWindow<T, MillenniumWebview<T>>> {
+		let label = pending.label.clone();
+		let menu_ids = pending.menu_ids.clone();
+		let js_event_listeners = pending.js_event_listeners.clone();
+		let context = self.clone();
+		let window_id = rand::random();
+
+		self.prepare_window(window_id);
+
+		self.proxy
+			.send_event(Message::CreateWebview(
+				window_id,
+				Box::new(move |event_loop, web_context| create_webview(window_id, event_loop, web_context, context, pending))
+			))
+			.map_err(|_| Error::FailedToSendMessage)?;
+
+		let dispatcher = MillenniumDispatcher { window_id, context: self.clone() };
+		Ok(DetachedWindow {
+			label,
+			dispatcher,
+			menu_ids,
+			js_event_listeners
+		})
+	}
 }
 
 #[derive(Debug, Clone)]
@@ -161,7 +214,7 @@ struct DispatcherMainThreadContext<T: UserEvent> {
 	web_context: WebContextStore,
 	global_shortcut_manager: Arc<Mutex<MillenniumShortcutManager>>,
 	clipboard_manager: Arc<Mutex<Clipboard>>,
-	windows: Arc<Mutex<HashMap<WindowId, WindowWrapper>>>,
+	windows: Arc<Mutex<HashMap<WebviewId, WindowWrapper>>>,
 	#[cfg(feature = "system-tray")]
 	tray_context: TrayContext
 }
@@ -774,7 +827,7 @@ impl WindowBuilder for WindowBuilderWrapper {
 		Ok(self)
 	}
 
-	#[cfg(any(target_os = "windows", target_os = "linux"))]
+	#[cfg(any(windows, target_os = "linux"))]
 	fn skip_taskbar(mut self, skip: bool) -> Self {
 		self.inner = self.inner.with_skip_taskbar(skip);
 		self
@@ -922,12 +975,12 @@ pub enum ClipboardMessage {
 pub type CreateWebviewClosure<T> = Box<dyn FnOnce(&EventLoopWindowTarget<Message<T>>, &WebContextStore) -> Result<WindowWrapper> + Send>;
 pub enum Message<T: 'static> {
 	Task(Box<dyn FnOnce() + Send>),
-	Window(WindowId, WindowMessage),
-	Webview(WindowId, WebviewMessage),
+	Window(WebviewId, WindowMessage),
+	Webview(WebviewId, WebviewMessage),
 	#[cfg(feature = "system-tray")]
 	Tray(TrayMessage),
-	CreateWebview(CreateWebviewClosure<T>, Sender<WindowId>),
-	CreateWindow(Box<dyn FnOnce() -> (String, MillenniumWindowBuilder) + Send>, Sender<Result<Weak<Window>>>),
+	CreateWebview(WebviewId, CreateWebviewClosure<T>),
+	CreateWindow(WebviewId, Box<dyn FnOnce() -> (String, MillenniumWindowBuilder) + Send>, Sender<Result<Weak<Window>>>),
 	GlobalShortcut(GlobalShortcutMessage),
 	Clipboard(ClipboardMessage),
 	UserEvent(T)
@@ -950,7 +1003,7 @@ impl<T: UserEvent> Clone for Message<T> {
 
 #[derive(Debug, Clone)]
 pub struct MillenniumDispatcher<T: UserEvent> {
-	window_id: WindowId,
+	window_id: WebviewId,
 	context: Context<T>
 }
 
@@ -1098,28 +1151,7 @@ impl<T: UserEvent> Dispatch<T> for MillenniumDispatcher<T> {
 	// Note that this must be called from a separate thread, otherwise the channel
 	// will introduce a deadlock.
 	fn create_window(&mut self, pending: PendingWindow<T, Self::Runtime>) -> Result<DetachedWindow<T, Self::Runtime>> {
-		let (tx, rx) = channel();
-		let label = pending.label.clone();
-		let menu_ids = pending.menu_ids.clone();
-		let js_event_listeners = pending.js_event_listeners.clone();
-		let context = self.context.clone();
-
-		send_user_message(
-			&self.context,
-			Message::CreateWebview(Box::new(move |event_loop, web_context| create_webview(event_loop, web_context, context, pending)), tx)
-		)?;
-		let window_id = rx.recv().unwrap();
-
-		let dispatcher = MillenniumDispatcher {
-			window_id,
-			context: self.context.clone()
-		};
-		Ok(DetachedWindow {
-			label,
-			dispatcher,
-			menu_ids,
-			js_event_listeners
-		})
+		self.context.create_webview(pending)
 	}
 
 	fn set_resizable(&self, resizable: bool) -> Result<()> {
@@ -1289,7 +1321,8 @@ pub struct MillenniumWebview<T: UserEvent> {
 	clipboard_manager: Arc<Mutex<Clipboard>>,
 	clipboard_manager_handle: ClipboardManagerWrapper<T>,
 	event_loop: EventLoop<Message<T>>,
-	windows: Arc<Mutex<HashMap<WindowId, WindowWrapper>>>,
+	windows: Arc<Mutex<HashMap<WebviewId, WindowWrapper>>>,
+	webview_id_map: WebviewIdStore,
 	web_context: WebContextStore,
 	window_event_listeners: WindowEventListeners,
 	menu_event_listeners: MenuEventListeners,
@@ -1330,8 +1363,13 @@ impl<T: UserEvent> MillenniumHandle<T> {
 	/// window id.
 	pub fn create_core_window<F: FnOnce() -> (String, MillenniumWindowBuilder) + Send + 'static>(&self, f: F) -> Result<Weak<Window>> {
 		let (tx, rx) = channel();
-		send_user_message(&self.context, Message::CreateWindow(Box::new(f), tx))?;
+		send_user_message(&self.context, Message::CreateWindow(rand::random(), Box::new(f), tx))?;
 		rx.recv().unwrap()
+	}
+
+	/// Gets the [`WebviewId`] associated with the given [`WindowId`].
+	pub fn window_id(&self, window_id: WindowId) -> WebviewId {
+		*self.context.webview_id_map.0.lock().unwrap().get(&window_id).unwrap()
 	}
 
 	/// Send a message to the event loop.
@@ -1352,27 +1390,7 @@ impl<T: UserEvent> RuntimeHandle<T> for MillenniumHandle<T> {
 	// Note that this must be called from a separate thread, otherwise the channel
 	// will introduce a deadlock.
 	fn create_window(&self, pending: PendingWindow<T, Self::Runtime>) -> Result<DetachedWindow<T, Self::Runtime>> {
-		let (tx, rx) = channel();
-		let label = pending.label.clone();
-		let menu_ids = pending.menu_ids.clone();
-		let js_event_listeners = pending.js_event_listeners.clone();
-		let context = self.context.clone();
-		send_user_message(
-			&self.context,
-			Message::CreateWebview(Box::new(move |event_loop, web_context| create_webview(event_loop, web_context, context, pending)), tx)
-		)?;
-		let window_id = rx.recv().unwrap();
-
-		let dispatcher = MillenniumDispatcher {
-			window_id,
-			context: self.context.clone()
-		};
-		Ok(DetachedWindow {
-			label,
-			dispatcher,
-			menu_ids,
-			js_event_listeners
-		})
+		self.context.create_webview(pending)
 	}
 
 	fn run_on_main_thread<F: FnOnce() + Send + 'static>(&self, f: F) -> Result<()> {
@@ -1394,6 +1412,7 @@ impl<T: UserEvent> MillenniumWebview<T> {
 		let global_shortcut_manager = Arc::new(Mutex::new(MillenniumShortcutManager::new(&event_loop)));
 		let clipboard_manager = Arc::new(Mutex::new(Clipboard::new()));
 		let windows = Arc::new(Mutex::new(HashMap::default()));
+		let webview_id_map = WebviewIdStore::default();
 		let window_event_listeners = WindowEventListeners::default();
 		let menu_event_listeners = MenuEventListeners::default();
 
@@ -1401,6 +1420,7 @@ impl<T: UserEvent> MillenniumWebview<T> {
 		let tray_context = TrayContext::default();
 
 		let event_loop_context = Context {
+			webview_id_map: webview_id_map.clone(),
 			main_thread_id,
 			proxy,
 			window_event_listeners: window_event_listeners.clone(),
@@ -1431,6 +1451,7 @@ impl<T: UserEvent> MillenniumWebview<T> {
 			clipboard_manager_handle,
 			event_loop,
 			windows,
+			webview_id_map,
 			web_context,
 			window_event_listeners,
 			menu_event_listeners,
@@ -1471,6 +1492,7 @@ impl<T: UserEvent> Runtime<T> for MillenniumWebview<T> {
 	fn handle(&self) -> Self::Handle {
 		MillenniumHandle {
 			context: Context {
+				webview_id_map: self.webview_id_map.clone(),
 				main_thread_id: self.main_thread_id,
 				proxy: self.event_loop.create_proxy(),
 				window_event_listeners: self.window_event_listeners.clone(),
@@ -1501,78 +1523,30 @@ impl<T: UserEvent> Runtime<T> for MillenniumWebview<T> {
 		let menu_ids = pending.menu_ids.clone();
 		let js_event_listeners = pending.js_event_listeners.clone();
 		let proxy = self.event_loop.create_proxy();
-		let webview = create_webview(
-			&self.event_loop,
-			&self.web_context,
-			Context {
-				main_thread_id: self.main_thread_id,
-				proxy: proxy.clone(),
-				window_event_listeners: self.window_event_listeners.clone(),
-				menu_event_listeners: self.menu_event_listeners.clone(),
-				main_thread: DispatcherMainThreadContext {
-					window_target: self.event_loop.deref().clone(),
-					web_context: self.web_context.clone(),
-					global_shortcut_manager: self.global_shortcut_manager.clone(),
-					clipboard_manager: self.clipboard_manager.clone(),
-					windows: self.windows.clone(),
-					#[cfg(feature = "system-tray")]
-					tray_context: self.tray_context.clone()
-				}
-			},
-			pending
-		)?;
+		let window_id = rand::random();
 
-		#[cfg(all(target_os = "windows", not(feature = "__rust_analyzer_hack")))]
-		{
-			let id = webview.inner.window().id();
-			if let WindowHandle::Webview(ref webview) = webview.inner {
-				let controller = webview.controller();
-				let proxy = self.event_loop.create_proxy();
-				let mut token = EventRegistrationToken::default();
-				unsafe {
-					controller.GotFocus(
-						FocusChangedEventHandler::create(Box::new(move |_, _| {
-							let _ = proxy.send_event(Message::Webview(id, WebviewMessage::WebviewEvent(WebviewEvent::Focused(true))));
-							Ok(())
-						})),
-						&mut token
-					)
-				}
-				.unwrap();
-				let proxy = self.event_loop.create_proxy();
-				unsafe {
-					controller.LostFocus(
-						FocusChangedEventHandler::create(Box::new(move |_, _| {
-							let _ = proxy.send_event(Message::Webview(id, WebviewMessage::WebviewEvent(WebviewEvent::Focused(false))));
-							Ok(())
-						})),
-						&mut token
-					)
-				}
-				.unwrap();
-			}
-		}
-
-		let dispatcher = MillenniumDispatcher {
-			window_id: webview.inner.window().id(),
-			context: Context {
-				main_thread_id: self.main_thread_id,
-				proxy,
-				window_event_listeners: self.window_event_listeners.clone(),
-				menu_event_listeners: self.menu_event_listeners.clone(),
-				main_thread: DispatcherMainThreadContext {
-					window_target: self.event_loop.deref().clone(),
-					web_context: self.web_context.clone(),
-					global_shortcut_manager: self.global_shortcut_manager.clone(),
-					clipboard_manager: self.clipboard_manager.clone(),
-					windows: self.windows.clone(),
-					#[cfg(feature = "system-tray")]
-					tray_context: self.tray_context.clone()
-				}
+		let context = Context {
+			webview_id_map: self.webview_id_map.clone(),
+			main_thread_id: self.main_thread_id,
+			proxy,
+			window_event_listeners: self.window_event_listeners.clone(),
+			menu_event_listeners: self.menu_event_listeners.clone(),
+			main_thread: DispatcherMainThreadContext {
+				window_target: self.event_loop.deref().clone(),
+				web_context: self.web_context.clone(),
+				global_shortcut_manager: self.global_shortcut_manager.clone(),
+				clipboard_manager: self.clipboard_manager.clone(),
+				windows: self.windows.clone(),
+				#[cfg(feature = "system-tray")]
+				tray_context: self.tray_context.clone()
 			}
 		};
+		context.prepare_window(window_id);
 
-		self.windows.lock().unwrap().insert(webview.inner.window().id(), webview);
+		let webview = create_webview(window_id, &self.event_loop, &self.web_context, context.clone(), pending)?;
+
+		let dispatcher = MillenniumDispatcher { window_id, context };
+		self.windows.lock().unwrap().insert(window_id, webview);
 
 		Ok(DetachedWindow {
 			label,
@@ -1627,6 +1601,7 @@ impl<T: UserEvent> Runtime<T> for MillenniumWebview<T> {
 	fn run_iteration<F: FnMut(RunEvent<T>) + 'static>(&mut self, mut callback: F) -> RunIteration {
 		use millennium_webview::application::platform::run_return::EventLoopExtRunReturn;
 		let windows = self.windows.clone();
+		let webview_id_map = self.webview_id_map.clone();
 		let web_context = &self.web_context;
 		let window_event_listeners = self.window_event_listeners.clone();
 		let menu_event_listeners = self.menu_event_listeners.clone();
@@ -1650,6 +1625,7 @@ impl<T: UserEvent> Runtime<T> for MillenniumWebview<T> {
 				EventLoopIterationContext {
 					callback: &mut callback,
 					windows: windows.clone(),
+					webview_id_map: webview_id_map.clone(),
 					window_event_listeners: &window_event_listeners,
 					global_shortcut_manager: global_shortcut_manager.clone(),
 					global_shortcut_manager_handle: &global_shortcut_manager_handle,
@@ -1667,6 +1643,7 @@ impl<T: UserEvent> Runtime<T> for MillenniumWebview<T> {
 
 	fn run<F: FnMut(RunEvent<T>) + 'static>(self, mut callback: F) {
 		let windows = self.windows.clone();
+		let webview_id_map = self.webview_id_map.clone();
 		let web_context = self.web_context;
 		let window_event_listeners = self.window_event_listeners.clone();
 		let menu_event_listeners = self.menu_event_listeners.clone();
@@ -1683,6 +1660,7 @@ impl<T: UserEvent> Runtime<T> for MillenniumWebview<T> {
 				control_flow,
 				EventLoopIterationContext {
 					callback: &mut callback,
+					webview_id_map: webview_id_map.clone(),
 					windows: windows.clone(),
 					window_event_listeners: &window_event_listeners,
 					global_shortcut_manager: global_shortcut_manager.clone(),
@@ -1700,7 +1678,8 @@ impl<T: UserEvent> Runtime<T> for MillenniumWebview<T> {
 
 pub struct EventLoopIterationContext<'a, T: UserEvent> {
 	callback: &'a mut (dyn FnMut(RunEvent<T>) + 'static),
-	windows: Arc<Mutex<HashMap<WindowId, WindowWrapper>>>,
+	webview_id_map: WebviewIdStore,
+	windows: Arc<Mutex<HashMap<WebviewId, WindowWrapper>>>,
 	window_event_listeners: &'a WindowEventListeners,
 	global_shortcut_manager: Arc<Mutex<MillenniumShortcutManager>>,
 	global_shortcut_manager_handle: &'a GlobalShortcutManagerHandle<T>,
@@ -1715,7 +1694,7 @@ struct UserMessageContext<'a> {
 	global_shortcut_manager: Arc<Mutex<MillenniumShortcutManager>>,
 	clipboard_manager: Arc<Mutex<Clipboard>>,
 	menu_event_listeners: &'a MenuEventListeners,
-	windows: Arc<Mutex<HashMap<WindowId, WindowWrapper>>>,
+	windows: Arc<Mutex<HashMap<WebviewId, WindowWrapper>>>,
 	#[cfg(feature = "system-tray")]
 	tray_context: &'a TrayContext
 }
@@ -1826,7 +1805,7 @@ fn handle_user_message<T: UserEvent>(
 						window.set_window_icon(Some(icon));
 					}
 					WindowMessage::SetSkipTaskbar(_skip) => {
-						#[cfg(any(target_os = "windows", target_os = "linux"))]
+						#[cfg(any(windows, target_os = "linux"))]
 						window.set_skip_taskbar(_skip);
 					}
 					WindowMessage::DragWindow => {
@@ -1872,31 +1851,27 @@ fn handle_user_message<T: UserEvent>(
 				}
 			}
 		},
-		Message::CreateWebview(handler, sender) => match handler(event_loop, web_context) {
+		Message::CreateWebview(window_id, handler) => match handler(event_loop, web_context) {
 			Ok(webview) => {
-				let window_id = webview.inner.window().id();
 				windows.lock().expect("poisoned webview collection").insert(window_id, webview);
-				sender.send(window_id).unwrap();
 			}
 			Err(e) => {
 				#[cfg(debug_assertions)]
 				eprintln!("{}", e);
 			}
 		},
-		Message::CreateWindow(handler, sender) => {
+		Message::CreateWindow(window_id, handler, sender) => {
 			let (label, builder) = handler();
 			if let Ok(window) = builder.build(event_loop) {
-				let window_id = window.id();
-
 				window_event_listeners
 					.lock()
 					.unwrap()
-					.insert(window.id(), WindowEventListenersMap::default());
+					.insert(window_id, WindowEventListenersMap::default());
 
 				menu_event_listeners
 					.lock()
 					.unwrap()
-					.insert(window.id(), WindowMenuEventListeners::default());
+					.insert(window_id, WindowMenuEventListeners::default());
 
 				let w = Arc::new(window);
 
@@ -2007,6 +1982,7 @@ fn handle_event_loop<T: UserEvent>(
 ) -> RunIteration {
 	let EventLoopIterationContext {
 		callback,
+		webview_id_map,
 		windows,
 		window_event_listeners,
 		global_shortcut_manager,
@@ -2053,6 +2029,7 @@ fn handle_event_loop<T: UserEvent>(
 			let window_id = window_id.unwrap(); // always Some on MenuBar event
 			let event = MenuEvent { menu_item_id: menu_id.0 };
 			let window_menu_event_listeners = {
+				let window_id = webview_id_map.get(&window_id);
 				let listeners = menu_event_listeners.lock().unwrap();
 				listeners.get(&window_id).cloned().unwrap_or_default()
 			};
@@ -2091,6 +2068,7 @@ fn handle_event_loop<T: UserEvent>(
 			}
 		}
 		Event::WindowEvent { event, window_id, .. } => {
+			let window_id = webview_id_map.get(&window_id);
 			// NOTE(amrbashir): we handle this event here instead of `match` statement below
 			// because we want to focus the webview as soon as possible, especially on
 			// windows.
@@ -2170,8 +2148,8 @@ fn handle_event_loop<T: UserEvent>(
 
 fn on_close_requested<'a, T: UserEvent>(
 	callback: &'a mut (dyn FnMut(RunEvent<T>) + 'static),
-	window_id: WindowId,
-	windows: Arc<Mutex<HashMap<WindowId, WindowWrapper>>>,
+	window_id: WebviewId,
+	windows: Arc<Mutex<HashMap<WebviewId, WindowWrapper>>>,
 	control_flow: &mut ControlFlow,
 	window_event_listeners: &WindowEventListeners,
 	menu_event_listeners: MenuEventListeners
@@ -2208,8 +2186,8 @@ fn on_close_requested<'a, T: UserEvent>(
 
 fn on_window_close<'a, T: UserEvent>(
 	callback: &'a mut (dyn FnMut(RunEvent<T>) + 'static),
-	window_id: WindowId,
-	mut windows: MutexGuard<'a, HashMap<WindowId, WindowWrapper>>,
+	window_id: WebviewId,
+	mut windows: MutexGuard<'a, HashMap<WebviewId, WindowWrapper>>,
 	control_flow: &mut ControlFlow,
 	#[cfg(target_os = "linux")] window_event_listeners: &WindowEventListeners,
 	menu_event_listeners: MenuEventListeners
@@ -2289,6 +2267,7 @@ fn to_millennium_menu(custom_menu_items: &mut HashMap<MenuHash, MillenniumCustom
 }
 
 fn create_webview<T: UserEvent>(
+	window_id: WebviewId,
 	event_loop: &EventLoopWindowTarget<Message<T>>,
 	web_context: &WebContextStore,
 	context: Context<T>,
@@ -2306,6 +2285,9 @@ fn create_webview<T: UserEvent>(
 		js_event_listeners,
 		..
 	} = pending;
+	let webview_id_map = context.webview_id_map.clone();
+	#[cfg(windows)]
+	let proxy = context.proxy.clone();
 
 	let is_window_transparent = window_builder.inner.window.transparent;
 	let menu_items = if let Some(menu) = window_builder.menu {
@@ -2317,18 +2299,6 @@ fn create_webview<T: UserEvent>(
 		None
 	};
 	let window = window_builder.inner.build(event_loop).unwrap();
-
-	context
-		.window_event_listeners
-		.lock()
-		.unwrap()
-		.insert(window.id(), WindowEventListenersMap::default());
-
-	context
-		.menu_event_listeners
-		.lock()
-		.unwrap()
-		.insert(window.id(), WindowMenuEventListeners::default());
 
 	if window_builder.center {
 		let _ = center_window(&window, window.inner_size());
@@ -2391,6 +2361,35 @@ fn create_webview<T: UserEvent>(
 		.build()
 		.map_err(|e| Error::CreateWebview(Box::new(e)))?;
 
+	webview_id_map.insert(webview.window().id(), window_id);
+
+	#[cfg(windows)]
+	{
+		let controller = webview.controller();
+		let proxy_ = proxy.clone();
+		let mut token = EventRegistrationToken::default();
+		unsafe {
+			controller.GotFocus(
+				FocusChangedEventHandler::create(Box::new(move |_, _| {
+					let _ = proxy_.send_event(Message::Webview(window_id, WebviewMessage::WebviewEvent(WebviewEvent::Focused(true))));
+					Ok(())
+				})),
+				&mut token
+			)
+		}
+		.unwrap();
+		unsafe {
+			controller.LostFocus(
+				FocusChangedEventHandler::create(Box::new(move |_, _| {
+					let _ = proxy.send_event(Message::Webview(window_id, WebviewMessage::WebviewEvent(WebviewEvent::Focused(false))));
+					Ok(())
+				})),
+				&mut token
+			)
+		}
+		.unwrap();
+	}
+
 	Ok(WindowWrapper {
 		label,
 		inner: WindowHandle::Webview(webview),
@@ -2410,7 +2409,7 @@ fn create_ipc_handler<T: UserEvent>(
 		handler(
 			DetachedWindow {
 				dispatcher: MillenniumDispatcher {
-					window_id: window.id(),
+					window_id: *context.webview_id_map.0.lock().unwrap().get(&window.id()).unwrap(),
 					context: context.clone()
 				},
 				label: label.clone(),
@@ -2425,11 +2424,12 @@ fn create_ipc_handler<T: UserEvent>(
 /// Create a Millennium Webview file drop handler.
 fn create_file_drop_handler<T: UserEvent>(context: &Context<T>) -> Box<dyn Fn(&Window, MillenniumFileDropEvent) -> bool + 'static> {
 	let window_event_listeners = context.window_event_listeners.clone();
+	let webview_id_map = context.webview_id_map.clone();
 	Box::new(move |window, event| {
 		let event: FileDropEvent = FileDropEventWrapper(event).into();
 		let window_event = WindowEvent::FileDrop(event);
 		let listeners = window_event_listeners.lock().unwrap();
-		if let Some(window_listeners) = listeners.get(&window.id()) {
+		if let Some(window_listeners) = listeners.get(&webview_id_map.get(&window.id())) {
 			let listeners_map = window_listeners.lock().unwrap();
 			let has_listener = !listeners_map.is_empty();
 			for listener in listeners_map.values() {

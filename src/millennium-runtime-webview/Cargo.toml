@@ -21,6 +21,7 @@ millennium-webview = { version = "1.0.0-beta.1", path = "../millennium-webview",
 millennium-runtime = { version = "1.0.0-beta.1", path = "../millennium-runtime" }
 millennium-utils = { version = "1.0.0-beta.1", path = "../millennium-utils" }
 uuid = { version = "0.8.2", features = [ "v4" ] }
+rand = "0.8"
 
 [target."cfg(windows)".dependencies]
 webview2-com = "0.13.0"
