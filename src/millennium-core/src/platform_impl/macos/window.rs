@@ -442,8 +442,9 @@ impl UnownedWindow {
 	}
 
 	pub fn set_menu(&self, menu: Option<Menu>) {
-		unsafe {
-			util::set_menu_async(*self.ns_window, menu);
+		// TODO: if None, we should set an empty menu. On Windows we can remove it, but on macOS we can't
+		if let Some(menu) = menu {
+			menu::initialize(menu);
 		}
 	}
 
