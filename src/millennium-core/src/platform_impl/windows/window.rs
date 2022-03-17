@@ -730,7 +730,7 @@ unsafe fn init<T: 'static>(
 	let mut window_flags = WindowFlags::empty();
 	window_flags.set(WindowFlags::DECORATIONS, attributes.decorations);
 	window_flags.set(WindowFlags::ALWAYS_ON_TOP, attributes.always_on_top);
-	window_flags.set(WindowFlags::NO_BACK_BUFFER, pl_attribs.no_redirection_bitmap);
+	window_flags.set(WindowFlags::NO_BACK_BUFFER, attributes.transparent || pl_attribs.no_redirection_bitmap);
 	window_flags.set(WindowFlags::TRANSPARENT, attributes.transparent);
 	// WindowFlags::VISIBLE and MAXIMIZED are set down below after the window has
 	// been configured.

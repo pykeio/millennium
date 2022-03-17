@@ -69,7 +69,7 @@ impl Default for PlatformSpecificWindowBuilderAttributes {
 			parent: Parent::None,
 			menu: None,
 			taskbar_icon: None,
-			no_redirection_bitmap: true,
+			no_redirection_bitmap: false,
 			drag_and_drop: true,
 			titlebar_hidden: false,
 			preferred_theme: None,
