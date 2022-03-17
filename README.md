@@ -1,5 +1,5 @@
 <div align=center>
-	<a href="https://millennium.pyke.io"><img src="https://github.com/pykeio/millennium/raw/master/.github/banner.png" width=1920></a>
+	<a href="https://millennium.pyke.io"><img src="https://github.com/pykeio/millennium/raw/main/.github/banner.png" width=1920></a>
 	<sub><i>Millennium Icon by <a href="https://github.com/xfaonae">XFaon</a>. *Stats are from <a href="https://github.com/tauri-apps/tauri">Tauri</a> and may not be fully accurate.</i><sub>
 	<br /><br />
 	<a href="https://github.com/pykeio/millennium/actions"><img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/pykeio/millennium/Test%20Millennium%20(Rust)?style=flat-square"></a> <img alt="Code Climate maintainability" src="https://img.shields.io/codeclimate/maintainability/pykeio/millennium?label=maintainability&style=flat-square">
