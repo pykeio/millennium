@@ -21,7 +21,6 @@
 
 #[cfg(not(target_os = "android"))]
 pub use millennium_core::*;
-
 // TODO: implement actual windowing library for Android
 #[cfg(target_os = "android")]
 pub use millennium_core::{dpi, error};
