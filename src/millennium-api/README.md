@@ -7,7 +7,7 @@
 	<hr />
 </div>
 
-Millennium is an experimental cross-platform GUI framework written in Rust. With Millennium, you can design consistent UI that works across all platforms, using HTML, CSS, and JavaScript.
+Millennium is an experimental cross-platform webview framework written in Rust. With Millennium, you can design consistent UI that works across all platforms, using HTML, CSS, and JavaScript.
 
 ## `@pyke/millennium-api`
 This package provides the JavaScript API for [Millennium](https://millennium.pyke.io/) applications. With `@pyke/millennium-api`, you can create windows, execute processes, read files, and more from JavaScript with APIs similar to (but not 100% compatible with) Node.js.
