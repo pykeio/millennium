@@ -1735,7 +1735,7 @@ unsafe fn public_window_callback_inner<T: 'static>(
 			let win_flags = subclass_input.window_state.lock().window_flags();
 
 			// remove ~6px margin at the top of the window when HIDDEN_TITLEBAR is enabled
-			if win_flags.contains(WindowFlags::HIDDEN_TITLEBAR) {
+			if win_flags.contains(WindowFlags::HIDDEN_TITLEBAR) && win_flags.contains(WindowFlags::DECORATIONS) {
 				let mut border_thickness = RECT::default();
 				AdjustWindowRectEx(&mut border_thickness, GetWindowLongPtrW(window, GWL_STYLE) as u32 & !WS_CAPTION, false, 0);
 

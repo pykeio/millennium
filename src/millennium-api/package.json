@@ -1,6 +1,6 @@
 {
 	"name": "@pyke/millennium-api",
-	"version": "0.0.0-dev.3",
+	"version": "0.0.0-dev.4",
 	"description": "JavaScript API for Millennium applications",
 	"type": "module",
 	"license": "Apache-2.0",

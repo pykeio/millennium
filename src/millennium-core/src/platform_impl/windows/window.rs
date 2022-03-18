@@ -232,13 +232,18 @@ impl Window {
 	#[inline]
 	pub fn set_inner_size(&self, size: Size) {
 		let scale_factor = self.scale_factor();
-		let (width, height) = size.to_physical::<u32>(scale_factor).into();
+		let (width, mut height) = size.to_physical::<u32>(scale_factor).into();
 
 		let window_state = Arc::clone(&self.window_state);
 		let window = self.window.clone();
 		self.thread_executor.execute_in_thread(move || {
 			WindowState::set_window_flags(window_state.lock(), window.0, |f| f.set(WindowFlags::MAXIMIZED, false));
 		});
+
+		let window_state = self.window_state.lock();
+		if window_state.window_flags.contains(WindowFlags::HIDDEN_TITLEBAR) && window_state.window_flags.contains(WindowFlags::DECORATIONS) {
+			height -= 6;
+		}
 
 		util::set_inner_size_physical(self.window.0, width, height);
 	}
@@ -907,7 +912,7 @@ unsafe extern "system" fn window_proc(window: HWND, msg: u32, wparam: WPARAM, lp
 			let userdata = util::GetWindowLongPtrW(window, GWL_USERDATA);
 			if userdata != 0 {
 				let win_flags = WindowFlags::from_bits_unchecked(userdata as _);
-				if win_flags.contains(WindowFlags::HIDDEN_TITLEBAR) {
+				if win_flags.contains(WindowFlags::HIDDEN_TITLEBAR) && win_flags.contains(WindowFlags::DECORATIONS) {
 					let mut border_thickness = RECT::default();
 					AdjustWindowRectEx(&mut border_thickness, GetWindowLongPtrW(window, GWL_STYLE) as u32 & !WS_CAPTION, false, 0);
 
