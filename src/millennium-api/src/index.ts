@@ -44,4 +44,5 @@ export type { ShortcutHandler } from './globalShortcut';
 export type { Body as HttpBody, Client as HttpClient, FetchOptions, HttpOptions, HttpVerb, RequestOptions, Response as HttpResponse, ResponseType } from './http';
 export type { NotificationOptions, NotificationPermissionStatus } from './notification';
 export type { UpdateResult, UpdateStatus } from './updater';
-export type { LogicalPosition, LogicalSize, Monitor, PhysicalPosition, PhysicalSize, UserAttentionType, WebviewWindow, WindowLabel, WindowOptions } from './window';
+export { LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize, UserAttentionType, WebviewWindow } from './window';
+export type { Monitor, WindowLabel, WindowOptions } from './window';

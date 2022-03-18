@@ -133,13 +133,13 @@ export interface Monitor {
 }
 
 export class LogicalSize {
-	public readonly TYPE = 'logical';
+	public readonly TYPE = 'Logical';
 
 	constructor(public width: number, public height: number) {}
 }
 
 export class PhysicalSize {
-	public readonly TYPE = 'physical';
+	public readonly TYPE = 'Physical';
 
 	constructor(public width: number, public height: number) {}
 
@@ -149,13 +149,13 @@ export class PhysicalSize {
 }
 
 export class LogicalPosition {
-	public readonly TYPE = 'logical';
+	public readonly TYPE = 'Logical';
 
 	constructor(public x: number, public y: number) {}
 }
 
 export class PhysicalPosition {
-	public readonly TYPE = 'physical';
+	public readonly TYPE = 'Physical';
 
 	constructor(public x: number, public y: number) {}
 
@@ -427,7 +427,7 @@ class WindowManager extends WebviewWindowHandle {
 
 	/** Sets the (inner!) size of the window. */
 	async setSize(size: LogicalSize | PhysicalSize): Promise<void> {
-		if (!size || (size.TYPE !== 'logical' && size.TYPE !== 'physical'))
+		if (!size || (size.TYPE !== 'Logical' && size.TYPE !== 'Physical'))
 			throw new Error('Invalid size! Must be an instance of `LogicalSize` or `PhysicalSize`.');
 
 		return await this._manage('setSize', {
@@ -441,7 +441,7 @@ class WindowManager extends WebviewWindowHandle {
 
 	/** Sets the minimum inner size. If the `size` argument is not provided, the constraint is unset. */
 	async setMinimumSize(size: LogicalSize | PhysicalSize | null = null): Promise<void> {
-		if (!size || (size.TYPE !== 'logical' && size.TYPE !== 'physical'))
+		if (!size || (size.TYPE !== 'Logical' && size.TYPE !== 'Physical'))
 			throw new Error('Invalid size! Must be an instance of `LogicalSize` or `PhysicalSize`.');
 
 		return await this._manage('setMinSize', size === null
@@ -458,7 +458,7 @@ class WindowManager extends WebviewWindowHandle {
 
 	/** Sets the maximum inner size. If the `size` argument is not provided, the constraint is unset. */
 	async setMaximumSize(size: LogicalSize | PhysicalSize | null = null): Promise<void> {
-		if (!size || (size.TYPE !== 'logical' && size.TYPE !== 'physical'))
+		if (!size || (size.TYPE !== 'Logical' && size.TYPE !== 'Physical'))
 			throw new Error('Invalid size! Must be an instance of `LogicalSize` or `PhysicalSize`.');
 
 		return await this._manage('setMaxSize', size === null
@@ -475,7 +475,7 @@ class WindowManager extends WebviewWindowHandle {
 
 	/** Sets the window outer position. */
 	async setPosition(position: LogicalPosition | PhysicalPosition): Promise<void> {
-		if (!position || (position.TYPE !== 'logical' && position.TYPE !== 'physical'))
+		if (!position || (position.TYPE !== 'Logical' && position.TYPE !== 'Physical'))
 			throw new Error('Invalid position! Must be an instance of `LogicalPosition` or `PhysicalPosition`.');
 
 		return await this._manage('setPosition', {
