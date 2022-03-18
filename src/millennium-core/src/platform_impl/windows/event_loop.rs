@@ -1776,12 +1776,10 @@ unsafe fn public_window_callback_inner<T: 'static>(
 					// conflicts with resizable: false. this will prevent resizing (at least via the
 					// borders) when resizing is disabled
 					let mut window_rect = RECT::default();
-					unsafe {
-						if GetWindowRect(window, <*mut _>::cast(&mut window_rect)).as_bool() {
-							result = ProcResult::Value(LRESULT(HTCLIENT as _));
-						} else {
-							result = ProcResult::Value(LRESULT(HTNOWHERE as _));
-						}
+					if GetWindowRect(window, <*mut _>::cast(&mut window_rect)).as_bool() {
+						result = ProcResult::Value(LRESULT(HTCLIENT as _));
+					} else {
+						result = ProcResult::Value(LRESULT(HTNOWHERE as _));
 					}
 				} else {
 					result = ProcResult::DefSubclassProc;
