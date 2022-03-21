@@ -77,7 +77,7 @@ pub enum Error {
 	#[error("error encountered during setup hook: {0}")]
 	Setup(Box<dyn std::error::Error + Send>),
 	/// Millennium updater error.
-	#[cfg(any(feature = "updater", feature = "__updater-docs"))]
+	#[cfg(updater)]
 	#[cfg_attr(doc_cfg, doc(cfg(feature = "updater")))]
 	#[error("Updater: {0}")]
 	MillenniumUpdater(#[from] crate::updater::Error),

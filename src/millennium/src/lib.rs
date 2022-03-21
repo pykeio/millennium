@@ -188,7 +188,7 @@ pub use millennium_runtime as runtime;
 pub mod scope;
 pub mod settings;
 mod state;
-#[cfg(any(feature = "updater", feature = "__updater-docs"))]
+#[cfg(updater)]
 #[cfg_attr(doc_cfg, doc(cfg(feature = "updater")))]
 pub mod updater;
 
@@ -272,7 +272,7 @@ pub use {
 };
 
 /// Updater events.
-#[cfg(any(feature = "updater", feature = "__updater-docs"))]
+#[cfg(updater)]
 #[cfg_attr(doc_cfg, doc(cfg(feature = "updater")))]
 #[derive(Debug, Clone)]
 pub enum UpdaterEvent {
@@ -295,7 +295,7 @@ pub enum UpdaterEvent {
 	Error(String)
 }
 
-#[cfg(feature = "updater")]
+#[cfg(updater)]
 impl UpdaterEvent {
 	pub(crate) fn status_message(self) -> &'static str {
 		match self {
@@ -312,7 +312,7 @@ impl UpdaterEvent {
 #[derive(Debug, Clone)]
 pub enum EventLoopMessage {
 	/// Updater event.
-	#[cfg(feature = "updater")]
+	#[cfg(updater)]
 	#[cfg_attr(doc_cfg, doc(cfg(feature = "updater")))]
 	Updater(UpdaterEvent)
 }

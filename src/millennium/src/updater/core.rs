@@ -390,11 +390,6 @@ impl Update {
 	// @todo(lemarier): Split into download and install (two step) but need to be
 	// thread safe
 	pub async fn download_and_install(&self, pub_key: String) -> Result {
-		// download url for selected release
-		let url = self.download_url.as_str();
-		// extract path
-		let extract_path = &self.extract_path;
-
 		// make sure we can install the update on linux
 		// We fail here because later we can add more linux support
 		// actually if we use APPIMAGE, our extract path should already
@@ -413,7 +408,7 @@ impl Update {
 		// Create our request
 		let resp = ClientBuilder::new()
 			.build()?
-			.send(HttpRequestBuilder::new("GET", url)?
+			.send(HttpRequestBuilder::new("GET", self.download_url.as_str())?
 					.headers(headers)
 					// wait 20sec for the firewall
 					.timeout(20))
@@ -447,9 +442,9 @@ impl Update {
 			// we run the setup, appimage re-install or overwrite the
 			// macos .app
 			#[cfg(target_os = "windows")]
-			copy_files_and_run(archive_buffer, extract_path, self.with_elevated_task)?;
+			copy_files_and_run(archive_buffer, &self.extract_path, self.with_elevated_task)?;
 			#[cfg(not(target_os = "windows"))]
-			copy_files_and_run(archive_buffer, extract_path)?;
+			copy_files_and_run(archive_buffer, &self.extract_path)?;
 		}
 		// We are done!
 		Ok(())
