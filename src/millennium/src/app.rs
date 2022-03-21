@@ -550,11 +550,9 @@ impl<R: Runtime> App<R> {
 impl<R: Runtime> App<R> {
 	/// Runs the updater hook with built-in dialog.
 	fn run_updater_dialog(&self) {
-		let updater_config = self.manager.config().millennium.updater.clone();
-		let package_info = self.manager.package_info().clone();
 		let handle = self.handle();
 
-		crate::async_runtime::spawn(async move { updater::check_update_with_dialog(updater_config, package_info, handle).await });
+		crate::async_runtime::spawn(async move { updater::check_update_with_dialog(handle).await });
 	}
 
 	fn run_updater(&self) {
@@ -565,13 +563,9 @@ impl<R: Runtime> App<R> {
 			if updater_config.dialog {
 				// if updater dialog is enabled, spawn a new task
 				self.run_updater_dialog();
-				let config = self.manager.config().millennium.updater.clone();
-				let package_info = self.manager.package_info().clone();
 				handle.listen_global(updater::EVENT_CHECK_UPDATE, move |_msg| {
 					let handle = handle_.clone();
-					let package_info = package_info.clone();
-					let config = config.clone();
-					crate::async_runtime::spawn(async move { updater::check_update_with_dialog(config, package_info, handle).await });
+					crate::async_runtime::spawn(async move { updater::check_update_with_dialog(handle).await });
 				});
 			} else {
 				updater::listener(handle);

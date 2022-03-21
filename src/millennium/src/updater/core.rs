@@ -33,6 +33,7 @@ use std::{
 };
 
 use base64::decode;
+use futures::StreamExt;
 use http::StatusCode;
 use millennium_utils::{platform::current_exe, Env};
 use minisign_verify::{PublicKey, Signature};
@@ -42,9 +43,12 @@ use super::error::{Error, Result};
 use crate::api::file::Compression;
 #[cfg(feature = "updater")]
 use crate::api::file::{ArchiveFormat, Extract, Move};
-use crate::api::{
-	http::{ClientBuilder, HttpRequestBuilder},
-	version
+use crate::{
+	api::{
+		http::{ClientBuilder, HttpRequestBuilder},
+		version
+	},
+	AppHandle, Manager, Runtime
 };
 
 #[derive(Debug)]
@@ -169,9 +173,9 @@ impl RemoteRelease {
 }
 
 #[derive(Debug)]
-pub struct UpdateBuilder<'a> {
-	/// Environment information.
-	pub env: Env,
+pub struct UpdateBuilder<'a, R: Runtime> {
+	/// Application handle.
+	pub app: AppHandle<R>,
 	/// Current version we are running to compare with announced version
 	pub current_version: &'a str,
 	/// The URLs to checks updates. We suggest at least one fallback on a
@@ -185,10 +189,10 @@ pub struct UpdateBuilder<'a> {
 }
 
 // Create new updater instance and return an Update
-impl<'a> UpdateBuilder<'a> {
-	pub fn new(env: Env) -> Self {
+impl<'a, R: Runtime> UpdateBuilder<'a, R> {
+	pub fn new(app: AppHandle<R>) -> Self {
 		UpdateBuilder {
-			env,
+			app,
 			urls: Vec::new(),
 			target: None,
 			executable_path: None,
@@ -236,7 +240,7 @@ impl<'a> UpdateBuilder<'a> {
 		self
 	}
 
-	pub async fn build(self) -> Result<Update> {
+	pub async fn build(self) -> Result<Update<R>> {
 		let mut remote_release: Option<RemoteRelease> = None;
 
 		// make sure we have at least one url
@@ -255,7 +259,7 @@ impl<'a> UpdateBuilder<'a> {
 		let target = self.target.or_else(get_updater_target).ok_or(Error::UnsupportedPlatform)?;
 
 		// Get the extract_path from the provided executable_path
-		let extract_path = extract_path_from_executable(&self.env, &executable_path);
+		let extract_path = extract_path_from_executable(&self.app.state::<Env>(), &executable_path);
 
 		// Set SSL certs for linux if they aren't available.
 		// We do not require to recheck in the download_and_install as we use
@@ -336,7 +340,7 @@ impl<'a> UpdateBuilder<'a> {
 
 		// create our new updater
 		Ok(Update {
-			env: self.env,
+			app: self.app,
 			target,
 			extract_path,
 			should_update,
@@ -352,14 +356,14 @@ impl<'a> UpdateBuilder<'a> {
 	}
 }
 
-pub fn builder<'a>(env: Env) -> UpdateBuilder<'a> {
-	UpdateBuilder::new(env)
+pub fn builder<'a, R: Runtime>(app: AppHandle<R>) -> UpdateBuilder<'a, R> {
+	UpdateBuilder::new(app)
 }
 
-#[derive(Debug, Clone)]
-pub struct Update {
-	/// Environment information.
-	pub env: Env,
+#[derive(Debug)]
+pub struct Update<R: Runtime> {
+	/// Application handle.
+	pub app: AppHandle<R>,
 	/// Update description
 	pub body: Option<String>,
 	/// Should we update or not
@@ -385,18 +389,37 @@ pub struct Update {
 	with_elevated_task: bool
 }
 
-impl Update {
+impl<R: Runtime> Clone for Update<R> {
+	fn clone(&self) -> Self {
+		Update {
+			app: self.app.clone(),
+			body: self.body.clone(),
+			should_update: self.should_update,
+			version: self.version.clone(),
+			current_version: self.current_version.clone(),
+			date: self.date.clone(),
+			target: self.target.clone(),
+			extract_path: self.extract_path.clone(),
+			download_url: self.download_url.clone(),
+			signature: self.signature.clone(),
+			#[cfg(target_os = "windows")]
+			with_elevated_task: self.with_elevated_task
+		}
+	}
+}
+
+impl<R: Runtime> Update<R> {
 	// Download and install our update
 	// @todo(lemarier): Split into download and install (two step) but need to be
 	// thread safe
-	pub async fn download_and_install(&self, pub_key: String) -> Result {
+	pub async fn download_and_install<F: Fn(usize, Option<u64>)>(&self, pub_key: String, on_chunk: F) -> Result {
 		// make sure we can install the update on linux
 		// We fail here because later we can add more linux support
 		// actually if we use APPIMAGE, our extract path should already
 		// be set with our APPIMAGE env variable, we don't need to do
 		// anythin with it yet
 		#[cfg(target_os = "linux")]
-		if self.env.appimage.is_none() {
+		if self.app.state::<Env>().appimage.is_none() {
 			return Err(Error::UnsupportedPlatform);
 		}
 
@@ -406,23 +429,36 @@ impl Update {
 		headers.insert("User-Agent".into(), "millennium/updater".into());
 
 		// Create our request
-		let resp = ClientBuilder::new()
+		let response = ClientBuilder::new()
 			.build()?
 			.send(HttpRequestBuilder::new("GET", self.download_url.as_str())?
 					.headers(headers)
 					// wait 20sec for the firewall
 					.timeout(20))
-			.await?
-			.bytes()
 			.await?;
 
 		// make sure it's success
-		if !StatusCode::from_u16(resp.status).map_err(|e| Error::Network(e.to_string()))?.is_success() {
-			return Err(Error::Network(format!("Download request failed with status: {}", resp.status)));
+		if !response.status().is_success() {
+			return Err(Error::Network(format!("Download request failed with status: {}", response.status())));
+		}
+
+		let content_length: Option<u64> = response
+			.headers()
+			.get("Content-Length")
+			.and_then(|value| value.to_str().ok())
+			.and_then(|value| value.parse().ok());
+
+		let mut buffer = Vec::new();
+		let mut stream = response.bytes_stream();
+		while let Some(chunk) = stream.next().await {
+			let chunk = chunk?;
+			let bytes = chunk.as_ref().to_vec();
+			on_chunk(bytes.len(), content_length);
+			buffer.extend(bytes);
 		}
 
 		// create memory buffer from our archive (Seek + Read)
-		let mut archive_buffer = Cursor::new(resp.data);
+		let mut archive_buffer = Cursor::new(buffer);
 
 		// We need an announced signature by the server
 		// if there is no signature, bail out.

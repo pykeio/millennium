@@ -47,7 +47,7 @@ use crate::{
 };
 
 pub fn is_msg_keyboard_related(msg: u32) -> bool {
-	let is_keyboard_msg = WM_KEYFIRST <= msg && msg <= WM_KEYLAST;
+	let is_keyboard_msg = (WM_KEYFIRST..=WM_KEYLAST).contains(&msg);
 
 	is_keyboard_msg || msg == WM_SETFOCUS || msg == WM_KILLFOCUS
 }

@@ -137,21 +137,26 @@
 //!
 //! ### Initialize updater and check if a new version is available
 //!
-//! #### If a new version is available, the event
-//! `millennium://update-available` is emitted.
-//!
 //! Event : `millennium://update`
 //!
-//! ### Rust
-//! ```ignore
-//! dispatcher.emit("millennium://update", None);
+//! #### Rust
+//! ```no_run
+//! millennium::Builder::default().setup(|app| {
+//! 	let handle = app.handle();
+//! 	millennium::async_runtime::spawn(async move {
+//! 		let response = handle.check_for_updates().await;
+//! 	});
+//! 	Ok(())
+//! });
 //! ```
 //!
-//! ### Javascript
+//! #### Javascript
 //! ```js
 //! import { emit } from "@pyke/millennium-api/event";
 //! emit("millennium://update");
 //! ```
+//!
+//! **If a new version is available, the event `millennium://update-available` is emitted.**
 //!
 //! ### Listen New Update Available
 //!
@@ -161,17 +166,26 @@
 //! ```text
 //! version    Version announced by the server
 //! date       Date announced by the server
-//! body       Note announced by the server
+//! body       Release notes announced by the server
 //! ```
 //!
-//! ### Rust
-//! ```ignore
-//! dispatcher.listen("millennium://update-available", move |msg| {
-//! 	println("New version available: {:?}", msg);
+//! #### Rust
+//! ```no_run
+//! let app = millennium::Builder::default()
+//! 	// on an actual app, remove the string argument
+//! 	.build(millennium::generate_context!("test/fixture/.millenniumrc"))
+//! 	.expect("error while building Millennium application");
+//! app.run(|_app_handle, event| match event {
+//! 	millennium::RunEvent::Updater(updater_event) => match updater_event {
+//! 		millennium::UpdaterEvent::UpdateAvailable { body, date, version } => {
+//! 			println!("new update available: v{} ({}): {}", version, date, body);
+//! 		}
+//! 		_ => {}
+//! 	}
 //! })
 //! ```
 //!
-//! ### JavaScript
+//! #### JavaScript
 //! ```js
 //! import { listen } from '@pyke/millennium-api/event';
 //! listen('millennium://update-available', res => {
@@ -186,45 +200,120 @@
 //!
 //! Event : `millennium://update-install`
 //!
-//! ### Rust
-//! ```ignore
-//! dispatcher.emit("millennium://update-install", None);
+//! #### Rust
+//! ```no_run
+//! millennium::Builder::default().setup(|app| {
+//! 	let handle = app.handle();
+//! 	millennium::async_runtime::spawn(async move {
+//! 		match handle.check_for_updates().await {
+//! 			Ok(update) => {
+//! 				if update.is_update_available() {
+//! 					update.download_and_install().await.unwrap();
+//! 				}
+//! 			}
+//! 			Err(error) => {
+//! 				println!("failed to update: {}", error);
+//! 			}
+//! 		}
+//! 	});
+//! 	Ok(())
+//! });
 //! ```
 //!
-//! ### JavaScript
+//! #### JavaScript
 //! ```js
 //! import { emit } from '@pyke/millennium-api/event';
 //! emit('millennium://update-install');
 //! ```
 //!
-//! ### Listen Install Progress
+//! ### Listen Download Progress
 //!
-//! Event : `millennium://update-status`
+//! The event payload contains the length of the chunk that was just downloaded and the total download size, if known.
+//!
+//! #### Rust
+//! ```no_run
+//! let app = millennium::Builder::default()
+//! 	// on an actual app, remove the string argument
+//! 	.build(millennium::generate_context!("test/fixture/.millenniumrc"))
+//! 	.expect("error while building Millennium application");
+//! app.run(|_app_handle, event| match event {
+//! 	millennium::RunEvent::Updater(updater_event) => match updater_event {
+//! 		millennium::UpdaterEvent::DownloadProgress { chunk_length, content_length } => {
+//! 			println!("download progress: {}/{}", chunk_length, content_length);
+//! 		}
+//! 		_ => {}
+//! 	},
+//! 	_ => {}
+//! });
+//! ```
+//!
+//! #### JavaScript
+//!
+//! Event : `millennium://update-download-progress`
 //!
 //! Emitted data:
 //! ```text
-//! status    [ERROR/PENDING/DONE]
-//! error     String/null
+//! chunkLength       number
+//! contentLength     number/null
 //! ```
 //!
-//! PENDING is emitted when the download is started and DONE when the install is
-//! complete. You can then ask to restart the application.
-//!
-//! ERROR is emitted when there is an error with the updater. We suggest to
-//! listen to this event even if the dialog is enabled.
-//!
-//! ### Rust
-//! ```ignore
-//! dispatcher.listen("millennium://update-status", move |msg| {
-//! 	println("New status: {:?}", msg);
-//! })
-//! ```
-//!
-//! ### JavaScript
 //! ```js
 //! import { listen } from '@pyke/millennium-api/event';
-//! listen('millennium://update-status', res => {
-//! 	console.log('New status: ', res);
+//! listen<{ chunkLength: number, contentLength?: number }>('millennium://update-download-progress', res => {
+//! 	console.log(`downloaded ${res.payload.chunkLength}/${res.payload.contentLength}`);
+//! });
+//! ```
+//!
+//! ### Listen Install Progress
+//!
+//! - **Pending** is emitted when the download is started and **Done** when the install is complete. You can then ask to
+//! restart the application to finish applying the update.
+//! - **UpToDate** is emitted when the app already has the latest version installed and an update is not needed.
+//! - **Error** is emitted when there is an error with the updater. We recommend listening to this event if the built-in
+//!   updater dialog is enabled.
+//!
+//! #### Rust
+//! ```no_run
+//! let app = millennium::Builder::default()
+//! 	// on an actual app, remove the string argument
+//! 	.build(millennium::generate_context!("test/fixture/.millenniumrc"))
+//! 	.expect("error while building Millennium application");
+//! app.run(|_app_handle, event| match event {
+//! 	millennium::RunEvent::Updater(updater_event) => match updater_event {
+//! 		millennium::UpdaterEvent::UpdateAvailable { body, date, version } => {
+//! 			println!("new update available: v{} ({}): {}", version, date, body);
+//! 		}
+//! 		millennium::UpdaterEvent::Pending => {
+//! 			println!("an update is pending");
+//! 		}
+//! 		millennium::UpdaterEvent::Updated => {
+//! 			println!("app has been updated");
+//! 		}
+//! 		millennium::UpdaterEvent::AlreadyUpToDate => {
+//! 			println!("app is up to date");
+//! 		}
+//! 		millennium::UpdaterEvent::Error(error) => {
+//! 			println!("updater error: {}", error);
+//! 		}
+//! 		_ => {}
+//! 	},
+//! 	_ => {}
+//! });
+//! ```
+//!
+//! #### JavaScript
+//! Event: `millennium://update-status`
+//!
+//! Emitted data:
+//! ```text
+//! status     ERROR | PENDING | UPTODATE | DONE
+//! error      string/null
+//! ```
+//!
+//! ```js
+//! import { listen } from '@pyke/millennium-api/event';
+//! listen<{ status: string, error?: string }>('millennium://update-status', e => {
+//! 	console.log('New status: ', e.payload.status);
 //! });
 //! ```
 //!
@@ -398,9 +487,7 @@ mod error;
 pub use self::error::Error;
 /// Alias for [`std::result::Result`] using our own [`Error`].
 pub type Result<T> = std::result::Result<T, Error>;
-use crate::{
-	api::dialog::blocking::ask, runtime::EventLoopProxy, utils::config::UpdaterConfig, AppHandle, Env, EventLoopMessage, Manager, Runtime, UpdaterEvent
-};
+use crate::{api::dialog::blocking::ask, runtime::EventLoopProxy, AppHandle, EventLoopMessage, Manager, Runtime, UpdaterEvent};
 
 /// Check for new updates
 pub const EVENT_CHECK_UPDATE: &str = "millennium://update";
@@ -413,6 +500,8 @@ pub const EVENT_INSTALL_UPDATE: &str = "millennium://update-install";
 /// always listen for this event. It'll send you the install progress
 /// and any error triggered during update check and install
 pub const EVENT_STATUS_UPDATE: &str = "millennium://update-status";
+/// Emitted when a chunk has been downloaded
+pub const EVENT_DOWNLOAD_PROGRESS: &str = "millennium://update-download-progress";
 /// this is the status emitted when the download start
 pub const EVENT_STATUS_PENDING: &str = "PENDING";
 /// When you got this status, something went wrong
@@ -431,6 +520,13 @@ struct StatusEvent {
 }
 
 #[derive(Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DownloadProgressEvent {
+	chunk_length: usize,
+	content_length: Option<u64>
+}
+
+#[derive(Clone, serde::Serialize)]
 struct UpdateManifest {
 	version: String,
 	date: String,
@@ -439,16 +535,12 @@ struct UpdateManifest {
 
 /// The response of an updater check.
 pub struct UpdateResponse<R: Runtime> {
-	update: core::Update,
-	handle: AppHandle<R>
+	update: core::Update<R>
 }
 
 impl<R: Runtime> Clone for UpdateResponse<R> {
 	fn clone(&self) -> Self {
-		Self {
-			update: self.update.clone(),
-			handle: self.handle.clone()
-		}
+		Self { update: self.update.clone() }
 	}
 }
 
@@ -470,17 +562,18 @@ impl<R: Runtime> UpdateResponse<R> {
 
 	/// Downloads and installs the update.
 	pub async fn download_and_install(self) -> Result<()> {
-		download_and_install(self.handle, self.update).await
+		download_and_install(self.update).await
 	}
 }
 
 /// Check if there is any new update with builtin dialog.
-pub(crate) async fn check_update_with_dialog<R: Runtime>(updater_config: UpdaterConfig, package_info: crate::PackageInfo, handle: AppHandle<R>) {
+pub(crate) async fn check_update_with_dialog<R: Runtime>(handle: AppHandle<R>) {
+	let updater_config = handle.config().millennium.updater.clone();
+	let package_info = handle.package_info().clone();
 	if let Some(endpoints) = updater_config.endpoints.clone() {
 		let endpoints = endpoints.iter().map(|e| e.to_string()).collect::<Vec<String>>();
-		let env = handle.state::<Env>().inner().clone();
 		// check updates
-		match self::core::builder(env)
+		match self::core::builder(handle.clone())
 			.urls(&endpoints[..])
 			.current_version(&package_info.version)
 			.build()
@@ -492,8 +585,7 @@ pub(crate) async fn check_update_with_dialog<R: Runtime>(updater_config: Updater
 				// if dialog enabled only
 				if updater.should_update && updater_config.dialog {
 					let body = updater.body.clone().unwrap_or_else(|| String::from(""));
-					let handle_ = handle.clone();
-					let dialog = prompt_for_install(handle_, &updater.clone(), &package_info.name, &body.clone(), pubkey).await;
+					let dialog = prompt_for_install(&updater.clone(), &package_info.name, &body.clone(), pubkey).await;
 
 					if let Err(e) = dialog {
 						send_status_update(&handle, UpdaterEvent::Error(e.to_string()));
@@ -520,24 +612,27 @@ pub(crate) fn listener<R: Runtime>(handle: AppHandle<R>) {
 	});
 }
 
-pub(crate) async fn download_and_install<R: Runtime>(handle: AppHandle<R>, update: core::Update) -> Result<()> {
+pub(crate) async fn download_and_install<R: Runtime>(update: core::Update<R>) -> Result<()> {
 	let update = update.clone();
 
 	// Start installation
-	send_status_update(&handle, UpdaterEvent::Pending);
+	send_status_update(&update.app, UpdaterEvent::Pending);
+
+	let handle = update.app.clone();
 
 	// Launch updater download process. On macOS, we display the `Ready to restart` dialog asking to restart.
 	// On Windows, we close the current app and launch the downloaded MSI when ready, and on Linux we replace the
 	// AppImage by launching a new install, which starts a new AppImage instance, and closes the old one.
 	let update_result = update
-		.clone()
-		.download_and_install(handle.config().millennium.updater.pubkey.clone())
+		.download_and_install(update.app.config().millennium.updater.pubkey.clone(), move |chunk_length, content_length| {
+			send_download_progress_event(&handle, chunk_length, content_length);
+		})
 		.await;
 
 	if let Err(err) = &update_result {
-		send_status_update(&handle, UpdaterEvent::Error(err.to_string()));
+		send_status_update(&update.app, UpdaterEvent::Error(err.to_string()));
 	} else {
-		send_status_update(&handle, UpdaterEvent::Updated);
+		send_status_update(&update.app, UpdaterEvent::Updated);
 	}
 
 	update_result
@@ -556,10 +651,7 @@ pub(crate) async fn check<R: Runtime>(handle: AppHandle<R>) -> Result<UpdateResp
 		.map(|e| e.to_string())
 		.collect::<Vec<String>>();
 
-	// check updates
-	let env = handle.state::<Env>().inner().clone();
-
-	match self::core::builder(env)
+	match self::core::builder(handle.clone())
 		.urls(&endpoints[..])
 		.current_version(&package_info.version)
 		.build()
@@ -585,23 +677,30 @@ pub(crate) async fn check<R: Runtime>(handle: AppHandle<R>) -> Result<UpdateResp
 				}));
 
 				// Listen for `millennium://update-install` event
-				let handle_ = handle.clone();
 				let update_ = update.clone();
 				handle.once_global(EVENT_INSTALL_UPDATE, move |_msg| {
 					crate::async_runtime::spawn(async move {
-						let _ = download_and_install(handle_, update_).await;
+						let _ = download_and_install(update_).await;
 					});
 				});
 			} else {
 				send_status_update(&handle, UpdaterEvent::AlreadyUpToDate);
 			}
-			Ok(UpdateResponse { update, handle })
+			Ok(UpdateResponse { update })
 		}
 		Err(e) => {
 			send_status_update(&handle, UpdaterEvent::Error(e.to_string()));
 			Err(e)
 		}
 	}
+}
+
+// Send a status update via `millennium://update-download-progress` event.
+fn send_download_progress_event<R: Runtime>(handle: &AppHandle<R>, chunk_length: usize, content_length: Option<u64>) {
+	let _ = handle.emit_all(EVENT_DOWNLOAD_PROGRESS, DownloadProgressEvent { chunk_length, content_length });
+	let _ = handle
+		.create_proxy()
+		.send_event(EventLoopMessage::Updater(UpdaterEvent::DownloadProgress { chunk_length, content_length }));
 }
 
 // Send a status update via `millennium://update-status` event.
@@ -625,10 +724,10 @@ fn send_status_update<R: Runtime>(handle: &AppHandle<R>, message: UpdaterEvent) 
 
 // Prompt a dialog asking if the user want to install the new version
 // Maybe we should add an option to customize it in future versions.
-async fn prompt_for_install<R: Runtime>(handle: AppHandle<R>, updater: &self::core::Update, app_name: &str, body: &str, pubkey: String) -> Result<()> {
+async fn prompt_for_install<R: Runtime>(update: &self::core::Update<R>, app_name: &str, body: &str, pubkey: String) -> Result<()> {
 	// remove single & double quote
 	let escaped_body = body.replace(&['\"', '\''][..], "");
-	let windows = handle.windows();
+	let windows = update.app.windows();
 	let parent_window = windows.values().next();
 
 	// todo(lemarier): We should review this and make sure we have
@@ -643,7 +742,7 @@ Would you like to install it now?
 
 Release Notes:
 {}"#,
-			app_name, updater.version, updater.current_version, escaped_body,
+			app_name, update.version, update.current_version, escaped_body,
 		)
 	);
 
@@ -654,12 +753,12 @@ Release Notes:
 		// (the process stop here) Linux we replace the AppImage by launching a new
 		// install, it start a new AppImage instance, so we're closing the previous.
 		// (the process stop here)
-		updater.download_and_install(pubkey.clone()).await?;
+		update.download_and_install(pubkey.clone(), |_, _| ()).await?;
 
 		// Ask user if we need to restart the application
 		let should_exit = ask(parent_window, "Ready to Restart", "The installation was successful, do you want to restart the application now?");
 		if should_exit {
-			handle.restart();
+			update.app.restart();
 		}
 	}
 

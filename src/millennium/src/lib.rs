@@ -285,8 +285,15 @@ pub enum UpdaterEvent {
 		/// The update version.
 		version: String
 	},
-	/// The update is pending.
+	/// The update is pending and about to be downloaded.
 	Pending,
+	/// The update download received a progress event.
+	DownloadProgress {
+		/// The length of the chunk that was downloaded on this iteration. Does not accumulate with previous chunks.
+		chunk_length: usize,
+		/// The total download size if it is known.
+		content_length: Option<u64>
+	},
 	/// The update has been applied and the app is now up to date.
 	Updated,
 	/// The app is already up to date.

@@ -21,6 +21,7 @@
 use std::{collections::HashMap, path::PathBuf, time::Duration};
 
 use http::{header::HeaderName, Method};
+pub use http::{HeaderMap, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -357,15 +358,79 @@ pub struct Response(ResponseType, reqwest::Response);
 #[derive(Debug)]
 pub struct Response(ResponseType, attohttpc::Response, Url);
 
+#[cfg(not(feature = "reqwest-client"))]
+struct AttohttpcByteReader(attohttpc::ResponseReader);
+
+#[cfg(not(feature = "reqwest-client"))]
+impl futures::Stream for AttohttpcByteReader {
+	type Item = crate::api::Result<bytes::Bytes>;
+
+	fn poll_next(mut self: std::pin::Pin<&mut Self>, _cx: &mut futures::task::Context<'_>) -> futures::task::Poll<Option<Self::Item>> {
+		use std::io::Read;
+		let mut buf = [0; 256];
+		match self.0.read(&mut buf) {
+			Ok(b) => {
+				if b == 0 {
+					futures::task::Poll::Ready(None)
+				} else {
+					futures::task::Poll::Ready(Some(Ok(buf[0..b].to_vec().into())))
+				}
+			}
+			Err(_) => futures::task::Poll::Ready(None)
+		}
+	}
+}
+
 impl Response {
+	/// Get the [`StatusCode`] of the response.
+	pub fn status(&self) -> StatusCode {
+		self.1.status()
+	}
+
+	/// Get the headers of the response.
+	pub fn headers(&self) -> &HeaderMap {
+		self.1.headers()
+	}
+
 	/// Reads the response as raw bytes.
 	pub async fn bytes(self) -> crate::api::Result<RawResponse> {
-		let status = self.1.status().as_u16();
+		let status = self.status().as_u16();
 		#[cfg(feature = "reqwest-client")]
 		let data = self.1.bytes().await?.to_vec();
 		#[cfg(not(feature = "reqwest-client"))]
 		let data = self.1.bytes()?;
 		Ok(RawResponse { status, data })
+	}
+
+	/// Convert the response body into a stream of [`bytes::Bytes`].
+	///
+	/// ```no_run
+	/// use futures::StreamExt;
+	///
+	/// # async fn run() -> Result<(), Box<dyn std::error::Error>> {
+	/// let client = millennium::api::http::ClientBuilder::new().build()?;
+	/// let mut stream = client
+	/// 	.send(millennium::api::http::HttpRequestBuilder::new("GET", "http://httpbin.org/ip")?)
+	/// 	.await?
+	/// 	.bytes_stream();
+	///
+	/// while let Some(item) = stream.next().await {
+	/// 	println!("Chunk: {:?}", item?);
+	/// }
+	/// # Ok(())
+	/// # }
+	/// ```
+	pub fn bytes_stream(self) -> impl futures::Stream<Item = crate::api::Result<bytes::Bytes>> {
+		#[cfg(not(feature = "reqwest-client"))]
+		{
+			let (_, _, reader) = self.1.split();
+			AttohttpcByteReader(reader)
+		}
+		#[cfg(feature = "reqwest-client")]
+		{
+			use futures::StreamExt;
+			self.1.bytes_stream().map(|res| res.map_err(Into::into))
+		}
 	}
 
 	/// Reads the response.
