@@ -181,7 +181,8 @@
 //! 			println!("new update available: v{} ({}): {}", version, date, body);
 //! 		}
 //! 		_ => {}
-//! 	}
+//! 	},
+//! 	_ => {}
 //! })
 //! ```
 //!
@@ -239,7 +240,7 @@
 //! app.run(|_app_handle, event| match event {
 //! 	millennium::RunEvent::Updater(updater_event) => match updater_event {
 //! 		millennium::UpdaterEvent::DownloadProgress { chunk_length, content_length } => {
-//! 			println!("download progress: {}/{}", chunk_length, content_length);
+//! 			println!("download progress: {}/{:?}", chunk_length, content_length);
 //! 		}
 //! 		_ => {}
 //! 	},
