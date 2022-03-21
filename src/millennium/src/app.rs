@@ -382,6 +382,14 @@ impl<R: Runtime> ManagerBase<R> for App<R> {
 macro_rules! shared_app_impl {
 	($app: ty) => {
 		impl<R: Runtime> $app {
+			#[cfg(feature = "updater")]
+			#[cfg_attr(doc_cfg, doc(cfg(feature = "updater")))]
+			/// Runs the updater to check if there is a new app version.
+			/// This is the same as triggering the `millennium://update` event.
+			pub async fn check_for_updates(&self) -> updater::Result<updater::UpdateResponse<R>> {
+				updater::check(self.app_handle()).await
+			}
+
 			/// Creates a new webview window.
 			///
 			/// Data URLs are only supported with the `window-data-url` feature flag.
@@ -549,29 +557,25 @@ impl<R: Runtime> App<R> {
 		crate::async_runtime::spawn(async move { updater::check_update_with_dialog(updater_config, package_info, handle).await });
 	}
 
-	/// Listen updater events when dialog are disabled.
-	fn listen_updater_events(&self, handle: AppHandle<R>) {
-		let updater_config = self.manager.config().millennium.updater.clone();
-		updater::listener(updater_config, self.manager.package_info().clone(), &handle);
-	}
-
 	fn run_updater(&self) {
 		let handle = self.handle();
 		let handle_ = handle.clone();
 		let updater_config = self.manager.config().millennium.updater.clone();
-		if updater_config.dialog && updater_config.active {
-			// if updater dialog is enabled, spawn a new task
-			self.run_updater_dialog();
-			let config = self.manager.config().millennium.updater.clone();
-			let package_info = self.manager.package_info().clone();
-			handle.listen_global(updater::EVENT_CHECK_UPDATE, move |_msg| {
-				let handle = handle_.clone();
-				let package_info = package_info.clone();
-				let config = config.clone();
-				crate::async_runtime::spawn(async move { updater::check_update_with_dialog(config, package_info, handle).await });
-			});
-		} else if updater_config.active {
-			self.listen_updater_events(handle);
+		if updater_config.active {
+			if updater_config.dialog {
+				// if updater dialog is enabled, spawn a new task
+				self.run_updater_dialog();
+				let config = self.manager.config().millennium.updater.clone();
+				let package_info = self.manager.package_info().clone();
+				handle.listen_global(updater::EVENT_CHECK_UPDATE, move |_msg| {
+					let handle = handle_.clone();
+					let package_info = package_info.clone();
+					let config = config.clone();
+					crate::async_runtime::spawn(async move { updater::check_update_with_dialog(config, package_info, handle).await });
+				});
+			} else {
+				updater::listener(handle);
+			}
 		}
 	}
 }
