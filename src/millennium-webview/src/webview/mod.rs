@@ -128,6 +128,11 @@ pub struct WebViewAttributes {
 	#[cfg(not(feature = "file-drop"))]
 	file_drop_handler: Option<Box<dyn Fn(&Window, FileDropEvent) -> bool>>,
 
+	/// Set a navigation handler to decide if an incoming URL is allowed to navigate.
+	///
+	/// The closure takes the URL as a `String` parameter and returns a `bool` to determine whether to allow navigation.
+	pub navigation_handler: Option<Box<dyn Fn(String) -> bool>>,
+
 	/// Enables clipboard access for the page rendered on **Linux** and
 	/// **Windows**.
 	///
@@ -160,6 +165,7 @@ impl Default for WebViewAttributes {
 			custom_protocols: vec![],
 			ipc_handler: None,
 			file_drop_handler: None,
+			navigation_handler: None,
 			clipboard: false,
 			devtool: false
 		}
@@ -269,6 +275,14 @@ impl<'a> WebViewBuilder<'a> {
 		F: Fn(&Window, FileDropEvent) -> bool + 'static
 	{
 		self.webview.file_drop_handler = Some(Box::new(handler));
+		self
+	}
+
+	/// Set a navigation handler to decide if an incoming URL is allowed to navigate.
+	///
+	/// The closure takes the URL as a `String` parameter and returns a `bool` to determine whether to allow navigation.
+	pub fn with_navigation_handler(mut self, callback: impl Fn(String) -> bool + 'static) -> Self {
+		self.webview.navigation_handler = Some(Box::new(callback));
 		self
 	}
 

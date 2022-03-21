@@ -26,8 +26,10 @@ use glib::signal::Inhibit;
 use gtk::prelude::*;
 use web_context::WebContextExt;
 pub use web_context::WebContextImpl;
-use webkit2gtk::{traits::*, UserContentInjectedFrames, UserScript, UserScriptInjectionTime, WebView, WebViewBuilder};
-use webkit2gtk_sys::{webkit_get_major_version, webkit_get_micro_version, webkit_get_minor_version};
+use webkit2gtk::{
+	traits::*, NavigationPolicyDecision, PolicyDecisionType, UserContentInjectedFrames, UserScriptInjectionTime, UserScriptUserScript, WebView, WebViewBuilder
+};
+use webkit2gtk_sys::{webkit_get_major_version, webkit_get_micro_version, webkit_get_minor_version, webkit_policy_decision_ignore, webkit_policy_decision_use};
 
 use crate::{
 	application::{platform::unix::*, window::Window},
@@ -190,6 +192,27 @@ impl InnerWebView {
 			}
 			Inhibit(false)
 		});
+
+		if let Some(nav_handler) = attributes.navigation_handler {
+			webview.connect_decide_policy(move |_webview, policy_decision, policy_type| {
+				if let PolicyDecisionType::NavigationAction = policy_type {
+					if let Some(policy) = policy_decision.dynamic_cast_ref::<NavigationPolicyDecision>() {
+						if let Some(nav_action) = policy.navigation_action() {
+							if let Some(uri_req) = nav_action.request() {
+								if let Some(uri) = uri_req.uri() {
+									let allow = nav_handler(uri.to_string());
+									let pointer = policy_decision.as_ptr();
+									unsafe {
+										if allow { webkit_policy_decision_use(pointer) } else { webkit_policy_decision_ignore(pointer) }
+									}
+								}
+							}
+						}
+					}
+				}
+				true
+			});
+		}
 
 		// Gtk application window can only contain one widget at a time.
 		// In Millennium Core, we add a GtkBox to pack menu bar. So we check if
