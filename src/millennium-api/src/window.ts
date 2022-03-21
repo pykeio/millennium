@@ -526,8 +526,39 @@ class WindowManager extends WebviewWindowHandle {
 	}
 }
 
+/**
+ * Create new webview windows and get handles to existing ones.
+ *
+ * Windows are identified by a label, a unique identifier that can be used to reference it later.
+ * It may only contain alphanumeric characters (`a-zA-Z0-9`) and `-`, `/`, `:`, or `_`.
+ *
+ * @example
+ * ```typescript
+ * // loading embedded assets:
+ * const webview = new WebviewWindow('super-unique-label', {
+ * 	url: 'path/to/page.html'
+ * });
+ *
+ * // alternatively, load a remote URL:
+ * const webview = new WebviewWindow('super-unique-label', {
+ * 	url: 'https://example.com/'
+ * });
+ *
+ * // emit an event to the backend
+ * await webview.emit('some-event', { ... });
+ * // listen to an event from the backend
+ * const unlisten = await webview.listen('some-other-event', e => { ... });
+ * unlisten();
+ * ```
+ */
 export class WebviewWindow extends WindowManager {
-	public constructor(label: WindowLabel, options: (WindowOptions & { skip?: true }) = {}) {
+	/**
+	 * Creates a new webview window.
+	 *
+	 * @param label The unique window label. Must be composed of only `a-zA-Z0-9-/:_`.
+	 * @param options The window options.
+	 */
+	public constructor(label: WindowLabel, options: (WindowOptions & { /** @internal */ skip?: true }) = {}) {
 		super(label);
 
 		if (!options.skip) {
@@ -548,6 +579,12 @@ export class WebviewWindow extends WindowManager {
 		}
 	}
 
+	/**
+	 * Gets the webview window associated with the given label.
+	 *
+	 * @param label The window label.
+	 * @returns The webview window, or `null` if no window with the given label exists.
+	 */
 	public static getByLabel(label: string): WebviewWindow | null {
 		if (getAllWindows().some(w => w.label === label))
 			return new WebviewWindow(label, { skip: true });
@@ -556,6 +593,7 @@ export class WebviewWindow extends WindowManager {
 	}
 }
 
+/** A reference to the current webview window. */
 let appWindow: WebviewWindow;
 if ('__MILLENNIUM_METADATA__' in window)
 	appWindow = new WebviewWindow(window.__MILLENNIUM_METADATA__.__currentWindow.label, { skip: true });
@@ -615,6 +653,9 @@ export interface WindowOptions {
 	fileDropEnabled?: boolean;
 }
 
+/**
+ * Returns the monitor on which the window currently resides, or `null` if the current monitor can't be detected.
+ */
 export async function currentMonitor(): Promise<Monitor | null> {
 	return await invokeMillenniumCommand({
 		__millenniumModule: 'Window',
@@ -629,6 +670,9 @@ export async function currentMonitor(): Promise<Monitor | null> {
 	});
 }
 
+/**
+ * Returns the primary monitor, or `null` if the primary monitor can't be detected.
+ */
 export async function primaryMonitor(): Promise<Monitor | null> {
 	return invokeMillenniumCommand({
 		__millenniumModule: 'Window',
@@ -643,6 +687,9 @@ export async function primaryMonitor(): Promise<Monitor | null> {
 	});
 }
 
+/**
+ * Returns an array of all available monitors.
+ */
 export async function availableMonitors(): Promise<Monitor[]> {
 	return await invokeMillenniumCommand({
 		__millenniumModule: 'Window',
