@@ -27,7 +27,7 @@ use gtk::prelude::*;
 use web_context::WebContextExt;
 pub use web_context::WebContextImpl;
 use webkit2gtk::{
-	traits::*, NavigationPolicyDecision, PolicyDecisionType, UserContentInjectedFrames, UserScriptInjectionTime, UserScriptUserScript, WebView, WebViewBuilder
+	traits::*, NavigationPolicyDecision, PolicyDecisionType, UserContentInjectedFrames, UserScript, UserScriptInjectionTime, WebView, WebViewBuilder
 };
 use webkit2gtk_sys::{webkit_get_major_version, webkit_get_micro_version, webkit_get_minor_version, webkit_policy_decision_ignore, webkit_policy_decision_use};
 
