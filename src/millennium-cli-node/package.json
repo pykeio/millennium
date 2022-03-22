@@ -1,0 +1,69 @@
+{
+  "name": "@pyke/millennium-cli",
+  "version": "1.0.0-beta.1",
+  "description": "Command line interface for building Millennium apps",
+  "funding": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/tauri"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pykeio/millennium.git"
+  },
+  "contributors": [
+    "Tauri Team <team@tauri-apps.org> (https://tauri.studio)"
+  ],
+  "license": "Apache-2.0 OR MIT",
+  "bugs": {
+    "url": "https://github.com/pykeio/millennium/issues"
+  },
+  "homepage": "https://github.com/pykeio/millennium#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "main.js",
+  "types": "main.d.ts",
+  "napi": {
+    "name": "millennium-cli",
+    "triples": {
+      "additional": [
+        "aarch64-apple-darwin",
+        "aarch64-unknown-linux-gnu",
+        "aarch64-unknown-linux-musl",
+        "armv7-unknown-linux-gnueabihf",
+        "x86_64-unknown-linux-musl",
+        "i686-pc-windows-msvc"
+      ]
+    }
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "2.4.5",
+    "cross-spawn": "7.0.3",
+    "fs-extra": "10.0.1"
+  },
+  "engines": {
+    "node": ">= 10"
+  },
+  "bin": {
+    "millennium": "./millennium.js"
+  },
+  "scripts": {
+    "artifacts": "napi artifacts",
+    "build": "napi build --platform --release",
+    "build:debug": "napi build --platform",
+    "prepublishOnly": "napi prepublish -t npm",
+    "version": "napi version",
+    "millennium": "node ./millennium.js"
+  },
+  "optionalDependencies": {
+    "@pyke/millennium-cli-win32-x64-msvc": "1.0.0-beta.1",
+    "@pyke/millennium-cli-darwin-x64": "1.0.0-beta.1",
+    "@pyke/millennium-cli-linux-x64-gnu": "1.0.0-beta.1",
+    "@pyke/millennium-cli-darwin-arm64": "1.0.0-beta.1",
+    "@pyke/millennium-cli-linux-arm64-gnu": "1.0.0-beta.1",
+    "@pyke/millennium-cli-linux-arm64-musl": "1.0.0-beta.1",
+    "@pyke/millennium-cli-linux-arm-gnueabihf": "1.0.0-beta.1",
+    "@pyke/millennium-cli-linux-x64-musl": "1.0.0-beta.1",
+    "@pyke/millennium-cli-win32-ia32-msvc": "1.0.0-beta.1"
+  }
+}

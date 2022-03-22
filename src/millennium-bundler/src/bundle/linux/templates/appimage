@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Copyright 2022 pyke.io
+#           2019-2021 Tauri Programme within The Commons Conservancy
+#                     [https:#tauri.studio/]
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http:#www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+set -euxo pipefail
+
+export ARCH=x86_64
+
+mkdir -p "{{app_name}}.AppDir"
+cp -r ../appimage_deb/data/usr "{{app_name}}.AppDir"
+
+cd "{{app_name}}.AppDir"
+
+# Copy WebKit files.
+find /usr/lib* -name WebKitNetworkProcess -exec mkdir -p "$(dirname '{}')" \; -exec cp --parents '{}' "." \; || true
+find /usr/lib* -name WebKitWebProcess -exec mkdir -p "$(dirname '{}')" \; -exec cp --parents '{}' "." \; || true
+find /usr/lib* -name libwebkit2gtkinjectedbundle.so -exec mkdir -p "$(dirname '{}')" \; -exec cp --parents '{}' "." \; || true
+
+wget -q -4 -O AppRun https://github.com/AppImage/AppImageKit/releases/download/continuous/AppRun-x86_64 || wget -q -4 -O AppRun https://github.com/AppImage/AppImageKit/releases/download/12/AppRun-aarch64
+chmod +x AppRun
+
+cp "{{icon_path}}" .DirIcon
+ln -s "{{icon_path}}" "{{app_name}}.png"
+
+ln -s "usr/share/applications/{{app_name}}.desktop" "{{app_name}}.desktop"
+
+cd ..
+
+wget -q -4 -O linuxdeploy-plugin-gtk.sh "https://raw.githubusercontent.com/tauri-apps/linuxdeploy-plugin-gtk/master/linuxdeploy-plugin-gtk.sh"
+wget -q -4 -O linuxdeploy-x86_64.AppImage https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+
+chmod +x linuxdeploy-plugin-gtk.sh
+chmod +x linuxdeploy-x86_64.AppImage
+
+OUTPUT="{{appimage_filename}}" ./linuxdeploy-x86_64.AppImage --appimage-extract-and-run --appdir "{{app_name}}.AppDir" --plugin gtk --output appimage

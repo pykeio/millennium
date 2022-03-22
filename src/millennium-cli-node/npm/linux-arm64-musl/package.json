@@ -1,0 +1,21 @@
+{
+  "name": "@pyke/millennium-cli-linux-arm64-musl",
+  "version": "1.0.0-beta.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "os": [
+    "linux"
+  ],
+  "arch": [
+    "arm64"
+  ],
+  "main": "millennium-cli.linux-arm64-musl.node",
+  "files": [
+    "millennium-cli.linux-arm64-musl.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=10"
+  }
+}

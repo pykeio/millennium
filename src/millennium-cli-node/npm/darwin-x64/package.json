@@ -1,0 +1,21 @@
+{
+  "name": "@pyke/millennium-cli-darwin-x64",
+  "version": "1.0.0-beta.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "os": [
+    "darwin"
+  ],
+  "arch": [
+    "x64"
+  ],
+  "main": "millennium-cli.darwin-x64.node",
+  "files": [
+    "millennium-cli.darwin-x64.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=10"
+  }
+}

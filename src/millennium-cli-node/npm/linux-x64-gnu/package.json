@@ -1,0 +1,21 @@
+{
+  "name": "@pyke/millennium-cli-linux-x64-gnu",
+  "version": "1.0.0-beta.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "os": [
+    "linux"
+  ],
+  "arch": [
+    "x64"
+  ],
+  "main": "millennium-cli.linux-x64-gnu.node",
+  "files": [
+    "millennium-cli.linux-x64-gnu.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=10"
+  }
+}

@@ -43,7 +43,6 @@ Cargo.lock
 *.lib
 
 # Executables
-*.exe
 *.out
 *.app
 
@@ -177,3 +176,9 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Node binaries
+*.node
+
+# Wix tools
+WixTools/

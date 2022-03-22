@@ -1,0 +1,21 @@
+{
+  "name": "@pyke/millennium-cli-win32-x64-msvc",
+  "version": "1.0.0-beta.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "os": [
+    "win32"
+  ],
+  "arch": [
+    "x64"
+  ],
+  "main": "millennium-cli.win32-x64-msvc.node",
+  "files": [
+    "millennium-cli.win32-x64-msvc.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=10"
+  }
+}
