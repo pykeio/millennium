@@ -14,7 +14,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::path::PathBuf;
+use std::{fmt, path::PathBuf};
+
+/// A generic boxed error.
+#[derive(Debug)]
+pub struct SetupError(Box<dyn std::error::Error>);
+
+impl From<Box<dyn std::error::Error>> for SetupError {
+	fn from(error: Box<dyn std::error::Error>) -> Self {
+		Self(error)
+	}
+}
+
+// SAFETY: the setup error is only used on the main thread and we exit the process immediately.
+unsafe impl Send for SetupError {}
+unsafe impl Sync for SetupError {}
+
+impl fmt::Display for SetupError {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		self.0.fmt(f)
+	}
+}
+
+impl std::error::Error for SetupError {}
 
 /// Runtime errors that can happen inside a Millennium application.
 #[derive(Debug, thiserror::Error)]
@@ -23,9 +45,6 @@ pub enum Error {
 	/// Runtime error.
 	#[error("runtime error: {0}")]
 	Runtime(#[from] millennium_runtime::Error),
-	/// Failed to create webview.
-	#[error("failed to create webview: {0}")]
-	CreateWebview(Box<dyn std::error::Error + Send>),
 	/// Failed to create window.
 	#[error("failed to create window")]
 	CreateWindow,
@@ -60,7 +79,7 @@ pub enum Error {
 	Base64Decode(#[from] base64::DecodeError),
 	/// Failed to load window icon.
 	#[error("invalid icon: {0}")]
-	InvalidIcon(Box<dyn std::error::Error + Send>),
+	InvalidIcon(std::io::Error),
 	/// Client with specified ID not found.
 	#[error("http client dropped or not initialized")]
 	HttpClientNotInitialized,
@@ -75,7 +94,7 @@ pub enum Error {
 	InvalidArgs(&'static str, &'static str, serde_json::Error),
 	/// Encountered an error in the setup hook,
 	#[error("error encountered during setup hook: {0}")]
-	Setup(Box<dyn std::error::Error + Send>),
+	Setup(SetupError),
 	/// Millennium updater error.
 	#[cfg(updater)]
 	#[cfg_attr(doc_cfg, doc(cfg(feature = "updater")))]
@@ -84,16 +103,13 @@ pub enum Error {
 	/// Error initializing plugin.
 	#[error("failed to initialize plugin `{0}`: {1}")]
 	PluginInitialization(String, String),
-	/// Encountered an error creating the app system tray,
-	#[error("error encountered during tray setup: {0}")]
-	SystemTray(Box<dyn std::error::Error + Send>),
 	/// A part of the URL is malformed or invalid. This may occur when parsing
 	/// and combining user-provided URLs and paths.
 	#[error("invalid url: {0}")]
 	InvalidUrl(url::ParseError),
 	/// Task join error.
 	#[error(transparent)]
-	JoinError(Box<dyn std::error::Error + Send>),
+	JoinError(#[from] tokio::task::JoinError),
 	/// Path not allowed by the scope.
 	#[error("path not allowed on the configured scope: {0}")]
 	PathNotAllowed(PathBuf),

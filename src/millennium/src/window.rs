@@ -217,8 +217,7 @@ impl<R: Runtime> WindowBuilder<R> {
 	/// 				}
 	/// 			}
 	/// 		})
-	/// 		.build()
-	/// 		.unwrap();
+	/// 		.build()?;
 	/// 	Ok(())
 	/// });
 	/// ```

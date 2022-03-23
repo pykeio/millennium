@@ -136,9 +136,7 @@ pub fn serialize_js_with<T: Serialize, F: FnOnce(&str) -> String>(value: &T, opt
 ///
 /// millennium::Builder::default().setup(|app| {
 /// 	let window = app.get_window("main").unwrap();
-/// 	window
-/// 		.eval(&format!("console.log({}, {})", serialize_js(&Foo { bar: "bar".to_string() }).unwrap(), serialize_js(&Bar { baz: 0 }).unwrap()))
-/// 		.unwrap();
+/// 	window.eval(&format!("console.log({}, {})", serialize_js(&Foo { bar: "bar".to_string() }).unwrap(), serialize_js(&Bar { baz: 0 }).unwrap()))?;
 /// 	Ok(())
 /// });
 /// ```

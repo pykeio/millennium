@@ -117,7 +117,7 @@ impl Program {
 /// use millennium::{api::shell::open, Manager};
 /// millennium::Builder::default().setup(|app| {
 /// 	// open the given URL on the system default browser
-/// 	open(&app.shell_scope(), "https://example.com", None).unwrap();
+/// 	open(&app.shell_scope(), "https://example.com", None)?;
 /// 	Ok(())
 /// });
 /// ```

@@ -508,7 +508,7 @@ impl<T: UserEvent> ClipboardManager for ClipboardManagerWrapper<T> {
 /// be created from a [`WindowIcon`].
 pub struct MillenniumIcon(MillenniumWindowIcon);
 
-fn icon_err<E: std::error::Error + Send + 'static>(e: E) -> Error {
+fn icon_err<E: std::error::Error + Send + Sync + 'static>(e: E) -> Error {
 	Error::InvalidIcon(Box::new(e))
 }
 

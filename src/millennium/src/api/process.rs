@@ -62,7 +62,7 @@ pub use command::*;
 /// let current_binary_path = current_binary(&Env::default()).unwrap();
 ///
 /// millennium::Builder::default().setup(|app| {
-/// 	let current_binary_path = current_binary(&app.env()).unwrap();
+/// 	let current_binary_path = current_binary(&app.env())?;
 /// 	Ok(())
 /// });
 /// ```

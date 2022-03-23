@@ -28,7 +28,7 @@ use crate::{
 };
 
 /// A closure that is run when the Millennium application is setting up.
-pub type SetupHook<R> = Box<dyn FnOnce(&mut App<R>) -> Result<(), Box<dyn std::error::Error + Send>> + Send>;
+pub type SetupHook<R> = Box<dyn FnOnce(&mut App<R>) -> Result<(), Box<dyn std::error::Error>> + Send>;
 
 /// A closure that is run everytime Millennium receives a message it doesn't
 /// explicitly handle.
