@@ -183,7 +183,7 @@ mod manager;
 mod pattern;
 pub mod plugin;
 pub mod window;
-pub use millennium_runtime as runtime;
+use millennium_runtime as runtime;
 /// The allowlist scopes.
 pub mod scope;
 pub mod settings;

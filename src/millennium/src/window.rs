@@ -194,7 +194,7 @@ impl<R: Runtime> WindowBuilder<R> {
 	/// use std::collections::HashMap;
 	///
 	/// use millennium::{
-	/// 	runtime::http::header::HeaderValue,
+	/// 	http::header::HeaderValue,
 	/// 	utils::config::{Csp, CspDirectiveSources, WindowUrl},
 	/// 	window::WindowBuilder
 	/// };
