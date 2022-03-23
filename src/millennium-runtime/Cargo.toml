@@ -34,7 +34,7 @@ millennium-utils = { version = "1.0.0-beta.1", path = "../millennium-utils" }
 uuid = { version = "0.8.2", features = [ "v4" ] }
 http = "0.2.4"
 http-range = "0.1.4"
-infer = "0.4"
+infer = "0.7"
 
 [target."cfg(windows)".dependencies]
 webview2-com = "0.13.0"
