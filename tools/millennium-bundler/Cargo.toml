@@ -14,7 +14,7 @@ exclude = [
 ]
 
 [dependencies]
-millennium-utils = { path = "../millennium-utils", features = [ "resources" ] }
+millennium-utils = { path = "../../src/millennium-utils", features = [ "resources" ] }
 ar = "0.9.0"
 icns = "0.3"
 image = "0.24.1"

@@ -2,9 +2,6 @@
 members = [
 	"src/millennium",
 	"src/millennium-build",
-	"src/millennium-bundler",
-	"src/millennium-cli",
-	"src/millennium-cli-node",
 	"src/millennium-codegen",
 	"src/millennium-core",
 	"src/millennium-macros",

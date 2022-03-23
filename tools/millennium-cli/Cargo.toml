@@ -35,7 +35,7 @@ notify = "4.0"
 shared_child = "1.0"
 toml_edit = "0.13"
 json-patch = "0.2"
-millennium-utils = { path = "../millennium-utils", features = [ "isolation", "schema", "config-json5" ] }
+millennium-utils = { path = "../../src/millennium-utils", features = [ "isolation", "schema", "config-json5" ] }
 toml = "0.5"
 valico = "3.6"
 handlebars = "4.2"
@@ -69,7 +69,7 @@ humansize = "1.1"
 heck = "0.4"
 
 [build-dependencies]
-millennium-utils = { path = "../millennium-utils", features = [ "schema", "isolation" ] }
+millennium-utils = { path = "../../src/millennium-utils", features = [ "schema", "isolation" ] }
 schemars = { version = "0.8", features = [ "url" ] }
 serde = { version = "1.0", features = [ "derive" ] }
 serde_json = "1.0"

@@ -1,0 +1,14 @@
+[workspace]
+members = [
+	"./millennium-bundler",
+	"./millennium-cli",
+	"./millennium-cli-node"
+]
+
+# default to small, optimized workspace release binaries
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+incremental = false
+opt-level = "s"
