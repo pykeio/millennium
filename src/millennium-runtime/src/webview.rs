@@ -183,6 +183,11 @@ pub trait WindowBuilder: WindowBuilderBase {
 	#[must_use]
 	fn parent_window(self, parent: HWND) -> Self;
 
+	/// Sets a parent ot the window to be created.
+	#[cfg(target_os = "macos")]
+	#[must_use]
+	fn parent_window(self, parent: *mut std::ffi::c_void) -> Self;
+
 	/// Set an owner to the window to be created.
 	///
 	/// From MSDN:

@@ -816,6 +816,13 @@ impl WindowBuilder for WindowBuilderWrapper {
 		self
 	}
 
+	#[cfg(target_os = "macos")]
+	fn parent_window(mut self, parent: *mut std::ffi::c_void) -> Self {
+		use millennium_webview::application::platform::macos::WindowBuilderExtMacOS;
+		self.inner = self.inner.with_parent_window(parent);
+		self
+	}
+
 	#[cfg(windows)]
 	fn owner_window(mut self, owner: HWND) -> Self {
 		self.inner = self.inner.with_owner_window(owner);
