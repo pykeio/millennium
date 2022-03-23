@@ -23,7 +23,7 @@ raw-window-handle = "0.4"
 millennium-core = { version = "1.0.0-beta.1", path = "../millennium-core" }
 
 [target."cfg(target_os = \"windows\")".dependencies.windows-sys]
-version = "0.33.0"
+version = "0.34.0"
 features = [
 	"Win32_Foundation",
 	"Win32_System_LibraryLoader",
