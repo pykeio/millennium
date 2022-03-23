@@ -363,17 +363,25 @@
 //! 	"notes": "Test version",
 //! 	"pub_date": "2020-06-22T19:25:57Z",
 //! 	"platforms": {
-//! 		"darwin": {
+//! 		"darwin-aarch64": {
 //! 			"signature": "",
-//! 			"url": "https://github.com/lemarier/tauri-test/releases/download/v1.0.0/app.app.tar.gz"
+//! 			"url": "https://github.com/pykeio/millennium-app/releases/download/v1.0.0/app-aarch64.app.tar.gz"
 //! 		},
-//! 		"linux": {
+//! 		"darwin-x86_64": {
 //! 			"signature": "",
-//! 			"url": "https://github.com/lemarier/tauri-test/releases/download/v1.0.0/app.AppImage.tar.gz"
+//! 			"url": "https://github.com/pykeio/millennium-app/releases/download/v1.0.0/app-x64.app.tar.gz"
 //! 		},
-//! 		"win64": {
+//! 		"linux-x86_64": {
 //! 			"signature": "",
-//! 			"url": "https://github.com/lemarier/tauri-test/releases/download/v1.0.0/app.x64.msi.zip"
+//! 			"url": "https://github.com/pykeio/millennium-app/releases/download/v1.0.0/app-x64.AppImage.tar.gz"
+//! 		},
+//! 		"windows-x86_64": {
+//! 			"signature": "",
+//! 			"url": "https://github.com/pykeio/millennium-app/releases/download/v1.0.0/app.x64.msi.zip"
+//! 		},
+//! 		"windows-i686": {
+//! 			"signature": "",
+//! 			"url": "https://github.com/pykeio/millennium-app/releases/download/v1.0.0/app.x86.msi.zip"
 //! 		}
 //! 	}
 //! }
@@ -514,6 +522,15 @@ pub const EVENT_STATUS_SUCCESS: &str = "DONE";
 /// last version
 pub const EVENT_STATUS_UPTODATE: &str = "UPTODATE";
 
+/// Gets the target string used in the updater.
+pub fn target() -> Option<String> {
+	if let (Some(target), Some(arch)) = (core::get_updater_target(), core::get_updater_arch()) {
+		Some(format!("{}-{}", target, arch))
+	} else {
+		None
+	}
+}
+
 #[derive(Clone, serde::Serialize)]
 struct StatusEvent {
 	status: String,
@@ -573,13 +590,15 @@ pub(crate) async fn check_update_with_dialog<R: Runtime>(handle: AppHandle<R>) {
 	let package_info = handle.package_info().clone();
 	if let Some(endpoints) = updater_config.endpoints.clone() {
 		let endpoints = endpoints.iter().map(|e| e.to_string()).collect::<Vec<String>>();
-		// check updates
-		match self::core::builder(handle.clone())
+		let mut builder = self::core::builder(handle.clone())
 			.urls(&endpoints[..])
-			.current_version(&package_info.version)
-			.build()
-			.await
-		{
+			.current_version(&package_info.version);
+		if let Some(target) = &handle.updater_settings.target {
+			builder = builder.target(target);
+		}
+
+		// check updates
+		match builder.build().await {
 			Ok(updater) => {
 				let pubkey = updater_config.pubkey.clone();
 
@@ -652,12 +671,14 @@ pub(crate) async fn check<R: Runtime>(handle: AppHandle<R>) -> Result<UpdateResp
 		.map(|e| e.to_string())
 		.collect::<Vec<String>>();
 
-	match self::core::builder(handle.clone())
+	let mut builder = self::core::builder(handle.clone())
 		.urls(&endpoints[..])
-		.current_version(&package_info.version)
-		.build()
-		.await
-	{
+		.current_version(&package_info.version);
+	if let Some(target) = &handle.updater_settings.target {
+		builder = builder.target(target);
+	}
+
+	match builder.build().await {
 		Ok(update) => {
 			// send notification if we need to update
 			if update.should_update {

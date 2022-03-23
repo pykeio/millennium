@@ -1873,6 +1873,18 @@ pub struct UpdaterConfig {
 	#[serde(default = "default_dialog")]
 	pub dialog: bool,
 	/// The updater endpoints. TLS is enforced on production.
+	///
+	/// The updater URL can contain the following variables:
+	/// - `{{current_version}}`: The version of the app that is requesting the update
+	/// - `{{target}}`: The operating system name (one of `linux`, `windows`, or `darwin`)
+	/// - `{{arch}}`: The architecture (one of `x86_64`, `i686`, `aarch64`, or `armv7`).
+	///
+	/// ## Examples
+	///
+	/// - `https://my.cdn.com/latest.json`: a raw JSON endpoint that returns the latest version and download links for
+	///   each platform.
+	/// - `https://updates.app.dev/{{target}}?version={{current_version}}&arch={{arch}}`: a dedicated API with
+	///   positional and query string arguments.
 	pub endpoints: Option<Vec<UpdaterEndpoint>>,
 	/// Signature public key.
 	#[serde(default)] // use default just so the schema doesn't flag it as required

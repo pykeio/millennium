@@ -177,6 +177,12 @@ impl<R: Runtime> GlobalWindowEvent<R> {
 	}
 }
 
+#[cfg(updater)]
+#[derive(Debug, Clone, Default)]
+pub(crate) struct UpdaterSettings {
+	pub(crate) target: Option<String>
+}
+
 /// The path resolver is a helper for the application-specific
 /// [`crate::api::path`] APIs.
 #[derive(Debug, Clone)]
@@ -229,7 +235,9 @@ pub struct AppHandle<R: Runtime> {
 	global_shortcut_manager: R::GlobalShortcutManager,
 	clipboard_manager: R::ClipboardManager,
 	#[cfg(feature = "system-tray")]
-	tray_handle: Option<tray::SystemTrayHandle<R>>
+	tray_handle: Option<tray::SystemTrayHandle<R>>,
+	#[cfg(updater)]
+	pub(crate) updater_settings: UpdaterSettings
 }
 
 impl<R: Runtime> AppHandle<R> {
@@ -271,7 +279,9 @@ impl<R: Runtime> Clone for AppHandle<R> {
 			global_shortcut_manager: self.global_shortcut_manager.clone(),
 			clipboard_manager: self.clipboard_manager.clone(),
 			#[cfg(feature = "system-tray")]
-			tray_handle: self.tray_handle.clone()
+			tray_handle: self.tray_handle.clone(),
+			#[cfg(updater)]
+			updater_settings: self.updater_settings.clone()
 		}
 	}
 }
@@ -634,7 +644,11 @@ pub struct Builder<R: Runtime> {
 
 	/// System tray event handlers.
 	#[cfg(feature = "system-tray")]
-	system_tray_event_listeners: Vec<SystemTrayEventListener<R>>
+	system_tray_event_listeners: Vec<SystemTrayEventListener<R>>,
+
+	/// The updater configuration.
+	#[cfg(updater)]
+	updater_settings: UpdaterSettings
 }
 
 impl<R: Runtime> Builder<R> {
@@ -659,7 +673,9 @@ impl<R: Runtime> Builder<R> {
 			#[cfg(feature = "system-tray")]
 			system_tray: None,
 			#[cfg(feature = "system-tray")]
-			system_tray_event_listeners: Vec::new()
+			system_tray_event_listeners: Vec::new(),
+			#[cfg(updater)]
+			updater_settings: Default::default()
 		}
 	}
 
@@ -1008,6 +1024,43 @@ impl<R: Runtime> Builder<R> {
 		self
 	}
 
+	/// Sets the current platform's target name for the updater.
+	///
+	/// By default Millennium looks for a target in the format "{target}-{arch}",
+	/// where *target* is one of `darwin`, `linux` and `windows`
+	/// and *arch* is one of `i686`, `x86_64`, `aarch64` and `armv7`
+	/// based on the running platform. You can change the target name with this function.
+	///
+	/// # Examples
+	///
+	/// - Use a macOS Universal binary target name:
+	///
+	/// ```no_run
+	/// let mut builder = millennium::Builder::default();
+	/// #[cfg(target_os = "macos")]
+	/// {
+	/// 	builder = builder.updater_target("darwin-universal");
+	/// }
+	/// ```
+	///
+	/// - Append debug information to the target:
+	///
+	/// ```no_run
+	/// let kind = if cfg!(debug_assertions) { "debug" } else { "release" };
+	/// millennium::Builder::default().updater_target(format!("{}-{}", millennium::updater::target().unwrap(), kind));
+	/// ```
+	///
+	/// - Use the platform's target triple:
+	///
+	/// ```no_run
+	/// millennium::Builder::default().updater_target(millennium::utils::platform::target_triple().unwrap());
+	/// ```
+	#[cfg(updater)]
+	pub fn updater_target<T: Into<String>>(mut self, target: T) -> Self {
+		self.updater_settings.target.replace(target.into());
+		self
+	}
+
 	/// Builds the application.
 	#[allow(clippy::type_complexity)]
 	pub fn build<A: Assets>(mut self, context: Context<A>) -> crate::Result<App<R>> {
@@ -1095,7 +1148,9 @@ impl<R: Runtime> Builder<R> {
 				global_shortcut_manager,
 				clipboard_manager,
 				#[cfg(feature = "system-tray")]
-				tray_handle: None
+				tray_handle: None,
+				#[cfg(updater)]
+				updater_settings: self.updater_settings
 			}
 		};
 
