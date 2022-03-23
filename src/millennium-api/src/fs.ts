@@ -270,11 +270,12 @@ export async function writeFile(path: string, contents: string | TypedArray | Bu
 	else if (contents instanceof ArrayBuffer || contents instanceof SharedArrayBuffer)
 		return await writeBinaryFile({ path, contents: Array.from(new Uint8Array(contents as ArrayBufferLike)) }, options);
 	else if (
-		   contents instanceof DataView
-		|| contents instanceof Int8Array || contents instanceof Uint8Array || contents instanceof Uint8ClampedArray
-		|| contents instanceof Int16Array || contents instanceof Uint16Array
-		|| contents instanceof Int32Array || contents instanceof Uint32Array
-		|| contents instanceof Float32Array
+		[
+			DataView,
+			Int8Array, Uint8Array, Uint8ClampedArray,
+			Int16Array, Uint16Array,
+			Int32Array, Uint32Array, Float32Array
+		].some(t => contents instanceof t)
 		|| (typeof Float64Array !== 'undefined' && contents instanceof Float64Array)
 		|| (typeof BigInt64Array !== 'undefined' && contents instanceof BigInt64Array)
 		|| (typeof BigUint64Array !== 'undefined' && contents instanceof BigUint64Array)
@@ -284,18 +285,20 @@ export async function writeFile(path: string, contents: string | TypedArray | Bu
 		throw new Error(`Unsupported contents type: '${{}.toString.call(contents)}'.`);
 }
 
+const invokeBase = <T>(cmd: string, options: Record<string, any>): Promise<T> =>
+	invokeMillenniumCommand<T>({
+		__millenniumModule: 'Fs',
+		message: {
+			cmd,
+			...options
+		}
+	});
+
 /**
  * Returns a list of entries in the directory, including files and other directories.
  */
 export async function readdir(dir: string, options: FsDirOptions = {}): Promise<FileEntry[]> {
-	return await invokeMillenniumCommand<FileEntry[]>({
-		__millenniumModule: 'Fs',
-		message: {
-			cmd: 'readDir',
-			path: dir,
-			options
-		}
-	});
+	return await invokeBase<FileEntry[]>('readDir', { path: dir, options });
 }
 
 /**
@@ -304,14 +307,7 @@ export async function readdir(dir: string, options: FsDirOptions = {}): Promise<
  * parent directories must exist, or an error will be thrown.
  */
 export async function mkdir(dir: string, options: FsDirOptions = {}): Promise<void> {
-	return await invokeMillenniumCommand({
-		__millenniumModule: 'Fs',
-		message: {
-			cmd: 'createDir',
-			path: dir,
-			options
-		}
-	});
+	return await invokeBase<void>('createDir', { path: dir, options });
 }
 
 /**
@@ -320,70 +316,33 @@ export async function mkdir(dir: string, options: FsDirOptions = {}): Promise<vo
  * Be careful when using the `recursive` option!
  */
 export async function rmdir(dir: string, options: FsDirOptions = {}): Promise<void> {
-	return await invokeMillenniumCommand({
-		__millenniumModule: 'Fs',
-		message: {
-			cmd: 'removeDir',
-			path: dir,
-			options
-		}
-	});
+	return await invokeBase<void>('removeDir', { path: dir, options });
 }
 
 /**
  * Copies a file to a destination.
  */
 export async function copyFile(source: string, destination: string, options: FsOptions = {}): Promise<void> {
-	return await invokeMillenniumCommand({
-		__millenniumModule: 'Fs',
-		message: {
-			cmd: 'copyFile',
-			source,
-			destination,
-			options
-		}
-	});
+	return await invokeBase<void>('copyFile', { source, destination, options });
 }
 
 /**
  * Removes a file permanently. This does not move the file to the recycle bin/trash on Windows/macOS.
  */
 export async function removeFile(file: string, options: FsOptions = {}): Promise<void> {
-	return await invokeMillenniumCommand({
-		__millenniumModule: 'Fs',
-		message: {
-			cmd: 'removeFile',
-			path: file,
-			options
-		}
-	});
+	return await invokeBase<void>('removeFile', { path: file, options });
 }
 
 /**
  * Renames/moves a file or directory.
  */
 export async function rename(oldPath: string, newPath: string, options: FsOptions = {}): Promise<void> {
-	return await invokeMillenniumCommand({
-		__millenniumModule: 'Fs',
-		message: {
-			cmd: 'rename',
-			oldPath,
-			newPath,
-			options
-		}
-	});
+	return await invokeBase<void>('rename', { oldPath, newPath, options });
 }
 
 /**
  * Checks if a file or directory exists.
  */
 export async function exists(path: string, options: FsOptions = {}): Promise<boolean> {
-	return await invokeMillenniumCommand({
-		__millenniumModule: 'Fs',
-		message: {
-			cmd: 'exists',
-			path,
-			options
-		}
-	});
+	return await invokeBase<boolean>('exists', { path, options });
 }

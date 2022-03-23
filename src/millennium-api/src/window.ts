@@ -164,6 +164,16 @@ export class PhysicalPosition {
 	}
 }
 
+function validatePosition(position: LogicalPosition | PhysicalPosition) {
+	if (!position || (position.TYPE !== 'Logical' && position.TYPE !== 'Physical'))
+		throw new Error('Invalid position! Must be an instance of `LogicalPosition` or `PhysicalPosition`.');
+}
+
+function validateSize(size: LogicalSize | PhysicalSize) {
+	if (!size || (size.TYPE !== 'Logical' && size.TYPE !== 'Physical'))
+		throw new Error('Invalid size! Must be an instance of `LogicalSize` or `PhysicalSize`.');
+}
+
 interface WindowDef {
 	label: string;
 }
@@ -427,9 +437,7 @@ class WindowManager extends WebviewWindowHandle {
 
 	/** Sets the (inner!) size of the window. */
 	async setSize(size: LogicalSize | PhysicalSize): Promise<void> {
-		if (!size || (size.TYPE !== 'Logical' && size.TYPE !== 'Physical'))
-			throw new Error('Invalid size! Must be an instance of `LogicalSize` or `PhysicalSize`.');
-
+		validateSize(size);
 		return await this._manage('setSize', {
 			type: size.TYPE,
 			data: {
@@ -441,9 +449,8 @@ class WindowManager extends WebviewWindowHandle {
 
 	/** Sets the minimum inner size. If the `size` argument is not provided, the constraint is unset. */
 	async setMinimumSize(size: LogicalSize | PhysicalSize | null = null): Promise<void> {
-		if (!size || (size.TYPE !== 'Logical' && size.TYPE !== 'Physical'))
-			throw new Error('Invalid size! Must be an instance of `LogicalSize` or `PhysicalSize`.');
-
+		if (size)
+			validateSize(size);
 		return await this._manage('setMinSize', size === null
 			? null
 			: {
@@ -458,9 +465,8 @@ class WindowManager extends WebviewWindowHandle {
 
 	/** Sets the maximum inner size. If the `size` argument is not provided, the constraint is unset. */
 	async setMaximumSize(size: LogicalSize | PhysicalSize | null = null): Promise<void> {
-		if (!size || (size.TYPE !== 'Logical' && size.TYPE !== 'Physical'))
-			throw new Error('Invalid size! Must be an instance of `LogicalSize` or `PhysicalSize`.');
-
+		if (size)
+			validateSize(size);
 		return await this._manage('setMaxSize', size === null
 			? null
 			: {
@@ -475,9 +481,7 @@ class WindowManager extends WebviewWindowHandle {
 
 	/** Sets the window outer position. */
 	async setPosition(position: LogicalPosition | PhysicalPosition): Promise<void> {
-		if (!position || (position.TYPE !== 'Logical' && position.TYPE !== 'Physical'))
-			throw new Error('Invalid position! Must be an instance of `LogicalPosition` or `PhysicalPosition`.');
-
+		validatePosition(position);
 		return await this._manage('setPosition', {
 			type: position.TYPE,
 			data: {
