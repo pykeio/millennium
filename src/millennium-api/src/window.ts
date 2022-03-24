@@ -121,7 +121,6 @@
 
 import { invokeMillenniumCommand } from './helpers/millennium';
 import { emit, listen, once, EventName, EventCallback, Unlistener } from './event';
-import { isBrowser } from './platform';
 
 export interface Monitor {
 	name: string | null;
@@ -600,7 +599,7 @@ export class WebviewWindow extends WindowManager {
 
 /** A reference to the current webview window. */
 let appWindow: WebviewWindow;
-if (isBrowser() && '__MILLENNIUM_METADATA__' in window)
+if ('__MILLENNIUM_METADATA__' in window)
 	appWindow = new WebviewWindow(window.__MILLENNIUM_METADATA__.__currentWindow.label, { skip: true });
 else {
 	console.warn(`Could not find __MILLENNIUM_METADATA__. The "appWindow" value will reference the window with the "main" label.

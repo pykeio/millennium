@@ -26,24 +26,14 @@ declare global {
 	}
 }
 
-export function isBrowser(): boolean {
-	return typeof window !== 'boolean';
-}
-
 export function isLinux(): boolean {
-	return isBrowser()
-		? /linux/i.test(navigator.userAgentData?.platform ?? navigator.userAgent)
-		: process.platform === 'linux';
+	return /linux/i.test(navigator.userAgentData?.platform ?? navigator.userAgent);
 }
 
 export function isWindows(): boolean {
-	return isBrowser()
-		? /win/i.test(navigator.userAgentData?.platform ?? navigator.userAgent)
-		: process.platform === 'win32';
+	return /win/i.test(navigator.userAgentData?.platform ?? navigator.userAgent);
 }
 
 export function isMacOS(): boolean {
-	return isBrowser()
-		? /mac/i.test(navigator.userAgentData?.platform ?? navigator.userAgent)
-		: process.platform === 'darwin';
+	return /macintosh/i.test(navigator.userAgentData?.platform ?? navigator.userAgent);
 }
