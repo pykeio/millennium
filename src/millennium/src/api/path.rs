@@ -18,7 +18,10 @@
 
 //! Types and functions related to file system path operations.
 
-use std::path::{Component, Path, PathBuf};
+use std::{
+	env::temp_dir,
+	path::{Component, Path, PathBuf}
+};
 
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
@@ -76,7 +79,9 @@ pub enum BaseDirectory {
 	/// Resolves to `BaseDirectory::Home/Library/Logs/{bundle_identifier}` on
 	/// macOS and `BaseDirectory::Config/{bundle_identifier}/logs` on linux and
 	/// windows.
-	Log
+	Log,
+	/// A temporary directory. Resolves to [`temp_dir`].
+	Temp
 }
 
 impl BaseDirectory {
@@ -102,7 +107,8 @@ impl BaseDirectory {
 			Self::Video => "$VIDEO",
 			Self::Resource => "$RESOURCE",
 			Self::App => "$APP",
-			Self::Log => "$LOG"
+			Self::Log => "$LOG",
+			Self::Temp => "$TEMP"
 		}
 	}
 
@@ -129,6 +135,7 @@ impl BaseDirectory {
 			"$RESOURCE" => Self::Resource,
 			"$APP" => Self::App,
 			"$LOG" => Self::Log,
+			"$TEMP" => Self::Temp,
 			_ => return None
 		};
 		Some(res)
@@ -238,7 +245,8 @@ pub fn resolve_path<P: AsRef<Path>>(
 			BaseDirectory::Video => video_dir(),
 			BaseDirectory::Resource => resource_dir(package_info, env),
 			BaseDirectory::App => app_dir(config),
-			BaseDirectory::Log => log_dir(config)
+			BaseDirectory::Log => log_dir(config),
+			BaseDirectory::Temp => Some(temp_dir())
 		};
 		if let Some(mut base_dir_path_value) = base_dir_path {
 			// use the same path resolution mechanism as the bundler's resource injection

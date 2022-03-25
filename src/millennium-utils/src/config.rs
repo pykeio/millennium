@@ -855,7 +855,7 @@ macro_rules! check_feature {
 /// directory. The variables are: `$AUDIO`, `$CACHE`, `$CONFIG`, `$DATA`,
 /// `$LOCALDATA`, `$DESKTOP`, `$DOCUMENT`, `$DOWNLOAD`, `$EXE`, `$FONT`,
 /// `$HOME`, `$PICTURE`, `$PUBLIC`, `$RUNTIME`, `$TEMPLATE`, `$VIDEO`,
-/// `$RESOURCE`, `$APP`.
+/// `$RESOURCE`, `$APP`, `$LOG`, `$TEMP`.
 #[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
 #[serde(untagged)]
@@ -1142,7 +1142,7 @@ pub struct ShellAllowedCommand {
 	/// The variables are: `$AUDIO`, `$CACHE`, `$CONFIG`, `$DATA`, `$LOCALDATA`,
 	/// `$DESKTOP`, `$DOCUMENT`, `$DOWNLOAD`, `$EXE`, `$FONT`, `$HOME`,
 	/// `$PICTURE`, `$PUBLIC`, `$RUNTIME`, `$TEMPLATE`, `$VIDEO`, `$RESOURCE`,
-	/// `$APP`.
+	/// `$APP`, `$LOG`, `$TEMP`.
 	#[serde(rename = "cmd")]
 	pub command: PathBuf,
 

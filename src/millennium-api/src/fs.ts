@@ -73,7 +73,8 @@
  * [[path.localDataDir | `$LOCALDATA`]], [[path.desktopDir | `$DESKTOP`]], [[path.documentDir | `$DOCUMENT`]],
  * [[path.downloadDir | `$DOWNLOAD`]], [[path.executableDir | `$EXE`]], [[path.fontDir | `$FONT`]], [[path.homeDir | `$HOME`]],
  * [[path.pictureDir | `$PICTURE`]], [[path.publicDir | `$PUBLIC`]], [[path.runtimeDir | `$RUNTIME`]],
- * [[path.templateDir | `$TEMPLATE`]], [[path.videoDir | `$VIDEO`]], [[path.resourceDir | `$RESOURCE`]], [[path.appDir | `$APP`]].
+ * [[path.templateDir | `$TEMPLATE`]], [[path.videoDir | `$VIDEO`]], [[path.resourceDir | `$RESOURCE`]], [[path.appDir | `$APP`]],
+ * [[path.logDir | `$LOG`]], [[os.tempdir | `$TEMP`]].
  *
  * Trying to execute any API with a URL not configured on the scope results in a promise rejection due to denied access.
  *
@@ -103,7 +104,8 @@ export enum BaseDirectory {
 	VIDEOS,
 	RESOURCE,
 	APP,
-	LOG
+	LOG,
+	TEMP
 }
 
 interface FsOptions {
