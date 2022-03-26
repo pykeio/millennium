@@ -36,7 +36,7 @@ use uuid::Uuid;
 use crate::{Error, Message, Result, TrayMessage};
 
 pub type SystemTrayEventHandler = Box<dyn Fn(&SystemTrayEvent) + Send>;
-pub type SystemTrayEventListeners = Arc<Mutex<HashMap<Uuid, SystemTrayEventHandler>>>;
+pub type SystemTrayEventListeners = Arc<Mutex<HashMap<Uuid, Arc<SystemTrayEventHandler>>>>;
 pub type SystemTrayItems = Arc<Mutex<HashMap<u16, MillenniumCustomMenuItem>>>;
 
 #[derive(Debug, Clone)]

@@ -1591,7 +1591,7 @@ impl<T: UserEvent> Runtime<T> for MillenniumWebview<T> {
 	#[cfg(feature = "system-tray")]
 	fn on_system_tray_event<F: Fn(&SystemTrayEvent) + Send + 'static>(&mut self, f: F) -> Uuid {
 		let id = Uuid::new_v4();
-		self.tray_context.listeners.lock().unwrap().insert(id, Box::new(f));
+		self.tray_context.listeners.lock().unwrap().insert(id, Arc::new(Box::new(f)));
 		id
 	}
 
@@ -2052,7 +2052,8 @@ fn handle_event_loop<T: UserEvent>(
 			..
 		} => {
 			let event = SystemTrayEvent::MenuItemClick(menu_id.0);
-			for handler in tray_context.listeners.lock().unwrap().values() {
+			let listeners = tray_context.listeners.lock().unwrap().clone();
+			for handler in listeners.values() {
 				handler(&event);
 			}
 		}
