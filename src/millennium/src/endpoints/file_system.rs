@@ -33,33 +33,14 @@ use serde::{
 
 use super::InvokeContext;
 use crate::{
-	api::{dir, file, path::BaseDirectory},
+	api::{
+		dir,
+		file::{self, SafePathBuf},
+		path::BaseDirectory
+	},
 	scope::Scopes,
 	Config, Env, Manager, PackageInfo, Runtime, Window
 };
-
-#[derive(Clone, Debug)]
-pub struct SafePathBuf(std::path::PathBuf);
-
-impl AsRef<Path> for SafePathBuf {
-	fn as_ref(&self) -> &Path {
-		self.0.as_ref()
-	}
-}
-
-impl<'de> Deserialize<'de> for SafePathBuf {
-	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-	where
-		D: Deserializer<'de>
-	{
-		let path = std::path::PathBuf::deserialize(deserializer)?;
-		if path.components().any(|x| matches!(x, Component::ParentDir)) {
-			Err(DeError::custom("cannot traverse directory"))
-		} else {
-			Ok(SafePathBuf(path))
-		}
-	}
-}
 
 /// The options for the directory functions on the file system API.
 #[derive(Debug, Clone, Deserialize)]
@@ -86,7 +67,7 @@ pub struct FileOperationOptions {
 /// The API descriptor.
 #[derive(Deserialize, CommandModule)]
 #[serde(tag = "cmd", rename_all = "camelCase")]
-pub enum Cmd {
+pub(crate) enum Cmd {
 	/// The read binary file API.
 	ReadFile { path: SafePathBuf, options: Option<FileOperationOptions> },
 	/// The read text file API.
@@ -127,7 +108,7 @@ impl Cmd {
 	fn read_file<R: Runtime>(context: InvokeContext<R>, path: SafePathBuf, options: Option<FileOperationOptions>) -> super::Result<Vec<u8>> {
 		let resolved_path = resolve_path(&context.config, &context.package_info, &context.window, path, options.and_then(|o| o.dir))?;
 		file::read_binary(&resolved_path)
-			.with_context(|| format!("path: {}", resolved_path.0.display()))
+			.with_context(|| format!("path: {}", resolved_path.display()))
 			.map_err(Into::into)
 	}
 
@@ -135,7 +116,7 @@ impl Cmd {
 	fn read_text_file<R: Runtime>(context: InvokeContext<R>, path: SafePathBuf, options: Option<FileOperationOptions>) -> super::Result<String> {
 		let resolved_path = resolve_path(&context.config, &context.package_info, &context.window, path, options.and_then(|o| o.dir))?;
 		file::read_string(&resolved_path)
-			.with_context(|| format!("path: {}", resolved_path.0.display()))
+			.with_context(|| format!("path: {}", resolved_path.display()))
 			.map_err(Into::into)
 	}
 
@@ -143,7 +124,7 @@ impl Cmd {
 	fn write_file<R: Runtime>(context: InvokeContext<R>, path: SafePathBuf, contents: Vec<u8>, options: Option<FileOperationOptions>) -> super::Result<()> {
 		let resolved_path = resolve_path(&context.config, &context.package_info, &context.window, path, options.and_then(|o| o.dir))?;
 		File::create(&resolved_path)
-			.with_context(|| format!("path: {}", resolved_path.0.display()))
+			.with_context(|| format!("path: {}", resolved_path.display()))
 			.map_err(Into::into)
 			.and_then(|mut f| f.write_all(&contents).map_err(|err| err.into()))
 	}
@@ -157,7 +138,7 @@ impl Cmd {
 		};
 		let resolved_path = resolve_path(&context.config, &context.package_info, &context.window, path, dir)?;
 		dir::read_dir(&resolved_path, recursive)
-			.with_context(|| format!("path: {}", resolved_path.0.display()))
+			.with_context(|| format!("path: {}", resolved_path.display()))
 			.map_err(Into::into)
 	}
 
@@ -175,7 +156,7 @@ impl Cmd {
 			),
 			None => (source, destination)
 		};
-		fs::copy(src.clone(), dest.clone()).with_context(|| format!("source: {}, dest: {}", src.0.display(), dest.0.display()))?;
+		fs::copy(src.clone(), dest.clone()).with_context(|| format!("source: {}, dest: {}", src.display(), dest.display()))?;
 		Ok(())
 	}
 
@@ -188,9 +169,9 @@ impl Cmd {
 		};
 		let resolved_path = resolve_path(&context.config, &context.package_info, &context.window, path, dir)?;
 		if recursive {
-			fs::create_dir_all(&resolved_path).with_context(|| format!("path: {}", resolved_path.0.display()))?;
+			fs::create_dir_all(&resolved_path).with_context(|| format!("path: {}", resolved_path.display()))?;
 		} else {
-			fs::create_dir(&resolved_path).with_context(|| format!("path: {} (non recursive)", resolved_path.0.display()))?;
+			fs::create_dir(&resolved_path).with_context(|| format!("path: {} (non recursive)", resolved_path.display()))?;
 		}
 
 		Ok(())
@@ -205,9 +186,9 @@ impl Cmd {
 		};
 		let resolved_path = resolve_path(&context.config, &context.package_info, &context.window, path, dir)?;
 		if recursive {
-			fs::remove_dir_all(&resolved_path).with_context(|| format!("path: {}", resolved_path.0.display()))?;
+			fs::remove_dir_all(&resolved_path).with_context(|| format!("path: {}", resolved_path.display()))?;
 		} else {
-			fs::remove_dir(&resolved_path).with_context(|| format!("path: {} (non recursive)", resolved_path.0.display()))?;
+			fs::remove_dir(&resolved_path).with_context(|| format!("path: {} (non recursive)", resolved_path.display()))?;
 		}
 
 		Ok(())
@@ -216,7 +197,7 @@ impl Cmd {
 	#[module_command_handler(fs_remove_file, "fs > removeFile")]
 	fn remove_file<R: Runtime>(context: InvokeContext<R>, path: SafePathBuf, options: Option<FileOperationOptions>) -> super::Result<()> {
 		let resolved_path = resolve_path(&context.config, &context.package_info, &context.window, path, options.and_then(|o| o.dir))?;
-		fs::remove_file(&resolved_path).with_context(|| format!("path: {}", resolved_path.0.display()))?;
+		fs::remove_file(&resolved_path).with_context(|| format!("path: {}", resolved_path.display()))?;
 		Ok(())
 	}
 
@@ -230,7 +211,7 @@ impl Cmd {
 			None => (old_path, new_path)
 		};
 		fs::rename(&old, &new)
-			.with_context(|| format!("old: {}, new: {}", old.0.display(), new.0.display()))
+			.with_context(|| format!("old: {}, new: {}", old.display(), new.display()))
 			.map_err(Into::into)
 	}
 
@@ -253,32 +234,23 @@ fn resolve_path<R: Runtime>(
 	match crate::api::path::resolve_path(config, package_info, env, &path, dir) {
 		Ok(path) => {
 			if window.state::<Scopes>().fs.is_allowed(&path) {
-				Ok(SafePathBuf(path))
+				Ok(
+					// safety: the path is resolved by Millennium so it is safe
+					unsafe { SafePathBuf::new_unchecked(path) }
+				)
 			} else {
 				Err(anyhow::anyhow!(crate::Error::PathNotAllowed(path).to_string()))
 			}
 		}
-		Err(e) => super::Result::<SafePathBuf>::Err(e.into()).with_context(|| format!("path: {}, base dir: {:?}", path.0.display(), dir))
+		Err(e) => super::Result::<SafePathBuf>::Err(e.into()).with_context(|| format!("path: {}, base dir: {:?}", path.display(), dir))
 	}
 }
 
 #[cfg(test)]
 mod tests {
-	use std::path::PathBuf;
-
 	use quickcheck::{Arbitrary, Gen};
 
 	use super::{BaseDirectory, DirOperationOptions, FileOperationOptions, SafePathBuf};
-
-	impl Arbitrary for super::SafePathBuf {
-		fn arbitrary(g: &mut Gen) -> Self {
-			Self(PathBuf::arbitrary(g))
-		}
-
-		fn shrink(&self) -> Box<dyn Iterator<Item = Self>> {
-			Box::new(self.0.shrink().map(SafePathBuf))
-		}
-	}
 
 	impl Arbitrary for BaseDirectory {
 		fn arbitrary(g: &mut Gen) -> Self {
