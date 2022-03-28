@@ -62,7 +62,7 @@ pub struct RemoteRelease {
 	/// Update short description
 	pub body: Option<String>,
 	/// Optional signature for the current platform
-	pub signature: Option<String>,
+	pub signature: String,
 	#[cfg(target_os = "windows")]
 	/// Optional: Windows only try to use elevated task
 	pub with_elevated_task: bool
@@ -77,30 +77,43 @@ impl RemoteRelease {
 		let version = match release.get("version") {
 			Some(version) => version
 				.as_str()
-				.ok_or_else(|| Error::RemoteMetadata("Unable to extract `version` from remote server".into()))?
+				.ok_or_else(|| Error::InvalidResponseType("version", "string", version.clone()))?
 				.trim_start_matches('v')
 				.to_string(),
-			None => release
-				.get("name")
-				.ok_or_else(|| Error::RemoteMetadata("Release missing `name` and `version`".into()))?
-				.as_str()
-				.ok_or_else(|| Error::RemoteMetadata("Unable to extract `name` from remote server`".into()))?
-				.trim_start_matches('v')
-				.to_string()
+			None => {
+				let name = release.get("name").ok_or(Error::MissingResponseField("version or name"))?;
+				name.as_str()
+					.ok_or_else(|| Error::InvalidResponseType("name", "string", name.clone()))?
+					.trim_start_matches('v')
+					.to_string()
+			}
 		};
 
 		// pub_date is required default is: `N/A` if not provided by the remote JSON
-		let date = release.get("pub_date").and_then(|v| v.as_str()).unwrap_or("N/A").to_string();
+		let date = if let Some(date) = release.get("pub_date") {
+			date.as_str()
+				.map(|d| d.to_string())
+				.ok_or_else(|| Error::InvalidResponseType("pub_date", "string", date.clone()))?
+		} else {
+			"N/A".into()
+		};
 
 		// body is optional to build our update
-		let body = release.get("notes").map(|notes| notes.as_str().unwrap_or("").to_string());
-
-		// signature is optional to build our update
-		let mut signature = release.get("signature").map(|signature| signature.as_str().unwrap_or("").to_string());
+		let body = if let Some(notes) = release.get("notes") {
+			Some(
+				notes
+					.as_str()
+					.map(|n| n.to_string())
+					.ok_or_else(|| Error::InvalidResponseType("notes", "string", notes.clone()))?
+			)
+		} else {
+			None
+		};
 
 		let download_url;
 		#[cfg(target_os = "windows")]
 		let with_elevated_task;
+		let signature;
 
 		match release.get("platforms") {
 			// Did we have a platforms field?
@@ -121,34 +134,48 @@ impl RemoteRelease {
 					// use provided signature if available
 					signature = current_target_data
 						.get("signature")
-						.map(|found_signature| found_signature.as_str().unwrap_or("").to_string());
+						.ok_or(Error::MissingResponseField("signature"))
+						.and_then(|signature| {
+							signature
+								.as_str()
+								.ok_or_else(|| Error::InvalidResponseType("signature", "string", signature.clone()))
+						})?;
 					// Download URL is required
-					download_url = current_target_data
-						.get("url")
-						.ok_or_else(|| Error::RemoteMetadata("Release missing `url`".into()))?
+					let url = current_target_data.get("url").ok_or(Error::MissingResponseField("url"))?;
+					download_url = url
 						.as_str()
-						.ok_or_else(|| Error::RemoteMetadata("Unable to extract `url` from remote server`".into()))?
+						.ok_or_else(|| Error::InvalidResponseType("url", "string", url.clone()))?
 						.to_string();
 					#[cfg(target_os = "windows")]
 					{
 						with_elevated_task = current_target_data
 							.get("with_elevated_task")
-							.and_then(|v| v.as_bool())
-							.unwrap_or_default();
+							.map(|v| {
+								v.as_bool()
+									.ok_or_else(|| Error::InvalidResponseType("with_elevated_task", "boolean", v.clone()))
+							})
+							.unwrap_or(Ok(false))?;
 					}
 				} else {
 					// make sure we have an available platform from the static
-					return Err(Error::RemoteMetadata("Platform not available".into()));
+					return Err(Error::TargetNotFound(target.into()));
 				}
 			}
 			// We don't have the `platforms` field announced, let's assume our
 			// download URL is at the root of the JSON.
 			None => {
-				download_url = release
-					.get("url")
-					.ok_or_else(|| Error::RemoteMetadata("Release missing `url`".into()))?
+				signature = release
+					.get("signature")
+					.ok_or(Error::MissingResponseField("signature"))
+					.and_then(|signature| {
+						signature
+							.as_str()
+							.ok_or_else(|| Error::InvalidResponseType("signature", "string", signature.clone()))
+					})?;
+				let url = release.get("url").ok_or(Error::MissingResponseField("url"))?;
+				download_url = url
 					.as_str()
-					.ok_or_else(|| Error::RemoteMetadata("Unable to extract `url` from remote server`".into()))?
+					.ok_or_else(|| Error::InvalidResponseType("url", "string", url.clone()))?
 					.to_string();
 				#[cfg(target_os = "windows")]
 				{
@@ -165,7 +192,7 @@ impl RemoteRelease {
 			date,
 			download_url,
 			body,
-			signature,
+			signature: signature.to_string(),
 			#[cfg(target_os = "windows")]
 			with_elevated_task
 		})
@@ -335,11 +362,11 @@ impl<'a, R: Runtime> UpdateBuilder<'a, R> {
 		// Last error is cleaned on success -- shouldn't be triggered if
 		// we have a successful call
 		if let Some(error) = last_error {
-			return Err(Error::Network(error.to_string()));
+			return Err(error);
 		}
 
 		// Extracted remote metadata
-		let final_release = remote_release.ok_or_else(|| Error::RemoteMetadata("Unable to extract update metadata from the remote server.".into()))?;
+		let final_release = remote_release.ok_or(Error::ReleaseNotFound)?;
 
 		// did the announced version is greated than our current one?
 		let should_update = version::is_greater(current_version, &final_release.version).unwrap_or(false);
@@ -388,7 +415,7 @@ pub struct Update<R: Runtime> {
 	/// Download URL announced
 	download_url: String,
 	/// Signature announced
-	signature: Option<String>,
+	signature: String,
 	#[cfg(target_os = "windows")]
 	/// Optional: Windows only try to use elevated task
 	/// Default to false
@@ -466,17 +493,9 @@ impl<R: Runtime> Update<R> {
 		// create memory buffer from our archive (Seek + Read)
 		let mut archive_buffer = Cursor::new(buffer);
 
-		// We need an announced signature by the server
-		// if there is no signature, bail out.
-		if let Some(signature) = &self.signature {
-			// we make sure the archive is valid and signed with the private key linked with
-			// the publickey
-			verify_signature(&mut archive_buffer, signature, &pub_key)?;
-		} else {
-			// We have a public key inside our source file, but not announced by the server,
-			// we assume this update is NOT valid.
-			return Err(Error::MissingUpdaterSignature);
-		}
+		// we make sure the archive is valid and signed with the private key linked with
+		// the publickey
+		verify_signature(&mut archive_buffer, &self.signature, &pub_key)?;
 
 		#[cfg(feature = "updater")]
 		{
@@ -739,7 +758,9 @@ pub fn extract_path_from_executable(env: &Env, executable_path: &Path) -> PathBu
 // Convert base64 to string and prevent failing
 fn base64_to_string(base64_string: &str) -> Result<String> {
 	let decoded_string = &decode(base64_string)?;
-	let result = from_utf8(decoded_string)?.to_string();
+	let result = from_utf8(decoded_string)
+		.map_err(|_| Error::SignatureUtf8(base64_string.into()))?
+		.to_string();
 	Ok(result)
 }
 
