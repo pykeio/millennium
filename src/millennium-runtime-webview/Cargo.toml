@@ -35,7 +35,7 @@ gtk = { version = "0.15", features = [ "v3_20" ] }
 
 [features]
 dox = [ "millennium-webview/dox" ]
-devtools = [ "millennium-webview/devtool", "millennium-runtime/devtools" ]
+devtools = [ "millennium-webview/devtools", "millennium-runtime/devtools" ]
 system-tray = [ "millennium-webview/tray", "millennium-runtime/system-tray" ]
 macos-private-api = [
 	"millennium-webview/fullscreen",

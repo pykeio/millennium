@@ -1731,7 +1731,7 @@ fn handle_user_message<T: UserEvent>(
 					#[cfg(any(debug_assertions, feature = "devtools"))]
 					WindowMessage::OpenDevTools => {
 						if let WindowHandle::Webview(w) = &webview.inner {
-							w.devtool();
+							w.open_devtools();
 						}
 					}
 					// Getters
@@ -2364,7 +2364,7 @@ fn create_webview<T: UserEvent>(
 
 	#[cfg(any(debug_assertions, feature = "devtools"))]
 	{
-		webview_builder = webview_builder.with_dev_tool(true);
+		webview_builder = webview_builder.with_devtools(true);
 	}
 
 	let webview = webview_builder

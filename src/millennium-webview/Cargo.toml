@@ -28,7 +28,7 @@ protocol = [ ]
 dox = [ "millennium-core/dox" ]
 tray = [ "millennium-core/tray" ]
 ayatana = [ "millennium-core/ayatana" ]
-devtool = [ ]
+devtools = [ ]
 transparent = [ ]
 fullscreen = [ ]
 
