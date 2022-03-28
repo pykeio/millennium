@@ -29,7 +29,7 @@
 //! # Example
 //!
 //! ```
-//! let mut hasher = tauri_codegen::vendor::blake3_reference::Hasher::new();
+//! let mut hasher = millennium_codegen::vendor::blake3_reference::Hasher::new();
 //! hasher.update(b"abc");
 //! hasher.update(b"def");
 //! let mut hash = [0; 32];
