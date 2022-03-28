@@ -184,6 +184,29 @@ impl Default for MenuBar {
 	}
 }
 
+/// Application metadata for the [`MenuItem::About`] action.
+///
+/// ## Platform-specific
+///
+/// - **Windows / macOS / Android / iOS:** The metadata is ignored on these platforms.
+#[derive(Debug, Clone, Default)]
+pub struct AboutMetadata {
+	/// The application name.
+	pub version: Option<String>,
+	/// The authors of the application.
+	pub authors: Option<Vec<String>>,
+	/// Application comments.
+	pub comments: Option<String>,
+	/// The copyright of the application.
+	pub copyright: Option<String>,
+	/// The license of the application.
+	pub license: Option<String>,
+	/// The application website.
+	pub website: Option<String>,
+	/// The website label.
+	pub website_label: Option<String>
+}
+
 /// A menu item, bound to a pre-defined native action.
 ///
 /// Note some platforms might not support some of the variants.
@@ -191,12 +214,15 @@ impl Default for MenuBar {
 #[non_exhaustive]
 #[derive(Debug, Clone)]
 pub enum MenuItem {
-	/// Shows a standard "About" item
+	/// Shows a standard "About" item.
+	///
+	/// THe first value is the applicatio name, and the second is its metadata.
 	///
 	/// ## Platform-specific
 	///
 	/// - **Windows / Android / iOS:** Unsupported
-	About(String),
+	/// - **Linux**: Supported
+	About(String, AboutMetadata),
 
 	/// A standard "hide the app" menu item.
 	///
