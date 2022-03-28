@@ -32,7 +32,7 @@ use std::{
 use millennium_runtime::window::MenuEvent;
 use millennium_runtime::{
 	http::{Request as HttpRequest, RequestParts as HttpRequestParts, Response as HttpResponse, ResponseParts as HttpResponseParts},
-	menu::{CustomMenuItem, Menu, MenuEntry, MenuHash, MenuId, MenuItem, MenuUpdate},
+	menu::{AboutMetadata, CustomMenuItem, Menu, MenuEntry, MenuHash, MenuId, MenuItem, MenuUpdate},
 	monitor::Monitor,
 	webview::{WebviewIpcHandler, WindowBuilder, WindowBuilderBase},
 	window::{
@@ -75,8 +75,8 @@ use millennium_webview::{
 		event_loop::{ControlFlow, EventLoop, EventLoopProxy as MillenniumEventLoopProxy, EventLoopWindowTarget},
 		global_shortcut::{GlobalShortcut, ShortcutManager as MillenniumShortcutManager},
 		menu::{
-			AboutMetadata, CustomMenuItem as MillenniumCustomMenuItem, MenuBar, MenuId as MillenniumMenuId, MenuItem as MillenniumMenuItem,
-			MenuItemAttributes as MillenniumMenuItemAttributes, MenuType
+			AboutMetadata as MillenniumAboutMetadata, CustomMenuItem as MillenniumCustomMenuItem, MenuBar, MenuId as MillenniumMenuId,
+			MenuItem as MillenniumMenuItem, MenuItemAttributes as MillenniumMenuItemAttributes, MenuType
 		},
 		monitor::MonitorHandle,
 		window::{Fullscreen, Icon as MillenniumWindowIcon, UserAttentionType as MillenniumUserAttentionType}
@@ -313,12 +313,28 @@ impl<'a> From<&'a CustomMenuItem> for MenuItemAttributesWrapper<'a> {
 	}
 }
 
+pub struct AboutMetadataWrapper(pub MillenniumAboutMetadata);
+
+impl From<AboutMetadata> for AboutMetadataWrapper {
+	fn from(metadata: AboutMetadata) -> Self {
+		Self(MillenniumAboutMetadata {
+			version: metadata.version,
+			authors: metadata.authors,
+			comments: metadata.comments,
+			copyright: metadata.copyright,
+			license: metadata.license,
+			website: metadata.website,
+			website_label: metadata.website_label
+		})
+	}
+}
+
 pub struct MenuItemWrapper(pub MillenniumMenuItem);
 
 impl From<MenuItem> for MenuItemWrapper {
 	fn from(item: MenuItem) -> Self {
 		match item {
-			MenuItem::About(v) => Self(MillenniumMenuItem::About(v, AboutMetadata::default())), // TODO: add metadata in millennium-runtime
+			MenuItem::About(name, metadata) => Self(MillenniumMenuItem::About(name, AboutMetadataWrapper::from(metadata).0)),
 			MenuItem::Hide => Self(MillenniumMenuItem::Hide),
 			MenuItem::Services => Self(MillenniumMenuItem::Services),
 			MenuItem::HideOthers => Self(MillenniumMenuItem::HideOthers),
