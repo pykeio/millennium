@@ -14,6 +14,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/// Handling the Millennium isolation pattern.
-#[cfg(feature = "isolation")]
-pub mod isolation;
+//! Manual vendored dependencies - NOT STABLE
+//!
+//! This module and all submodules are not considered part of the public API. They can and will change at any time for
+//! any reason and in any version.
+
+pub mod blake3_reference;

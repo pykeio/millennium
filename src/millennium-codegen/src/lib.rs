@@ -25,6 +25,8 @@ pub use self::context::{context_codegen, ContextData};
 
 mod context;
 pub mod embedded_assets;
+#[doc(hidden)]
+pub mod vendor;
 
 /// Represents all the errors that can happen while reading the config during
 /// codegen.

@@ -21,7 +21,6 @@ no-default-features = true
 features = [
 	"compression",
 	"millennium_webview",
-	"__isolation-docs",
 	"custom-protocol",
 	"api-all",
 	"cli",
@@ -122,7 +121,6 @@ compression = [ "millennium-macros/compression", "millennium-utils/compression" 
 millennium_webview = [ "millennium-runtime-webview" ]
 objc-exception = [ "millennium-runtime-webview/objc-exception" ]
 isolation = [ "millennium-utils/isolation", "millennium-macros/isolation" ]
-__isolation-docs = [ "millennium-utils/__isolation-docs", "millennium-macros/__isolation-docs" ]
 custom-protocol = [ "millennium-macros/custom-protocol" ]
 updater = [ "minisign-verify", "base64", "http-api", "dialog-ask", "fs-extract-api" ]
 __updater-docs = [ "minisign-verify", "base64", "http-api", "dialog-ask" ]

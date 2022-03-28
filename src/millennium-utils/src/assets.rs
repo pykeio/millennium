@@ -154,8 +154,11 @@ impl Assets for EmbeddedAssets {
 	fn get(&self, key: &AssetKey) -> Option<Cow<'_, [u8]>> {
 		self.assets
 			.get(key.as_ref())
-			.copied()
-			.map(zstd::decode_all)
+			.map(|&(mut input_buf)| {
+				// with the exception of extremely small files, output should usually be at least as large as the compressed version.
+				let mut buf = Vec::with_capacity(input_buf.len());
+				brotli::BrotliDecompress(&mut input_buf, &mut buf).map(|()| buf)
+			})
 			.and_then(Result::ok)
 			.map(Cow::Owned)
 	}

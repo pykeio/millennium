@@ -31,6 +31,5 @@ millennium-utils = { version = "1.0.0-beta.1", path = "../millennium-utils" }
 custom-protocol = [ ]
 compression = [ "millennium-codegen/compression" ]
 isolation = [ "millennium-codegen/isolation" ]
-__isolation-docs = [ "millennium-codegen/__isolation-docs" ]
 shell-scope = [ "millennium-codegen/shell-scope" ]
 config-json5 = [ "millennium-codegen/config-json5", "millennium-utils/config-json5" ]
