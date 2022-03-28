@@ -15,6 +15,7 @@ include = [
 	"MergeModules/",
 	"*.json",
 	"*.rs",
+	"millennium.gitignore",
 	"vswhere.exe"
 ]
 
