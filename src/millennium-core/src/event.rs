@@ -439,7 +439,14 @@ pub enum WindowEvent<'a> {
 	/// content of the window when the system changes the window theme.
 	///
 	/// At the moment this is only supported on Windows.
-	ThemeChanged(Theme)
+	ThemeChanged(Theme),
+
+	/// The window decorations (title bar, border, etc.) have been clicked.
+	///
+	/// ## Platform-specific
+	///
+	/// - **Linux / macOS / Android / iOS**: Unsupported.
+	DecorationsClicked
 }
 
 impl Clone for WindowEvent<'static> {
@@ -499,6 +506,7 @@ impl Clone for WindowEvent<'static> {
 			ScaleFactorChanged { .. } => {
 				unreachable!("Static event can't be about scale factor changing")
 			}
+			DecorationsClicked => DecorationsClicked
 		}
 	}
 }
@@ -530,7 +538,8 @@ impl<'a> WindowEvent<'a> {
 			AxisMotion { device_id, axis, value } => Some(AxisMotion { device_id, axis, value }),
 			Touch(touch) => Some(Touch(touch)),
 			ThemeChanged(theme) => Some(ThemeChanged(theme)),
-			ScaleFactorChanged { .. } => None
+			ScaleFactorChanged { .. } => None,
+			DecorationsClicked => Some(DecorationsClicked)
 		}
 	}
 }
