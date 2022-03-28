@@ -61,6 +61,7 @@ use millennium_webview::application::platform::windows::{WindowBuilderExtWindows
 use millennium_webview::application::system_tray::{SystemTray as MillenniumSystemTray, SystemTrayBuilder};
 pub use millennium_webview::application::window::{Window, WindowBuilder as MillenniumWindowBuilder, WindowId};
 #[cfg(windows)]
+#[allow(unused)]
 use millennium_webview::webview::WebviewExtWindows;
 use millennium_webview::{
 	application::{
@@ -86,7 +87,7 @@ use millennium_webview::{
 	webview::{FileDropEvent as MillenniumFileDropEvent, WebContext, WebView, WebViewBuilder}
 };
 use uuid::Uuid;
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "__rust_analyzer_hack")))]
 use webview2_com::FocusChangedEventHandler;
 #[cfg(windows)]
 #[allow(unused_imports)]
@@ -2294,7 +2295,7 @@ fn create_webview<T: UserEvent>(
 		..
 	} = pending;
 	let webview_id_map = context.webview_id_map.clone();
-	#[cfg(windows)]
+	#[cfg(all(windows, not(feature = "__rust_analyzer_hack")))]
 	let proxy = context.proxy.clone();
 
 	let is_window_transparent = window_builder.inner.window.transparent;
@@ -2371,7 +2372,7 @@ fn create_webview<T: UserEvent>(
 
 	webview_id_map.insert(webview.window().id(), window_id);
 
-	#[cfg(windows)]
+	#[cfg(all(windows, not(feature = "__rust_analyzer_hack")))]
 	{
 		let controller = webview.controller();
 		let proxy_ = proxy.clone();
