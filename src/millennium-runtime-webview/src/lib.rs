@@ -75,7 +75,7 @@ use millennium_webview::{
 		event_loop::{ControlFlow, EventLoop, EventLoopProxy as MillenniumEventLoopProxy, EventLoopWindowTarget},
 		global_shortcut::{GlobalShortcut, ShortcutManager as MillenniumShortcutManager},
 		menu::{
-			CustomMenuItem as MillenniumCustomMenuItem, MenuBar, MenuId as MillenniumMenuId, MenuItem as MillenniumMenuItem,
+			AboutMetadata, CustomMenuItem as MillenniumCustomMenuItem, MenuBar, MenuId as MillenniumMenuId, MenuItem as MillenniumMenuItem,
 			MenuItemAttributes as MillenniumMenuItemAttributes, MenuType
 		},
 		monitor::MonitorHandle,
@@ -318,7 +318,7 @@ pub struct MenuItemWrapper(pub MillenniumMenuItem);
 impl From<MenuItem> for MenuItemWrapper {
 	fn from(item: MenuItem) -> Self {
 		match item {
-			MenuItem::About(v) => Self(MillenniumMenuItem::About(v)),
+			MenuItem::About(v) => Self(MillenniumMenuItem::About(v, AboutMetadata::default())), // TODO: add metadata in millennium-runtime
 			MenuItem::Hide => Self(MillenniumMenuItem::Hide),
 			MenuItem::Services => Self(MillenniumMenuItem::Services),
 			MenuItem::HideOthers => Self(MillenniumMenuItem::HideOthers),
