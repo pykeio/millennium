@@ -1840,6 +1840,7 @@ fn handle_user_message<T: UserEvent>(
 		Message::Webview(id, webview_message) => match webview_message {
 			WebviewMessage::EvaluateScript(script) => {
 				if let Some(WindowHandle::Webview(webview)) = windows.lock().expect("poisoned webview collection").get(&id).map(|w| &w.inner) {
+					#[cfg_attr(not(debug_assertions), allow(unused_variables))]
 					if let Err(e) = webview.evaluate_script(&script) {
 						#[cfg(debug_assertions)]
 						eprintln!("{}", e);
@@ -1863,6 +1864,7 @@ fn handle_user_message<T: UserEvent>(
 			Ok(webview) => {
 				windows.lock().expect("poisoned webview collection").insert(window_id, webview);
 			}
+			#[cfg_attr(not(debug_assertions), allow(unused_variables))]
 			Err(e) => {
 				#[cfg(debug_assertions)]
 				eprintln!("{}", e);
@@ -2107,6 +2109,7 @@ fn handle_event_loop<T: UserEvent>(
 				}
 				MillenniumWindowEvent::Resized(_) => {
 					if let Some(WindowHandle::Webview(webview)) = windows.lock().expect("poisoned webview collection").get(&window_id).map(|w| &w.inner) {
+						#[cfg_attr(not(debug_assertions), allow(unused_variables))]
 						if let Err(e) = webview.resize() {
 							#[cfg(debug_assertions)]
 							eprintln!("{}", e);
