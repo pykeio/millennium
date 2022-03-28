@@ -409,6 +409,7 @@ pub fn build_wix_app_installer(settings: &Settings, wix_toolset_path: &Path) -> 
 	let upgrade_code = Uuid::new_v5(&Uuid::NAMESPACE_DNS, format!("{}.app.x64", &settings.main_binary_name()).as_bytes()).to_string();
 
 	data.insert("upgrade_code", to_json(&upgrade_code.as_str()));
+	data.insert("allow_downgrades", to_json(settings.windows().allow_downgrades));
 
 	let path_guid = generate_package_guid(settings).to_string();
 	data.insert("path_component_guid", to_json(&path_guid.as_str()));

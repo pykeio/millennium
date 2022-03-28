@@ -25,8 +25,11 @@
                  InstallScope="perMachine"
                  SummaryCodepage="!(loc.MillenniumCodepage)"/>
 
-        <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeErrorMessage)"
-          AllowSameVersionUpgrades="yes" />
+		{{#if allow_downgrades}}
+			<MajorUpgrade AllowDowngrade="yes" />
+		{{else}}
+        	<MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeErrorMessage)" AllowSameVersionUpgrades="yes" />
+		{{/if}}
 
         <Media Id="1" Cabinet="app.cab" EmbedCab="yes" />
 

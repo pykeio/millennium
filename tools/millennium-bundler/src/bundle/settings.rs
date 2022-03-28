@@ -268,7 +268,13 @@ pub struct WindowsSettings {
 	/// The path to the application icon. Defaults to `./icons/icon.ico`.
 	pub icon_path: PathBuf,
 	/// Path to the webview fixed runtime to use.
-	pub webview_fixed_runtime_path: Option<PathBuf>
+	pub webview_fixed_runtime_path: Option<PathBuf>,
+	/// Validates a second app installation, blocking the user from installing an older version if set to `false`.
+	///
+	/// For instance, if `1.2.1` is installed, the user won't be able to install app version `1.2.0` or `1.1.5`.
+	///
+	/// The default value of this flag is `true`.
+	pub allow_downgrades: bool
 }
 
 impl Default for WindowsSettings {
@@ -280,7 +286,8 @@ impl Default for WindowsSettings {
 			tsp: None,
 			wix: None,
 			icon_path: PathBuf::from("icons/icon.ico"),
-			webview_fixed_runtime_path: None
+			webview_fixed_runtime_path: None,
+			allow_downgrades: true
 		}
 	}
 }
