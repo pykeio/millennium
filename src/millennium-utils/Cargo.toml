@@ -1,11 +1,11 @@
 [package]
-publish = false
 name = "millennium-utils"
 description = "Utilities for Millennium"
 version = "1.0.0-beta.1"
 license = "Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/pykeio/millennium"
+homepage = "https://millennium.pyke.io/"
 authors = [ "pyke.io", "Tauri Programme within The Commons Conservancy" ]
 rust-version = "1.57"
 edition = "2021"

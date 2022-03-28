@@ -1,10 +1,10 @@
 [package]
-publish = false
 name = "millennium-bundler"
 description = "Wrap Rust executables in OS-specific app bundles for Millennium"
 version = "1.0.0-beta.1"
 license = "Apache-2.0 OR MIT"
 repository = "https://github.com/pykeio/millennium"
+homepage = "https://millennium.pyke.io/"
 authors = [ "pykeio", "George Burton <burtonageo@gmail.com>", "Tauri Programme within The Commons Conservancy" ]
 categories = [ "command-line-utilities", "development-tools::cargo-plugins" ]
 rust-version = "1.57"
@@ -14,7 +14,7 @@ exclude = [
 ]
 
 [dependencies]
-millennium-utils = { path = "../../src/millennium-utils", features = [ "resources" ] }
+millennium-utils = { version = "1.0.0-beta.1", path = "../../src/millennium-utils", features = [ "resources" ] }
 ar = "0.9.0"
 icns = "0.3"
 image = "0.24.1"

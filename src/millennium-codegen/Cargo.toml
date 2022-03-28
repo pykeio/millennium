@@ -1,11 +1,11 @@
 [package]
-publish = false
 name = "millennium-codegen"
 description = "Code generation macros for Millennium"
 version = "1.0.0-beta.1"
 license = "Apache-2.0 OR MIT"
 readme = "README.md"
 repository = "https://github.com/pykeio/millennium"
+homepage = "https://millennium.pyke.io/"
 authors = [ "pyke.io", "Tauri Programme within The Commons Conservancy" ]
 categories = [ "gui", "web-programming" ]
 rust-version = "1.57"

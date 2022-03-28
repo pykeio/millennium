@@ -1,10 +1,10 @@
 [package]
-publish = false
 name = "millennium-cli"
 description = "Command line interface for building Millennium apps"
 version = "1.0.0-beta.1"
 license = "Apache-2.0 OR MIT"
 repository = "https://github.com/pykeio/millennium"
+homepage = "https://millennium.pyke.io/"
 authors = [ "pykeio", "Tauri Programme within The Commons Conservancy" ]
 categories = [ "gui", "web-programming" ]
 rust-version = "1.57"
@@ -25,7 +25,7 @@ path = "src/main.rs"
 [dependencies]
 clap = { version = "3.1", features = [ "derive" ] }
 anyhow = "1.0"
-millennium-bundler = { path = "../millennium-bundler" }
+millennium-bundler = { version = "1.0.0-beta.1", path = "../millennium-bundler" }
 colored = "2.0"
 once_cell = "1.10"
 serde = { version = "1.0", features = [ "derive" ] }
@@ -35,7 +35,7 @@ notify = "4.0"
 shared_child = "1.0"
 toml_edit = "0.13"
 json-patch = "0.2"
-millennium-utils = { path = "../../src/millennium-utils", features = [ "isolation", "schema", "config-json5" ] }
+millennium-utils = { version = "1.0.0-beta.1", path = "../../src/millennium-utils", features = [ "isolation", "schema", "config-json5" ] }
 toml = "0.5"
 valico = "3.6"
 handlebars = "4.2"
@@ -70,7 +70,7 @@ humansize = "1.1"
 heck = "0.4"
 
 [build-dependencies]
-millennium-utils = { path = "../../src/millennium-utils", features = [ "schema", "isolation" ] }
+millennium-utils = { version = "1.0.0-beta.1", path = "../../src/millennium-utils", features = [ "schema", "isolation" ] }
 schemars = { version = "0.8", features = [ "url" ] }
 serde = { version = "1.0", features = [ "derive" ] }
 serde_json = "1.0"

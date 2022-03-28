@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 # Default enable napi4 feature, see https://nodejs.org/api/n-api.html#node-api-version-matrix
 napi = { version = "2.2", default-features = false, features = ["napi4"] }
 napi-derive = "2.2"
-millennium-cli = { path = "../millennium-cli" }
+millennium-cli = { version = "1.0.0-beta.1", path = "../millennium-cli" }
 
 [build-dependencies]
 napi-build = "1.2"
