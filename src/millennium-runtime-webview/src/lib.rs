@@ -2000,13 +2000,9 @@ fn handle_event_loop<T: UserEvent>(
 		#[cfg(feature = "system-tray")]
 		tray_context
 	} = context;
-	if *control_flow == ControlFlow::Exit {
-		return RunIteration {
-			window_count: windows.lock().expect("poisoned webview collection").len()
-		};
+	if *control_flow != ControlFlow::Exit {
+		*control_flow = ControlFlow::Wait;
 	}
-
-	*control_flow = ControlFlow::Wait;
 
 	match event {
 		Event::NewEvents(StartCause::Init) => {
@@ -2019,6 +2015,10 @@ fn handle_event_loop<T: UserEvent>(
 
 		Event::MainEventsCleared => {
 			callback(RunEvent::MainEventsCleared);
+		}
+
+		Event::LoopDestroyed => {
+			callback(RunEvent::Exit);
 		}
 
 		Event::GlobalShortcutEvent(accelerator_id) => {
@@ -2220,7 +2220,6 @@ fn on_window_close<'a, T: UserEvent>(
 
 			if !should_prevent {
 				*control_flow = ControlFlow::Exit;
-				callback(RunEvent::Exit);
 			}
 		}
 		Some(webview)
