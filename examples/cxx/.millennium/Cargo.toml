@@ -3,6 +3,8 @@ millennium = { version = "1.0.0-beta.1", path = "../../../src/millennium", featu
 	# Put your Millennium features here #
 ] }
 libc = "0.2"
+anyhow = "1.0"
+thiserror = "1.0"
 
 [profile.release]
 panic = "abort"
@@ -21,7 +23,7 @@ rust-version = "1.57"
 edition = "2021"
 
 [lib]
-name = "millennium"
+name = "millenniumcxx"
 crate_type = [ "staticlib", "cdylib" ]
 
 [build-dependencies]
