@@ -1,6 +1,7 @@
 [workspace]
 members = [
 	"src/millennium",
+	"src/millennium-bindings-cxx",
 	"src/millennium-build",
 	"src/millennium-codegen",
 	"src/millennium-core",

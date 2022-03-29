@@ -35,3 +35,4 @@ winres = "0.1"
 codegen = [ "millennium-codegen", "quote" ]
 isolation = [ "millennium-codegen/isolation", "millennium-utils/isolation" ]
 config-json5 = [ "millennium-utils/config-json5" ]
+cxx = [ ]

@@ -1,0 +1,29 @@
+[dependencies]
+millennium = { version = "1.0.0-beta.1", path = "../../../src/millennium", features = [
+	# Put your Millennium features here #
+] }
+libc = "0.2"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+incremental = false
+opt-level = "s"
+
+[workspace]
+
+[package]
+publish = false
+name = "millennium-cxx"
+version = "0.1.0"
+rust-version = "1.57"
+edition = "2021"
+
+[lib]
+name = "millennium"
+crate_type = [ "staticlib", "cdylib" ]
+
+[build-dependencies]
+millennium-bindings-cxx = { path = "../../../src/millennium-bindings-cxx" }
+millennium-build = { version = "1.0.0-beta.1", path = "../../../src/millennium-build", features = [ "cxx" ] }

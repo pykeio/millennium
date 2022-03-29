@@ -169,10 +169,14 @@ pub fn try_build(attributes: Attributes) -> Result<()> {
 	use cargo_toml::{Dependency, Manifest};
 	use millennium_utils::config::{Config, MillenniumConfig};
 
-	println!("cargo:rerun-if-changed=.millenniumrc");
-	println!("cargo:rerun-if-changed=.millenniumrc.json");
-	#[cfg(feature = "config-json5")]
-	println!("cargo:rerun-if-changed=.millenniumrc.json5");
+	// Skip this if we're building from C++ bindings, because .millenniumrc may not be in the root directory.
+	#[cfg(not(feature = "cxx"))]
+	{
+		println!("cargo:rerun-if-changed=.millenniumrc");
+		println!("cargo:rerun-if-changed=.millenniumrc.json");
+		#[cfg(feature = "config-json5")]
+		println!("cargo:rerun-if-changed=.millenniumrc.json5");
+	}
 
 	let config: Config = if let Ok(env) = std::env::var("MILLENNIUM_CONFIG") {
 		serde_json::from_str(&env)?
@@ -238,7 +242,7 @@ pub fn try_build(attributes: Attributes) -> Result<()> {
 		}
 	}
 
-	#[cfg(windows)]
+	#[cfg(all(windows, not(feature = "cxx")))]
 	{
 		use anyhow::Context;
 		use winres::WindowsResource;
