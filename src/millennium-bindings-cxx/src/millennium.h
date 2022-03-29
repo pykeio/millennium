@@ -17,6 +17,22 @@
 #ifndef _MILLENNIUM_H__
 #define _MILLENNIUM_H__
 
+/** Pattern scanning functions **/
+
 #define MillenniumCommand(x) x
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef void *MillenniumBuilder;
+
+extern MillenniumBuilder *millennium_builder_new(void);
+
+extern void *millennium_builder_run(MillenniumBuilder *builder);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

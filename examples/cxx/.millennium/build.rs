@@ -28,6 +28,16 @@
 //! ```
 //!
 //! To build a release build (with size optimizations), run `cargo build --release`.
+//!
+//! On Windows, you need to link to the following libraries:
+//! ```plaintext
+//! user32.lib kernel32.lib gdi32.lib shell32.lib advapi32.lib bcrypt.lib ws2_32.lib imm32.lib userenv.lib oleaut32.lib
+//! dwmapi.lib comctl32.lib uxtheme.lib WebView2LoaderStatic.lib
+//! ```
+//!
+//! WebView2LoaderStatic.lib can be found in the `Microsoft.Web.WebView2` NuGet package, which you can download
+//! at https://www.nuget.org/packages/Microsoft.Web.WebView2/. The library is found under `build/native/{arch}/`, and
+//! you can use 7-Zip to extract it from the nupkg file.
 
 /// The path to your .millenniumrc config file relative to the `build.rs` file. For most projects, this is
 /// `../.millenniumrc`. Note that these bindings do **not** support platform-specific configuration files. If you need
