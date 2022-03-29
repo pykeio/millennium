@@ -26,7 +26,7 @@ use clap::Parser;
 use colored::Colorize;
 use serde::Deserialize;
 
-use crate::helpers::{config::get as get_config, framework::infer_from_package_json as infer_framework};
+use crate::helpers::{config::get as get_config};
 use crate::Result;
 
 #[derive(Deserialize)]
@@ -644,20 +644,6 @@ pub fn command(_options: Options) -> Result<()> {
 				.display();
 				InfoBlock::new("distDir", config.build.dist_dir.to_string()).display();
 				InfoBlock::new("devPath", config.build.dev_path.to_string()).display();
-			}
-		}
-
-		if let Some(app_dir) = app_dir {
-			if let Ok(package_json) = read_to_string(app_dir.join("package.json")) {
-				let (framework, bundler) = infer_framework(&package_json);
-				if let Some(framework) = framework {
-					InfoBlock::new("framework", framework.to_string()).display();
-				}
-				if let Some(bundler) = bundler {
-					InfoBlock::new("bundler", bundler.to_string()).display();
-				}
-			} else {
-				println!("package.json not found");
 			}
 		}
 	}

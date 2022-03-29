@@ -55,11 +55,12 @@ tempfile = "3"
 zeroize = "1.5"
 glob = "0.3"
 heck = "0.4"
-dialoguer = "0.10"
 url = { version = "2.2", features = [ "serde" ] }
 os_pipe = "1"
 ignore = "0.4"
 ctrlc = "3.2"
+inquire = "0.2"
+phf = { version = "0.10", features = ["macros"] }
 
 [target."cfg(windows)".dependencies]
 encode_unicode = "0.3"

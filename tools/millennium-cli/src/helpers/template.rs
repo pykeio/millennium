@@ -16,18 +16,108 @@
 
 use std::{
 	collections::BTreeMap,
+	fmt::{Display, Formatter},
 	fs::{create_dir_all, File},
 	io::Write,
-	path::Path
+	path::Path,
+	str::FromStr
 };
 
 use handlebars::Handlebars;
 use include_dir::Dir;
 
-pub fn render<P: AsRef<Path>>(handlebars: &Handlebars<'_>, data: &BTreeMap<&str, serde_json::Value>, dir: &Dir<'_>, out_dir: P) -> crate::Result<()> {
-	create_dir_all(out_dir.as_ref().join(dir.path()))?;
+#[derive(Debug, Copy, Clone)]
+pub enum Template {
+	Basic,
+	Intermediate,
+	Advanced,
+	BasicCxx,
+	React,
+	Preact,
+	PreactWmr,
+	Svelte,
+	Vue
+}
+
+impl Template {
+	pub const VARIANTS: &'static [Template] = &[
+		Template::Basic,
+		Template::Intermediate,
+		Template::Advanced,
+		Template::BasicCxx,
+		Template::React,
+		Template::Preact,
+		Template::PreactWmr,
+		Template::Svelte,
+		Template::Vue
+	];
+
+	pub fn id(self) -> String {
+		match self {
+			Template::Basic => "basic",
+			Template::Intermediate => "intermediate",
+			Template::Advanced => "advanced",
+			Template::BasicCxx => "basic-cxx",
+			Template::React => "react",
+			Template::Preact => "preact",
+			Template::PreactWmr => "preact-wmr",
+			Template::Svelte => "svelte",
+			Template::Vue => "vue"
+		}
+		.to_string()
+	}
+}
+
+impl FromStr for Template {
+	type Err = String;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		match s {
+			"basic" => Ok(Template::Basic),
+			"intermediate" => Ok(Template::Intermediate),
+			"advanced" => Ok(Template::Advanced),
+			"basic-cxx" => Ok(Template::BasicCxx),
+			"react" => Ok(Template::React),
+			"preact" => Ok(Template::Preact),
+			"preact-wmr" => Ok(Template::PreactWmr),
+			"svelte" => Ok(Template::Svelte),
+			"vue" => Ok(Template::Vue),
+			_ => Err(format!("Unknown template: {}", s))
+		}
+	}
+}
+
+impl Display for Template {
+	fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+		write!(
+			f,
+			"{}",
+			match self {
+				Template::Basic => "Basic",
+				Template::Intermediate => "Intermediate",
+				Template::Advanced => "Advanced",
+				Template::BasicCxx => "Basic (via C++ bindings)",
+				Template::React => "React (w/ react-scripts)",
+				Template::Preact => "Preact (w/ esbuild)",
+				Template::PreactWmr => "Preact (w/ WMR)",
+				Template::Svelte => "Svelte",
+				Template::Vue => "Vue"
+			}
+		)
+	}
+}
+
+pub fn render<P: AsRef<Path>>(
+	handlebars: &Handlebars<'_>,
+	data: &BTreeMap<&str, serde_json::Value>,
+	dir: &Dir<'_>,
+	out_dir: P,
+	base: &str
+) -> crate::Result<()> {
+	let dir_path = dir.path().strip_prefix(base).unwrap();
+	create_dir_all(out_dir.as_ref().join(dir_path))?;
 	for file in dir.files() {
-		let mut file_path = file.path().to_path_buf();
+		let mut file_path = file.path().strip_prefix(base).unwrap().to_path_buf();
 		// cargo for some reason ignores the /templates folder packaging when it has a Cargo.toml file inside
 		// so we rename the extension to `.crate-manifest`
 		if let Some(extension) = file_path.extension() {
@@ -45,7 +135,7 @@ pub fn render<P: AsRef<Path>>(handlebars: &Handlebars<'_>, data: &BTreeMap<&str,
 		}
 	}
 	for dir in dir.dirs() {
-		render(handlebars, data, dir, out_dir.as_ref())?;
+		render(handlebars, data, dir, out_dir.as_ref(), base)?;
 	}
 	Ok(())
 }

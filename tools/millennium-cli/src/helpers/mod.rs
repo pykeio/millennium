@@ -16,7 +16,6 @@
 
 pub mod app_paths;
 pub mod config;
-pub mod framework;
 mod logger;
 pub mod manifest;
 pub mod template;

@@ -141,7 +141,7 @@ pub fn command(mut options: Options) -> Result<()> {
 			);
 		}
 
-		template::render(&handlebars, &data, if options.api { &API_PLUGIN_DIR } else { &BACKEND_PLUGIN_DIR }, &template_target_path)
+		template::render(&handlebars, &data, if options.api { &API_PLUGIN_DIR } else { &BACKEND_PLUGIN_DIR }, &template_target_path, "")
 			.with_context(|| "failed to render Millennium> template")?;
 	}
 	Ok(())

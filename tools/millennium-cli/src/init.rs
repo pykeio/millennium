@@ -14,28 +14,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{
-	collections::BTreeMap,
-	env::current_dir,
-	fmt::Display,
-	fs::{read_to_string, remove_dir_all},
-	path::PathBuf,
-	str::FromStr
-};
+use std::fs::{create_dir_all, File};
+use std::io::Write;
+use std::{collections::BTreeMap, env::current_dir, path::PathBuf};
 
 use anyhow::Context;
 use clap::Parser;
-use dialoguer::Input;
+use colored::Colorize;
 use handlebars::{to_json, Handlebars};
 use include_dir::{include_dir, Dir};
-use serde::Deserialize;
+use inquire::{Select, Text};
 
+use crate::helpers::template::Template;
 use crate::Result;
 use crate::{
-	helpers::{
-		framework::{infer_from_package_json as infer_framework, Framework},
-		resolve_millennium_path, template, Logger
-	},
+	helpers::{resolve_millennium_path, template, Logger},
 	VersionMetadata
 };
 
@@ -60,6 +53,9 @@ pub struct Options {
 	/// Path of the Millennium project to use (relative to the cwd)
 	#[clap(short, long)]
 	millennium_path: Option<PathBuf>,
+	/// Name of the template to use
+	#[clap(short, long)]
+	template: Option<Template>,
 	/// Name of your Millennium application
 	#[clap(short = 'A', long)]
 	app_name: Option<String>,
@@ -74,55 +70,56 @@ pub struct Options {
 	dev_path: Option<String>
 }
 
-#[derive(Deserialize)]
-struct PackageJson {
-	name: Option<String>,
-	product_name: Option<String>
-}
-
-#[derive(Default)]
-struct InitDefaults {
-	app_name: Option<String>,
-	framework: Option<Framework>
-}
-
 impl Options {
 	fn load(mut self) -> Result<Self> {
 		self.ci = self.ci || std::env::var("CI").is_ok();
-		let package_json_path = PathBuf::from(&self.directory).join("package.json");
 
-		let init_defaults = if package_json_path.exists() {
-			let package_json_text = read_to_string(package_json_path)?;
-			let package_json: PackageJson = serde_json::from_str(&package_json_text)?;
-			let (framework, _) = infer_framework(&package_json_text);
-			InitDefaults {
-				app_name: package_json.product_name.or(package_json.name),
-				framework
+		self.template = self.template.map(|s| Ok(Some(s))).unwrap_or_else(|| {
+			let text = Select::new("What template would you like to use?", Template::VARIANTS.to_vec());
+			match text.prompt() {
+				Ok(name) => Ok(Some(name)),
+				Err(e) => Err(e)
 			}
-		} else {
-			Default::default()
-		};
+		})?;
 
-		self.app_name = self
-			.app_name
-			.map(|s| Ok(Some(s)))
-			.unwrap_or_else(|| request_input("What is the name of your app?", init_defaults.app_name.clone(), self.ci))?;
+		self.app_name = self.app_name.map(|s| Ok(Some(s))).unwrap_or_else(|| {
+			let text = Text::new("What is the name of your app?")
+				.with_help_message("This is the identifier of your app and should contain only alphanumeric characters, underscores, and dashes.");
+			match text.prompt() {
+				Ok(name) => Ok(Some(name)),
+				Err(e) => Err(e)
+			}
+		})?;
 
-		self.window_title = self
-			.window_title
-			.map(|s| Ok(Some(s)))
-			.unwrap_or_else(|| request_input("What should the window title be?", init_defaults.app_name.clone(), self.ci))?;
+		self.window_title = self.window_title.map(|s| Ok(Some(s))).unwrap_or_else(|| {
+			let text = Text::new("What should the window title be?")
+				.with_help_message("This is the human-readable name of your app that will be shown as the window title and can contain any characters.");
+			match text.prompt() {
+				Ok(name) => Ok(Some(name)),
+				Err(e) => Err(e)
+			}
+		})?;
 
 		self.dist_dir = self.dist_dir.map(|s| Ok(Some(s))).unwrap_or_else(|| {
-			request_input(
-				r#"Where are your web assets (HTML/CSS/JS) located, relative to <current dir>? (usually dist)"#,
-				init_defaults.framework.as_ref().map(|f| f.dist_dir()),
-				self.ci
-			)
+			let text = Text::new("Where are your web assets (HTML/CSS/JS) located?")
+				.with_default("dist")
+				.with_help_message(
+					"This is the path to your compiled web assets relative to the app root (usually dist), or for static sites, the path to the site contents."
+				);
+			match text.prompt() {
+				Ok(name) => Ok(Some(name)),
+				Err(e) => Err(e)
+			}
 		})?;
 
 		self.dev_path = self.dev_path.map(|s| Ok(Some(s))).unwrap_or_else(|| {
-			request_input("What is the URL of your development server? (for hot reloading)", init_defaults.framework.map(|f| f.dev_path()), self.ci)
+			let text = Text::new("What is the URL of your development server?")
+				.with_default("http://localhost:3000")
+				.with_help_message("If you're using a build tool with support for hot reloading, this is the URL of your dev server.\nOtherwise, set this to be the same path as your web assets entered previously.");
+			match text.prompt() {
+				Ok(name) => Ok(Some(name)),
+				Err(e) => Err(e)
+			}
 		})?;
 
 		Ok(self)
@@ -141,8 +138,8 @@ pub fn command(mut options: Options) -> Result<()> {
 	} else {
 		let (millennium_dep, millennium_build_dep) = if let Some(millennium_path) = options.millennium_path {
 			(
-				format!(r#"{{  path = {:?}, features = [ "api-all" ] }}"#, resolve_millennium_path(&millennium_path, "src/millennium")),
-				format!("{{  path = {:?} }}", resolve_millennium_path(&millennium_path, "src/millennium-build"))
+				format!(r#"{{ path = {:?}, features = [ "api-all" ] }}"#, resolve_millennium_path(&millennium_path, "src/millennium")),
+				format!("{{ path = {:?} }}", resolve_millennium_path(&millennium_path, "src/millennium-build"))
 			)
 		} else {
 			(
@@ -151,7 +148,6 @@ pub fn command(mut options: Options) -> Result<()> {
 			)
 		};
 
-		let _ = remove_dir_all(&template_target_path);
 		let handlebars = Handlebars::new();
 
 		let mut data = BTreeMap::new();
@@ -162,29 +158,18 @@ pub fn command(mut options: Options) -> Result<()> {
 		data.insert("app_name", to_json(options.app_name.unwrap_or_else(|| "Millennium App".to_string())));
 		data.insert("window_title", to_json(options.window_title.unwrap_or_else(|| "Millennium App".to_string())));
 
-		template::render(&handlebars, &data, &TEMPLATE_DIR, &options.directory).with_context(|| "failed to render Millennium template")?;
-	}
+		let template_id = options.template.unwrap_or(Template::Basic).id();
+		let template_id = template_id.as_str();
+		template::render(&handlebars, &data, TEMPLATE_DIR.get_dir(template_id).unwrap(), &options.directory, template_id)
+			.with_context(|| "failed to render Millennium template")?;
 
-	Ok(())
-}
-
-fn request_input<T>(prompt: &str, default: Option<T>, skip: bool) -> Result<Option<T>>
-where
-	T: Clone + FromStr + Display + ToString,
-	T::Err: Display + std::fmt::Debug
-{
-	if skip {
-		Ok(default)
-	} else {
-		let theme = dialoguer::theme::ColorfulTheme::default();
-		let mut builder = Input::with_theme(&theme);
-		builder.with_prompt(prompt);
-
-		if let Some(v) = default {
-			builder.default(v.clone());
-			builder.with_initial_text(v.to_string());
+		create_dir_all(PathBuf::from(&options.directory).join("icons"))?;
+		for file in TEMPLATE_DIR.get_dir(".icons").unwrap().files() {
+			let mut output_file = File::create(PathBuf::from(&options.directory).join("icons").join(file.path().file_name().unwrap()))?;
+			output_file.write_all(file.contents())?;
 		}
-
-		builder.interact_text().map(Some).map_err(Into::into)
 	}
+
+	println!("{}", "Your app is ready! Happy coding! 🎉".bold().blue());
+	Ok(())
 }
