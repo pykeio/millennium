@@ -50,14 +50,14 @@ use crate::{
 	runtime::{
 		http::{MimeType, Request as HttpRequest, Response as HttpResponse, ResponseBuilder as HttpResponseBuilder},
 		webview::{WebviewIpcHandler, WindowBuilder},
-		window::{dpi::PhysicalSize, DetachedWindow, FileDropEvent, PendingWindow}
+		window::{dpi::PhysicalSize, DetachedWindow, FileDropEvent, PendingWindow, WindowEvent}
 	},
 	utils::{
 		assets::Assets,
 		config::{AppUrl, Config, WindowUrl},
 		PackageInfo
 	},
-	Context, EventLoopMessage, Icon, Invoke, Manager, Pattern, Runtime, Scopes, StateManager, Window, WindowEvent
+	Context, EventLoopMessage, Icon, Invoke, Manager, Pattern, Runtime, Scopes, StateManager, Window
 };
 use crate::{runtime::menu::Menu, MenuEvent};
 
@@ -1108,9 +1108,9 @@ fn on_window_event<R: Runtime>(window: &Window<R>, manager: &WindowManager<R>, e
 	match event {
 		WindowEvent::Resized(size) => window.emit(WINDOW_RESIZED_EVENT, size)?,
 		WindowEvent::Moved(position) => window.emit(WINDOW_MOVED_EVENT, position)?,
-		WindowEvent::CloseRequested { api } => {
+		WindowEvent::CloseRequested { label: _, signal_tx } => {
 			if window.has_js_listener(Some(window.label().into()), WINDOW_CLOSE_REQUESTED_EVENT) {
-				api.prevent_close();
+				signal_tx.send(true).unwrap();
 			}
 			window.emit(WINDOW_CLOSE_REQUESTED_EVENT, ())?;
 		}
@@ -1147,7 +1147,8 @@ fn on_window_event<R: Runtime>(window: &Window<R>, manager: &WindowManager<R>, e
 			}
 			FileDropEvent::Cancelled => window.emit("millennium://file-drop-cancelled", ())?,
 			_ => unimplemented!()
-		}
+		},
+		_ => unimplemented!()
 	}
 	Ok(())
 }

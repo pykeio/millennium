@@ -46,14 +46,14 @@ use crate::{
 		webview::{WebviewAttributes, WindowBuilder as _},
 		window::{
 			dpi::{PhysicalPosition, PhysicalSize, Position, Size},
-			DetachedWindow, JsEventListenerKey, PendingWindow
+			DetachedWindow, JsEventListenerKey, PendingWindow, WindowEvent
 		},
 		Dispatch, RuntimeHandle, UserAttentionType
 	},
 	sealed::ManagerBase,
 	sealed::RuntimeOrDispatch,
 	utils::config::WindowUrl,
-	EventLoopMessage, Icon, Invoke, InvokeError, InvokeMessage, InvokeResolver, Manager, PageLoadPayload, Runtime, WindowEvent
+	EventLoopMessage, Icon, Invoke, InvokeError, InvokeMessage, InvokeResolver, Manager, PageLoadPayload, Runtime
 };
 
 #[derive(Clone, Serialize)]
@@ -680,7 +680,7 @@ impl<R: Runtime> Window<R> {
 
 	/// Registers a window event listener.
 	pub fn on_window_event<F: Fn(&WindowEvent) + Send + 'static>(&self, f: F) {
-		self.window.dispatcher.on_window_event(move |event| f(&event.clone().into()));
+		self.window.dispatcher.on_window_event(f);
 	}
 
 	/// Registers a menu event listener.

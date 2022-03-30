@@ -247,7 +247,7 @@ pub use {
 	self::window::menu::MenuEvent
 };
 pub use {
-	self::app::{App, AppHandle, AssetResolver, Builder, CloseRequestApi, GlobalWindowEvent, PathResolver, RunEvent, WindowEvent},
+	self::app::{App, AppHandle, AssetResolver, Builder, CloseRequestApi, GlobalWindowEvent, PathResolver, RunEvent},
 	self::hooks::{
 		Invoke, InvokeError, InvokeHandler, InvokeMessage, InvokePayload, InvokeResolver, InvokeResponder, InvokeResponse, OnPageLoad, PageLoadPayload,
 		SetupHook
@@ -257,7 +257,7 @@ pub use {
 		webview::{WebviewAttributes, WindowBuilder},
 		window::{
 			dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize, Pixel, Position, Size},
-			FileDropEvent
+			FileDropEvent, WindowEvent
 		},
 		ClipboardManager, GlobalShortcutManager, RunIteration, TrayIcon, UserAttentionType
 	},
