@@ -94,9 +94,6 @@ pub enum RunEvent {
 	/// The app is about to exit
 	#[non_exhaustive]
 	ExitRequested {
-		/// The label of the window that requested the exit.
-		/// It is the last window managed by Millennium.
-		window_label: String,
 		/// Event API
 		api: ExitRequestApi
 	},
@@ -1285,10 +1282,7 @@ fn on_event_loop_event<R: Runtime, F: FnMut(&AppHandle<R>, RunEvent) + 'static>(
 
 	let event = match event {
 		RuntimeRunEvent::Exit => RunEvent::Exit,
-		RuntimeRunEvent::ExitRequested { window_label, tx } => RunEvent::ExitRequested {
-			window_label,
-			api: ExitRequestApi(tx)
-		},
+		RuntimeRunEvent::ExitRequested { tx } => RunEvent::ExitRequested { api: ExitRequestApi(tx) },
 		RuntimeRunEvent::CloseRequested { label, signal_tx } => RunEvent::CloseRequested {
 			label,
 			api: CloseRequestApi(signal_tx)
