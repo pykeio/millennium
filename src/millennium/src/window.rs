@@ -230,7 +230,7 @@ impl<R: Runtime> WindowBuilder<R> {
 	pub fn build(mut self) -> crate::Result<Window<R>> {
 		let web_resource_request_handler = self.web_resource_request_handler.take();
 		let pending = PendingWindow::new(self.window_builder.clone(), self.webview_attributes.clone(), self.label.clone())?;
-		let labels = self.manager.labels().into_iter().collect::<Vec<_>>();
+		let labels = self.manager().labels().into_iter().collect::<Vec<_>>();
 		let pending = self
 			.manager()
 			.prepare_window(self.managed_app_handle(), pending, &labels, web_resource_request_handler)?;

@@ -368,7 +368,7 @@ pub struct WebView {
 
 // Signal the Window to drop on Linux and Windows. On mac, we need to handle
 // several unsafe code blocks and raw pointer properly.
-#[cfg(any(target_os = "linu", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))]
+#[cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))]
 impl Drop for WebView {
 	fn drop(&mut self) {
 		unsafe {
