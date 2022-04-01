@@ -854,7 +854,17 @@ pub struct SecurityConfig {
 	/// Allow the use of notifications without prompting the user for
 	/// permission.
 	#[serde(default)]
-	pub allow_notifications: bool
+	pub allow_notifications: bool,
+	/// Disables the Millennium-injected CSP sources.
+	///
+	/// At compile time, Millennium parses all the frontend assets and changes the Content-Security-Policy
+	/// to only allow loading of your own scripts and styles by injecting nonce and hash sources.
+	/// This stricts your CSP, which may introduce issues when using along with other flexing sources.
+	///
+	/// **WARNING:** Only disable this if you know what you are doing and have properly configured the CSP.
+	/// Your application might be vulnerable to XSS attacks without Millennium's protection.
+	#[serde(default)]
+	pub dangerous_disable_asset_csp_modification: bool
 }
 
 /// Defines an allowlist type.
@@ -2646,8 +2656,9 @@ mod build {
 			let dev_csp = opt_lit(self.dev_csp.as_ref());
 			let freeze_prototype = self.freeze_prototype;
 			let allow_notifications = self.allow_notifications;
+			let dangerous_disable_asset_csp_modification = self.dangerous_disable_asset_csp_modification;
 
-			literal_struct!(tokens, SecurityConfig, csp, dev_csp, freeze_prototype, allow_notifications);
+			literal_struct!(tokens, SecurityConfig, csp, dev_csp, freeze_prototype, allow_notifications, dangerous_disable_asset_csp_modification);
 		}
 	}
 
@@ -2880,7 +2891,8 @@ mod test {
 				csp: None,
 				dev_csp: None,
 				freeze_prototype: false,
-				allow_notifications: false
+				allow_notifications: false,
+				dangerous_disable_asset_csp_modification: false
 			},
 			allowlist: AllowlistConfig::default(),
 			system_tray: None,

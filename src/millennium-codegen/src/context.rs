@@ -38,8 +38,6 @@ pub struct ContextData {
 }
 
 fn load_csp(document: &mut NodeRef, key: &AssetKey, csp_hashes: &mut CspHashes) {
-	#[cfg(target_os = "linux")]
-	::millennium_utils::html::inject_csp_token(document);
 	inject_nonce_token(document);
 	if let Ok(inline_script_elements) = document.select("script:not(empty)") {
 		let mut scripts = Vec::new();
@@ -58,21 +56,28 @@ fn map_core_assets(options: &AssetOptions) -> impl Fn(&AssetKey, &Path, &mut Vec
 	#[cfg(feature = "isolation")]
 	let pattern = millennium_utils::html::PatternObject::from(&options.pattern);
 	let csp = options.csp;
+	let dangerous_disable_asset_csp_modification = options.dangerous_disable_asset_csp_modification;
 	move |key, path, input, csp_hashes| {
 		if path.extension() == Some(OsStr::new("html")) {
 			let mut document = parse_html(String::from_utf8_lossy(input).into_owned());
 
+			#[cfg_attr(not(target_os = "linux"), allow(clippy::collapsible_if))]
 			if csp {
-				load_csp(&mut document, key, csp_hashes);
+				#[cfg(target_os = "linux")]
+				::millennium_utils::html::inject_csp_token(&mut document);
 
-				#[cfg(feature = "isolation")]
-				if let millennium_utils::html::PatternObject::Isolation { .. } = &pattern {
-					// create the csp for the isolation iframe styling now, to make the runtime less
-					// complex
-					let mut hasher = Sha256::new();
-					hasher.update(millennium_utils::pattern::isolation::IFRAME_STYLE);
-					let hash = hasher.finalize();
-					csp_hashes.styles.push(format!("'sha256-{}'", base64::encode(&hash)));
+				if !dangerous_disable_asset_csp_modification {
+					load_csp(&mut document, key, csp_hashes);
+
+					#[cfg(feature = "isolation")]
+					if let millennium_utils::html::PatternObject::Isolation { .. } = &pattern {
+						// create the csp for the isolation iframe styling now, to make the runtime less
+						// complex
+						let mut hasher = Sha256::new();
+						hasher.update(millennium_utils::pattern::isolation::IFRAME_STYLE);
+						let hash = hasher.finalize();
+						csp_hashes.styles.push(format!("'sha256-{}'", base64::encode(&hash)));
+					}
 				}
 			}
 
@@ -133,11 +138,11 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 				if !assets_path.exists() {
 					panic!("The `{}` configuration is set to `{:?}` but this path doesn't exist", if dev { "devPath" } else { "distDir" }, path)
 				}
-				EmbeddedAssets::new(assets_path, map_core_assets(&options))?
+				EmbeddedAssets::new(assets_path, &options, map_core_assets(&options))?
 			}
 			_ => unimplemented!()
 		},
-		AppUrl::Files(files) => EmbeddedAssets::new(files.iter().map(|p| config_parent.join(p)).collect::<Vec<_>>(), map_core_assets(&options))?,
+		AppUrl::Files(files) => EmbeddedAssets::new(files.iter().map(|p| config_parent.join(p)).collect::<Vec<_>>(), &options, map_core_assets(&options))?,
 		_ => unimplemented!()
 	};
 
@@ -253,7 +258,7 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 			}
 
 			let key = uuid::Uuid::new_v4().to_string();
-			let assets = EmbeddedAssets::new(dir.clone(), map_isolation(&options, dir))?;
+			let assets = EmbeddedAssets::new(dir.clone(), &options, map_isolation(&options, dir))?;
 			let schema = options.isolation_schema;
 
 			quote!(#root::Pattern::Isolation {
