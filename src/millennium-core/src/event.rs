@@ -299,6 +299,11 @@ pub enum WindowEvent<'a> {
 
 	/// The position of the window has changed. Contains the window's new
 	/// position.
+	///
+	/// ## Platform-specific
+	///
+	/// - **Linux (Wayland)**: The position will always be (0, 0) since Wayland doesn't support a global coordinate
+	///   system.
 	Moved(PhysicalPosition<i32>),
 
 	/// The window has been requested to close.
