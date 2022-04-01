@@ -1768,27 +1768,29 @@ unsafe fn public_window_callback_inner<T: 'static>(
 		}
 
 		win32wm::WM_NCHITTEST => {
-			if let Some(state) = subclass_input.window_state.try_lock() {
-				let win_flags = state.window_flags();
+			if !util::is_maximized(window) {
+				if let Some(state) = subclass_input.window_state.try_lock() {
+					let win_flags = state.window_flags();
 
-				// Only apply this hit test for borderless windows that wants to be resizable
-				if !win_flags.contains(WindowFlags::DECORATIONS) {
-					// cursor location
-					let (cx, cy) = (i32::from(util::GET_X_LPARAM(lparam)), i32::from(util::GET_Y_LPARAM(lparam)));
+					// Only apply this hit test for borderless windows that wants to be resizable
+					if !win_flags.contains(WindowFlags::DECORATIONS) {
+						// cursor location
+						let (cx, cy) = (i32::from(util::GET_X_LPARAM(lparam)), i32::from(util::GET_Y_LPARAM(lparam)));
 
-					result = ProcResult::Value(crate::platform_impl::hit_test(window, cx, cy));
-				} else if !win_flags.contains(WindowFlags::RESIZABLE) {
-					// we need WS_THICKFRAME for borders when decorations are enabled, but this
-					// conflicts with resizable: false. this will prevent resizing (at least via the
-					// borders) when resizing is disabled
-					let mut window_rect = RECT::default();
-					if GetWindowRect(window, <*mut _>::cast(&mut window_rect)).as_bool() {
-						result = ProcResult::Value(LRESULT(HTCLIENT as _));
+						result = ProcResult::Value(crate::platform_impl::hit_test(window, cx, cy));
+					} else if !win_flags.contains(WindowFlags::RESIZABLE) {
+						// we need WS_THICKFRAME for borders when decorations are enabled, but this
+						// conflicts with resizable: false. this will prevent resizing (at least via the
+						// borders) when resizing is disabled
+						let mut window_rect = RECT::default();
+						if GetWindowRect(window, <*mut _>::cast(&mut window_rect)).as_bool() {
+							result = ProcResult::Value(LRESULT(HTCLIENT as _));
+						} else {
+							result = ProcResult::Value(LRESULT(HTNOWHERE as _));
+						}
 					} else {
-						result = ProcResult::Value(LRESULT(HTNOWHERE as _));
+						result = ProcResult::DefSubclassProc;
 					}
-				} else {
-					result = ProcResult::DefSubclassProc;
 				}
 			}
 		}
