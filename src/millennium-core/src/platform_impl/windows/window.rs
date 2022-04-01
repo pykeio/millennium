@@ -875,7 +875,7 @@ unsafe fn init<T: 'static>(
 }
 
 unsafe fn register_window_class(window_icon: &Option<Icon>, taskbar_icon: &Option<Icon>) -> Vec<u16> {
-	let mut class_name = util::to_wstring("Window Class");
+	let mut class_name = util::encode_wide("Window Class");
 
 	let h_icon = taskbar_icon.as_ref().map(|icon| icon.inner.as_raw_handle()).unwrap_or_default();
 	let h_icon_small = window_icon.as_ref().map(|icon| icon.inner.as_raw_handle()).unwrap_or_default();

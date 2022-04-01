@@ -15,7 +15,9 @@
 // limitations under the License.
 
 use std::{
-	io, mem,
+	io,
+	iter::once,
+	mem,
 	ops::BitAnd,
 	os::windows::prelude::OsStrExt,
 	ptr, slice,
@@ -57,8 +59,8 @@ pub fn wchar_ptr_to_string(wchar: PWSTR) -> String {
 	wchar_to_string(wchar_slice)
 }
 
-pub fn to_wstring(str: &str) -> Vec<u16> {
-	std::ffi::OsStr::new(str).encode_wide().chain(Some(0).into_iter()).collect()
+pub fn encode_wide(string: impl AsRef<std::ffi::OsStr>) -> Vec<u16> {
+	string.as_ref().encode_wide().chain(once(0)).collect()
 }
 
 pub unsafe fn status_map<T, F: FnMut(&mut T) -> BOOL>(mut fun: F) -> Option<T> {

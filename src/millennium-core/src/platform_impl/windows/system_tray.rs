@@ -62,7 +62,7 @@ impl SystemTrayBuilder {
 	pub fn build<T: 'static>(self, window_target: &EventLoopWindowTarget<T>) -> Result<RootSystemTray, RootOsError> {
 		let hmenu: Option<HMENU> = self.tray_menu.map(|m| m.hmenu());
 
-		let mut class_name = util::to_wstring("millennium_system_tray_app");
+		let mut class_name = util::encode_wide("millennium_system_tray_app");
 		unsafe {
 			let hinstance = GetModuleHandleA(PSTR::default());
 
