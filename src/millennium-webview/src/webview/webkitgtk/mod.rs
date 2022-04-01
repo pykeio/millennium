@@ -116,7 +116,7 @@ impl InnerWebView {
 				if let Some(window) = widget.parent() {
 					// Safe to unwrap unless this is not from Millennium Core
 					let window: gtk::Window = window.downcast().unwrap();
-					if !window.is_decorated() && window.is_resizable() {
+					if !window.is_decorated() && window.is_resizable() && !window.is_maximized() {
 						if let Some(window) = window.window() {
 							let (cx, cy) = event.root();
 							let edge = hit_test(&window, cx, cy);
