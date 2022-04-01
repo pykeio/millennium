@@ -144,7 +144,7 @@
 //! millennium::Builder::default().setup(|app| {
 //! 	let handle = app.handle();
 //! 	millennium::async_runtime::spawn(async move {
-//! 		let response = handle.check_for_updates().await;
+//! 		let response = handle.updater().check().await;
 //! 	});
 //! 	Ok(())
 //! });
@@ -206,7 +206,7 @@
 //! millennium::Builder::default().setup(|app| {
 //! 	let handle = app.handle();
 //! 	millennium::async_runtime::spawn(async move {
-//! 		match handle.check_for_updates().await {
+//! 		match handle.updater().check().await {
 //! 			Ok(update) => {
 //! 				if update.is_update_available() {
 //! 					update.download_and_install().await.unwrap();
@@ -399,8 +399,6 @@
 //! The signature can be found in the `sig` file. The signature can be uploaded
 //! to GitHub safely or made public as long as your private key is secure.
 //!
-//! You can see how it's [bundled with the CI](https://github.com/tauri-apps/tauri/blob/feature/new_updater/.github/workflows/artifacts-updater.yml#L44) and a [sample .millenniumrc](https://github.com/tauri-apps/tauri/blob/feature/new_updater/examples/updater/src-tauri/tauri.conf.json#L52)
-//!
 //! ## macOS
 //!
 //! On MACOS we create a .tar.gz from the whole application. (.app)
@@ -551,6 +549,111 @@ struct UpdateManifest {
 	body: String
 }
 
+/// An update check builder.
+#[derive(Debug)]
+pub struct UpdateBuilder<R: Runtime> {
+	inner: core::UpdateBuilder<R>,
+	events: bool
+}
+
+impl<R: Runtime> UpdateBuilder<R> {
+	/// Do not use the event system to emit information or listen to install the update.
+	pub fn skip_events(mut self) -> Self {
+		self.events = false;
+		self
+	}
+
+	/// Set the target name. Represents the string that is looked up on the updater API or response JSON.
+	pub fn target(mut self, target: impl Into<String>) -> Self {
+		self.inner = self.inner.target(target);
+		self
+	}
+
+	/// Sets a closure that is invoked to compare the current version and the latest version returned by the updater
+	/// server. The first argument is the current version, and the second one is the latest version.
+	///
+	/// The closure must return `true` if the update should be installed.
+	///
+	/// # Examples
+	///
+	/// - Always install the version returned by the server:
+	///
+	/// ```no_run
+	/// millennium::Builder::default().setup(|app| {
+	/// 	millennium::updater::builder(app.handle()).should_install(|_current, _latest| true);
+	/// 	Ok(())
+	/// });
+	/// ```
+	pub fn should_install<F: FnOnce(&str, &str) -> bool + Send + 'static>(mut self, f: F) -> Self {
+		self.inner = self.inner.should_install(f);
+		self
+	}
+
+	/// Check if an update is available.
+	///
+	/// # Examples
+	///
+	/// ```no_run
+	/// millennium::Builder::default().setup(|app| {
+	/// 	let handle = app.handle();
+	/// 	millennium::async_runtime::spawn(async move {
+	/// 		match millennium::updater::builder(handle).check().await {
+	/// 			Ok(update) => {}
+	/// 			Err(error) => {}
+	/// 		}
+	/// 	});
+	/// 	Ok(())
+	/// });
+	/// ```
+	pub async fn check(self) -> Result<UpdateResponse<R>> {
+		let handle = self.inner.app.clone();
+		let events = self.events;
+		// check updates
+		match self.inner.build().await {
+			Ok(update) => {
+				if events {
+					// send notification if we need to update
+					if update.should_update {
+						let body = update.body.clone().unwrap_or_else(|| String::from(""));
+
+						// Emit `millennium://update-available`
+						let _ = handle.emit_all(
+							EVENT_UPDATE_AVAILABLE,
+							UpdateManifest {
+								body: body.clone(),
+								date: update.date.clone(),
+								version: update.version.clone()
+							}
+						);
+						let _ = handle.create_proxy().send_event(EventLoopMessage::Updater(UpdaterEvent::UpdateAvailable {
+							body,
+							date: update.date.clone(),
+							version: update.version.clone()
+						}));
+
+						// Listen for `millennium://update-install`
+						let update_ = update.clone();
+						handle.once_global(EVENT_INSTALL_UPDATE, move |_msg| {
+							crate::async_runtime::spawn(async move {
+								let _ = download_and_install(update_).await;
+							});
+						});
+					} else {
+						send_status_update(&handle, UpdaterEvent::AlreadyUpToDate);
+					}
+				}
+				Ok(UpdateResponse { update })
+			}
+			Err(e) => {
+				if self.events {
+					send_status_update(&handle, UpdaterEvent::Error(e.to_string()));
+				}
+				Err(e)
+			}
+		}
+	}
+}
+
 /// The response of an updater check.
 pub struct UpdateResponse<R: Runtime> {
 	update: core::Update<R>
@@ -627,7 +730,7 @@ pub(crate) fn listener<R: Runtime>(handle: AppHandle<R>) {
 	handle.listen_global(EVENT_CHECK_UPDATE, move |_msg| {
 		let handle_ = handle_.clone();
 		crate::async_runtime::spawn(async move {
-			let _ = check(handle_.clone()).await;
+			let _ = builder(handle_.clone()).check().await;
 		});
 	});
 }
@@ -658,7 +761,8 @@ pub(crate) async fn download_and_install<R: Runtime>(update: core::Update<R>) ->
 	update_result
 }
 
-pub(crate) async fn check<R: Runtime>(handle: AppHandle<R>) -> Result<UpdateResponse<R>> {
+/// Initializes the [`UpdateBuilder`] using the app configuration.
+pub fn builder<R: Runtime>(handle: AppHandle<R>) -> UpdateBuilder<R> {
 	let updater_config = &handle.config().millennium.updater;
 	let package_info = handle.package_info().clone();
 
@@ -678,43 +782,7 @@ pub(crate) async fn check<R: Runtime>(handle: AppHandle<R>) -> Result<UpdateResp
 		builder = builder.target(target);
 	}
 
-	match builder.build().await {
-		Ok(update) => {
-			// send notification if we need to update
-			if update.should_update {
-				let body = update.body.clone().unwrap_or_else(|| String::from(""));
-
-				let _ = handle.emit_all(
-					EVENT_UPDATE_AVAILABLE,
-					UpdateManifest {
-						body: body.clone(),
-						date: update.date.clone(),
-						version: update.version.clone()
-					}
-				);
-				let _ = handle.create_proxy().send_event(EventLoopMessage::Updater(UpdaterEvent::UpdateAvailable {
-					body,
-					date: update.date.clone(),
-					version: update.version.clone()
-				}));
-
-				// Listen for `millennium://update-install` event
-				let update_ = update.clone();
-				handle.once_global(EVENT_INSTALL_UPDATE, move |_msg| {
-					crate::async_runtime::spawn(async move {
-						let _ = download_and_install(update_).await;
-					});
-				});
-			} else {
-				send_status_update(&handle, UpdaterEvent::AlreadyUpToDate);
-			}
-			Ok(UpdateResponse { update })
-		}
-		Err(e) => {
-			send_status_update(&handle, UpdaterEvent::Error(e.to_string()));
-			Err(e)
-		}
-	}
+	UpdateBuilder { inner: builder, events: true }
 }
 
 // Send a status update via `millennium://update-download-progress` event.
