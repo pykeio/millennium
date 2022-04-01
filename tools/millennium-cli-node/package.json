@@ -1,6 +1,6 @@
 {
   "name": "@pyke/millennium-cli",
-  "version": "0.0.0-dev.1",
+  "version": "0.0.0-dev.2",
   "description": "Command line interface for building Millennium apps",
   "funding": {
     "type": "opencollective",
@@ -56,14 +56,14 @@
     "millennium": "node ./millennium.js"
   },
   "optionalDependencies": {
-    "@pyke/millennium-cli-win32-x64-msvc": "0.0.0-dev.1",
-    "@pyke/millennium-cli-darwin-x64": "0.0.0-dev.1",
-    "@pyke/millennium-cli-linux-x64-gnu": "0.0.0-dev.1",
-    "@pyke/millennium-cli-darwin-arm64": "0.0.0-dev.1",
-    "@pyke/millennium-cli-linux-arm64-gnu": "0.0.0-dev.1",
-    "@pyke/millennium-cli-linux-arm64-musl": "0.0.0-dev.1",
-    "@pyke/millennium-cli-linux-arm-gnueabihf": "0.0.0-dev.1",
-    "@pyke/millennium-cli-linux-x64-musl": "0.0.0-dev.1",
-    "@pyke/millennium-cli-win32-ia32-msvc": "0.0.0-dev.1"
+    "@pyke/millennium-cli-win32-x64-msvc": "0.0.0-dev.2",
+    "@pyke/millennium-cli-darwin-x64": "0.0.0-dev.2",
+    "@pyke/millennium-cli-linux-x64-gnu": "0.0.0-dev.2",
+    "@pyke/millennium-cli-darwin-arm64": "0.0.0-dev.2",
+    "@pyke/millennium-cli-linux-arm64-gnu": "0.0.0-dev.2",
+    "@pyke/millennium-cli-linux-arm64-musl": "0.0.0-dev.2",
+    "@pyke/millennium-cli-linux-arm-gnueabihf": "0.0.0-dev.2",
+    "@pyke/millennium-cli-linux-x64-musl": "0.0.0-dev.2",
+    "@pyke/millennium-cli-win32-ia32-msvc": "0.0.0-dev.2"
   }
 }

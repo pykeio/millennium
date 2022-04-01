@@ -1,6 +1,6 @@
 {
   "name": "@pyke/millennium-cli-win32-ia32-msvc",
-  "version": "0.0.0-dev.1",
+  "version": "0.0.0-dev.2",
   "publishConfig": {
     "access": "public"
   },

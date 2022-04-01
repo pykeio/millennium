@@ -1,6 +1,6 @@
 {
   "name": "@pyke/millennium-cli-linux-x64-musl",
-  "version": "0.0.0-dev.1",
+  "version": "0.0.0-dev.2",
   "publishConfig": {
     "access": "public"
   },
