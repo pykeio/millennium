@@ -517,19 +517,16 @@ impl InnerWebView {
 		let _ = unsafe { self.controller.MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC) };
 	}
 
-	/// Open the web inspector/devtools.
 	#[cfg(any(debug_assertions, feature = "devtools"))]
 	pub fn open_devtools(&self) {
 		let _ = unsafe { self.webview.OpenDevToolsWindow() };
 	}
 
-	/// Close the web inspector/devtools.
 	#[cfg(any(debug_assertions, feature = "devtools"))]
 	pub fn close_devtools(&self) {
 		// unsupported
 	}
 
-	/// Gets the devtool window's current visibility state.
 	#[cfg(any(debug_assertions, feature = "devtools"))]
 	pub fn is_devtools_open(&self) -> bool {
 		false // unsupported

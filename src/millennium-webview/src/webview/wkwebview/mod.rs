@@ -492,11 +492,6 @@ impl InnerWebView {
 
 	pub fn focus(&self) {}
 
-	/// Open the web inspector/devtools.
-	///
-	/// ## Platform-specific
-	///
-	/// - **iOS:** Not implemented.
 	#[cfg(any(debug_assertions, feature = "devtools"))]
 	pub fn open_devtools(&self) {
 		#[cfg(target_os = "macos")]
@@ -507,11 +502,6 @@ impl InnerWebView {
 		}
 	}
 
-	/// Close the web inspector/devtools.
-	///
-	/// ## Platform-specific
-	///
-	/// - **iOS:** Not supported.
 	#[cfg(any(debug_assertions, feature = "devtools"))]
 	pub fn close_devtools(&self) {
 		#[cfg(target_os = "macos")]
@@ -522,11 +512,6 @@ impl InnerWebView {
 		}
 	}
 
-	/// Gets the devtool window's current vibility state.
-	///
-	/// ## Platform-specific
-	///
-	/// - **iOS:** Not supported.
 	#[cfg(any(debug_assertions, feature = "devtools"))]
 	pub fn is_devtools_open(&self) -> bool {
 		#[cfg(target_os = "macos")]

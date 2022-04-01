@@ -69,10 +69,9 @@
 //! by default.
 //! - `ayatana`: Enable this if you wish to use more update `libayatana-appindicator` since
 //! `libappindicator` is no longer maintained.
-//! - `devtool`: Enable devtool on **macOS** requires calling private functions. While it's still
-//! enabled in **debug** build on mac, it will require this feature flag to
-//! actually enable it in **release** build. Avoid this in release build if your
-//! app needs to publish to App Store.
+//! - `devtools`: Enables devtools in release builds. Devtools are always enabled in debug builds.
+//! On macOS, enabling devtools requires calling private functions, so you should avoid using this in release builds if
+//! your app needs to be published to the App Store.
 //! - `transparent`: Transparent background on **macOS** requires calling private functions.
 //! Avoid this in release build if your app needs to publish to App Store.
 //! - `fullscreen`: Fullscreen video and other media on **macOS** requires calling private functions.
