@@ -2,9 +2,8 @@
 millennium = { version = "1.0.0-beta.1", path = "../../../src/millennium", features = [
 	# Put your Millennium features here #
 ] }
-libc = "0.2"
-anyhow = "1.0"
 thiserror = "1.0"
+serde_json = "1.0"
 
 [profile.release]
 panic = "abort"

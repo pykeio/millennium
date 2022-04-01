@@ -31,6 +31,8 @@ extern MillenniumBuilder *millennium_builder_new(void);
 
 extern void *millennium_builder_run(MillenniumBuilder *builder);
 
+extern MillenniumBuilder *millennium_builder_setup(MillenniumBuilder *builder, void (*setup)(void *app));
+
 #ifdef __cplusplus
 }
 #endif
