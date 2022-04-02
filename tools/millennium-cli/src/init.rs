@@ -133,8 +133,8 @@ pub fn command(mut options: Options) -> Result<()> {
 	let template_target_path = PathBuf::from(&options.directory);
 	let metadata = serde_json::from_str::<VersionMetadata>(include_str!("../metadata.json"))?;
 
-	if template_target_path.exists() && template_target_path.read_dir().map(|mut i| i.next().is_none()).unwrap_or(false) && !options.force {
-		logger.warn(format!("Directory ({:?}) not empty. Run `init --force` to overwrite.", template_target_path));
+	if template_target_path.exists() && !template_target_path.read_dir().map(|mut i| i.next().is_none()).unwrap_or(false) && !options.force {
+		logger.warn(format!("Target directory ({:?}) is not empty. Run `init --force` to overwrite.", template_target_path));
 	} else {
 		let (millennium_dep, millennium_build_dep) = if let Some(millennium_path) = options.millennium_path {
 			(
