@@ -15,6 +15,11 @@
 extern crate millennium;
 extern crate serde_json;
 
+use std::{
+	mem, ptr,
+	sync::{Arc, Mutex}
+};
+
 use thiserror::Error;
 
 // The following section contains code from `ffi-helpers`: https://github.com/Michael-F-Bryan/ffi_helpers
@@ -113,12 +118,13 @@ impl Nullable for () {
 #[macro_export]
 macro_rules! null_pointer_check {
 	($ptr:expr) => {
-		null_pointer_check!($ptr, Nullable::NULL)
+		null_pointer_check!($ptr, crate::Nullable::NULL)
 	};
 	($ptr:expr, $null:expr) => {{
 		#[allow(unused_imports)]
-		if <_ as Nullable>::is_null(&$ptr) {
-			update_last_error(NullPointer);
+		if <_ as crate::Nullable>::is_null(&$ptr) {
+			println!("null pointer");
+			// update_last_error(crate::NullPointer);
 			return $null;
 		}
 	}};
@@ -131,35 +137,124 @@ pub struct NullPointer;
 
 /////////////////////////////// end MIT code ///////////////////////////////
 
+struct OnDrop<F: FnOnce()>(mem::ManuallyDrop<F>);
+
+impl<F: FnOnce()> Drop for OnDrop<F> {
+	#[inline(always)]
+	fn drop(&mut self) {
+		(unsafe { ptr::read(&*self.0) })();
+	}
+}
+
+#[inline(always)]
+fn on_unwind<F: FnOnce() -> T, T, P: FnOnce()>(f: F, p: P) -> T {
+	let x = OnDrop(mem::ManuallyDrop::new(p));
+	let t = f();
+	let mut x = mem::ManuallyDrop::new(x);
+	unsafe { mem::ManuallyDrop::drop(&mut x.0) };
+	t
+}
+
+/// Temporarily takes ownership of a value at a mutable location, and replace it with a new value
+/// based on the old one. Aborts on panic.
+///
+/// We move out of the reference temporarily, to apply a closure `f`, returning a new value, which
+/// is then placed at the original value's location.
+///
+/// # Safety
+///
+/// It is crucial to only ever use this function having defined `panic = "abort"`, or else bad
+/// things may happen.
+#[inline]
+pub fn replace_with<T, V, F>(v: *mut V, f: F)
+where
+	F: FnOnce(T) -> T
+{
+	let v = v as *mut T;
+
+	unsafe {
+		let old = ptr::read(v);
+		let new = on_unwind(
+			move || f(old),
+			#[allow(clippy::redundant_closure)]
+			|| std::process::abort()
+		);
+		ptr::write(v, new);
+	};
+}
+
+#[repr(C)]
+struct OpaqueContainer(Arc<Mutex<Option<*mut std::ffi::c_void>>>);
+
+impl OpaqueContainer {
+	pub fn get(&self) -> *mut std::ffi::c_void {
+		let mut lock = self.0.lock().unwrap();
+		let ptr = lock.as_mut().take().unwrap();
+		*ptr
+	}
+}
+
+unsafe impl Send for OpaqueContainer {}
+unsafe impl Sync for OpaqueContainer {}
+
 mod millennium_builder {
 	use std::os::raw::*;
+	use std::sync::{Arc, Mutex};
+
+	#[repr(C)]
+	pub struct BuilderFFI(());
 
 	#[no_mangle]
-	pub extern "C" fn millennium_builder_new() -> *mut millennium::Builder<millennium::MillenniumWebview> {
+	pub extern "C" fn millennium_builder_new() -> *mut BuilderFFI {
 		let builder = millennium::Builder::default();
-		let builder_ptr = Box::into_raw(Box::new(builder));
-		builder_ptr
+		Box::into_raw(Box::new(builder)) as _
 	}
 
 	#[no_mangle]
-	pub extern "C" fn millennium_builder_run(builder_ptr: *mut millennium::Builder<millennium::MillenniumWebview>) -> *mut c_void {
-		let builder = unsafe { Box::from_raw(builder_ptr) };
-		let result = builder.run(millennium::generate_context!("$rc_path"));
-		let result_ptr = Box::into_raw(Box::new(result));
-		result_ptr as *mut c_void
+	pub unsafe extern "C" fn millennium_builder_run(builder_ptr: *mut BuilderFFI) {
+		null_pointer_check!(builder_ptr);
+
+		let builder = builder_ptr as *mut millennium::Builder<millennium::MillenniumWebview>;
+		let builder = builder.read();
+		let _ = builder.run(millennium::generate_context!("$rc_path"));
 	}
 
 	#[no_mangle]
 	pub unsafe extern "C" fn millennium_builder_setup(
-		builder_ptr: *mut millennium::Builder<millennium::MillenniumWebview>,
-		callback: unsafe extern "C" fn(*mut millennium::App)
-	) -> *mut millennium::Builder<millennium::MillenniumWebview> {
-		let builder = Box::from_raw(builder_ptr);
-		*builder_ptr = builder.setup(move |app| {
-			callback(app);
-			Ok(())
+		builder_ptr: *mut BuilderFFI,
+		callback: unsafe extern "C" fn(*mut c_void, *mut millennium::App),
+		opaque: *mut c_void
+	) {
+		null_pointer_check!(builder_ptr);
+
+		let opaque = super::OpaqueContainer(Arc::new(Mutex::new(Some(opaque))));
+		super::replace_with::<millennium::Builder<millennium::MillenniumWebview>, _, _>(builder_ptr, |builder| {
+			builder.setup(move |app| {
+				callback(opaque.get(), app);
+				Ok(())
+			})
 		});
-		builder_ptr
+	}
+
+	#[no_mangle]
+	pub unsafe extern "C" fn millennium_builder_invoke_handler(
+		builder_ptr: *mut BuilderFFI,
+		callback: unsafe extern "C" fn(*mut c_void, *mut super::millennium_invoke::MillenniumInvoke),
+		opaque: *mut c_void
+	) {
+		null_pointer_check!(builder_ptr);
+
+		let opaque = super::OpaqueContainer(Arc::new(Mutex::new(Some(opaque))));
+		super::replace_with::<millennium::Builder<millennium::MillenniumWebview>, _, _>(builder_ptr, |builder| {
+			builder.invoke_handler(move |invoke| {
+				let mut invoke = super::millennium_invoke::MillenniumInvoke {
+					message: Box::into_raw(Box::new(invoke.message)),
+					resolver: Box::into_raw(Box::new(invoke.resolver))
+				};
+
+				callback(opaque.get(), &mut invoke);
+			})
+		});
 	}
 }
 
@@ -174,30 +269,25 @@ mod millennium_invoke {
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn millennium_invoke_message_command(
-		invoke_message_ptr: *mut millennium::InvokeMessage<millennium::MillenniumWebview>
-	) -> *const c_char {
-		let invoke_message = Box::from_raw(invoke_message_ptr);
+	pub extern "C" fn millennium_invoke_message_command(invoke_message_ptr: *mut millennium::InvokeMessage<millennium::MillenniumWebview>) -> *const c_char {
+		let invoke_message = unsafe { Box::from_raw(invoke_message_ptr) };
 		let command = invoke_message.command();
 		let command_cstring = CString::new(command).expect("CString failed in millennium_invoke_message_command");
 		command_cstring.into_raw()
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn millennium_invoke_message_window(
+	pub extern "C" fn millennium_invoke_message_window(
 		invoke_message_ptr: *mut millennium::InvokeMessage<millennium::MillenniumWebview>
 	) -> *mut millennium::window::Window<millennium::MillenniumWebview> {
-		let invoke_message = Box::from_raw(invoke_message_ptr);
+		let invoke_message = unsafe { Box::from_raw(invoke_message_ptr) };
 		let window = invoke_message.window();
-		let window_ptr = Box::into_raw(Box::new(window));
-		window_ptr
+		Box::into_raw(Box::new(window))
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn millennium_invoke_message_payload(
-		invoke_message_ptr: *mut millennium::InvokeMessage<millennium::MillenniumWebview>
-	) -> *const c_char {
-		let invoke_message = Box::from_raw(invoke_message_ptr);
+	pub extern "C" fn millennium_invoke_message_payload(invoke_message_ptr: *mut millennium::InvokeMessage<millennium::MillenniumWebview>) -> *const c_char {
+		let invoke_message = unsafe { Box::from_raw(invoke_message_ptr) };
 		let payload = invoke_message.payload();
 		let payload = serde_json::to_string(&payload).unwrap();
 		let payload_cstring = CString::new(payload).expect("CString failed in millennium_invoke_message_payload");
@@ -209,8 +299,8 @@ mod millennium_window {
 	use std::os::raw::*;
 
 	#[no_mangle]
-	pub unsafe extern "C" fn millennium_window_label(window_ptr: *mut millennium::window::Window<millennium::MillenniumWebview>) -> *const c_char {
-		let window = Box::from_raw(window_ptr);
+	pub extern "C" fn millennium_window_label(window_ptr: *mut millennium::window::Window<millennium::MillenniumWebview>) -> *const c_char {
+		let window = unsafe { Box::from_raw(window_ptr) };
 		let label = window.label();
 		let label_ptr = Box::into_raw(Box::new(label));
 		label_ptr as *const c_char

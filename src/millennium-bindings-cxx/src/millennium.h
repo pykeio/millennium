@@ -27,11 +27,20 @@ extern "C" {
 
 typedef void *MillenniumBuilder;
 
-extern MillenniumBuilder *millennium_builder_new(void);
+typedef struct MillenniumInvoke {
+	void *message;
+	void *resolver;
+} MillenniumInvoke;
 
-extern void *millennium_builder_run(MillenniumBuilder *builder);
+extern MillenniumBuilder millennium_builder_new(void);
 
-extern MillenniumBuilder *millennium_builder_setup(MillenniumBuilder *builder, void (*setup)(void *app));
+extern void millennium_builder_run(MillenniumBuilder builder);
+
+extern void millennium_builder_setup(MillenniumBuilder builder, void (*setup)(void *opaque, void *app), void *opaque);
+
+extern void millennium_builder_invoke_handler(MillenniumBuilder builder, void (*handler)(void *opaque, MillenniumInvoke *invoke), void *opaque);
+
+extern const char *millennium_invoke_message_command(void *message);
 
 #ifdef __cplusplus
 }
