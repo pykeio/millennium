@@ -1,0 +1,19 @@
+{
+	"name": "create-millennium",
+	"version": "0.0.0-dev.1",
+	"description": "Get started with a Millennium application in a few simple steps ⚡",
+	"license": "Apache-2.0 OR MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/pykeio/millennium.git"
+	},
+	"bugs": {
+		"url": "https://github.com/pykeio/millennium/issues"
+	},
+	"homepage": "https://github.com/pykeio/millennium#readme",
+	"main": "index.js",
+	"bin": "index.js",
+	"dependencies": {
+		"@pyke/millennium-cli": "*"
+	}
+}

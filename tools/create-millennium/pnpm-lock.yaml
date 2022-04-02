@@ -1,0 +1,97 @@
+lockfileVersion: 5.3
+
+specifiers:
+  '@pyke/millennium-cli': '*'
+
+dependencies:
+  '@pyke/millennium-cli': 0.0.0-dev.2
+
+packages:
+
+  /@pyke/millennium-cli-darwin-arm64/0.0.0-dev.2:
+    resolution: {integrity: sha512-8jUAOvecV7kGImCv4G9FAcwa/JfC5evdPfhuORgATxSwvnN31C7FTBIn9jm/tsoJ2rOn+4jj5Wr87+1+kAJdsw==}
+    engines: {node: '>=10'}
+    os: [darwin]
+    requiresBuild: true
+    dev: false
+    optional: true
+
+  /@pyke/millennium-cli-darwin-x64/0.0.0-dev.2:
+    resolution: {integrity: sha512-fL7QBbAKtcm1m5FKi0eCupqIJApKYsO8I+G4oDK+ZaPo6KhMaztQIr7fWl0b2FH5iexZMHL0I5hHtLZ/qv2YjQ==}
+    engines: {node: '>=10'}
+    os: [darwin]
+    requiresBuild: true
+    dev: false
+    optional: true
+
+  /@pyke/millennium-cli-linux-arm-gnueabihf/0.0.0-dev.2:
+    resolution: {integrity: sha512-v6UJnVeFxLvJjYJHigQJnduUEuLBhXiJ7LkQ4l8kQwaDZJfWSuWFPlDwMoBQfFZTTK0Mwg4enASMCCDYUYUq7g==}
+    engines: {node: '>=10'}
+    os: [linux]
+    requiresBuild: true
+    dev: false
+    optional: true
+
+  /@pyke/millennium-cli-linux-arm64-gnu/0.0.0-dev.2:
+    resolution: {integrity: sha512-umQO1lxLVZS9wCdJWyXUiRtuWzOmm7f1cbBvL/EoSP6vaBLyufGTcNGLSbL/mn2hmYld0agov1k6smZzTBuymA==}
+    engines: {node: '>=10'}
+    os: [linux]
+    requiresBuild: true
+    dev: false
+    optional: true
+
+  /@pyke/millennium-cli-linux-arm64-musl/0.0.0-dev.2:
+    resolution: {integrity: sha512-IiKhQsuqU8PDTfvYQH7UCIJf8sh3GFeZKZ9veFr7lVEt6VuSMEtjNx2KxyqaFCjBfnO+Di6YRAV958mdLG234A==}
+    engines: {node: '>=10'}
+    os: [linux]
+    requiresBuild: true
+    dev: false
+    optional: true
+
+  /@pyke/millennium-cli-linux-x64-gnu/0.0.0-dev.2:
+    resolution: {integrity: sha512-Uk/v8BidMnxiksAmqy/5OWoPcZBjOcdvpKp5GqD/PulWxQBqTm3AF5uwQ39Z9ExswHDI1YxKDXIO2XMPZeQFMw==}
+    engines: {node: '>=10'}
+    os: [linux]
+    requiresBuild: true
+    dev: false
+    optional: true
+
+  /@pyke/millennium-cli-linux-x64-musl/0.0.0-dev.2:
+    resolution: {integrity: sha512-Tcwnlct6YGxIULR3xVFK7CoAoJZH2pVjBkvtEnKqCxgWKkXhfJ2XON5wYC17DMj8qRgqFe5WlufNZv1YIRyZQg==}
+    engines: {node: '>=10'}
+    os: [linux]
+    requiresBuild: true
+    dev: false
+    optional: true
+
+  /@pyke/millennium-cli-win32-ia32-msvc/0.0.0-dev.2:
+    resolution: {integrity: sha512-jGemudOgChX+FJ3bQetMprLe3gMDFSuhpAnMaZXDA5ikPgsks6sWmS9zHx4UqHTV9+NNt455LOucsLx4G7avDg==}
+    engines: {node: '>=10'}
+    os: [win32]
+    requiresBuild: true
+    dev: false
+    optional: true
+
+  /@pyke/millennium-cli-win32-x64-msvc/0.0.0-dev.2:
+    resolution: {integrity: sha512-BXpzG6Mfhbp7zQeWWmvhHESPo+l0eULiWisaF1H5941SVwlzh4paffcNq/hmg5vWIKfcCpObUIMLaV1URTeSfg==}
+    engines: {node: '>=10'}
+    os: [win32]
+    requiresBuild: true
+    dev: false
+    optional: true
+
+  /@pyke/millennium-cli/0.0.0-dev.2:
+    resolution: {integrity: sha512-aXzxLiXeC0ZF6j+j6eBoTrm54SOF/g9TG30bqzkbYWqXE+XkWhn0jN4RXiB6SUhvsb1AQmaENdpdp/6HQpEYQQ==}
+    engines: {node: '>= 10'}
+    hasBin: true
+    optionalDependencies:
+      '@pyke/millennium-cli-darwin-arm64': 0.0.0-dev.2
+      '@pyke/millennium-cli-darwin-x64': 0.0.0-dev.2
+      '@pyke/millennium-cli-linux-arm-gnueabihf': 0.0.0-dev.2
+      '@pyke/millennium-cli-linux-arm64-gnu': 0.0.0-dev.2
+      '@pyke/millennium-cli-linux-arm64-musl': 0.0.0-dev.2
+      '@pyke/millennium-cli-linux-x64-gnu': 0.0.0-dev.2
+      '@pyke/millennium-cli-linux-x64-musl': 0.0.0-dev.2
+      '@pyke/millennium-cli-win32-ia32-msvc': 0.0.0-dev.2
+      '@pyke/millennium-cli-win32-x64-msvc': 0.0.0-dev.2
+    dev: false
