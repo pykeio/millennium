@@ -1,7 +1,7 @@
 [package]
 name = "millennium"
 description = "Create consistent, light, & secure apps that work on all platforms, using HTML, CSS, and JavaScript"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 license = "Apache-2.0 OR MIT"
 readme = "README.md"
 repository = "https://github.com/pykeio/millennium"
@@ -49,10 +49,10 @@ url = { version = "2.2" }
 anyhow = "1.0"
 thiserror = "1.0"
 once_cell = "1.10"
-millennium-runtime = { version = "1.0.0-beta.1", path = "../millennium-runtime" }
-millennium-macros = { version = "1.0.0-beta.1", path = "../millennium-macros" }
-millennium-utils = { version = "1.0.0-beta.1", path = "../millennium-utils" }
-millennium-runtime-webview = { version = "1.0.0-beta.1", path = "../millennium-runtime-webview", optional = true }
+millennium-runtime = { version = "1.0.0-beta.2", path = "../millennium-runtime" }
+millennium-macros = { version = "1.0.0-beta.2", path = "../millennium-macros" }
+millennium-utils = { version = "1.0.0-beta.2", path = "../millennium-utils" }
+millennium-runtime-webview = { version = "1.0.0-beta.2", path = "../millennium-runtime-webview", optional = true }
 rand = "0.8"
 semver = "1.0"
 serde_repr = "0.1"

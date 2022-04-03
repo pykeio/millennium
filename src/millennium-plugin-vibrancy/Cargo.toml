@@ -1,7 +1,7 @@
 [package]
 name = "millennium-plugin-vibrancy"
 description = "Vibrancy & acrylic effects for Millennium"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 license = "Apache-2.0 OR MIT"
 readme = "README.md"
 repository = "https://github.com/pykeio/millennium"
@@ -20,7 +20,7 @@ targets = [ "x86_64-apple-darwin", "x86_64-pc-windows-msvc" ]
 raw-window-handle = "0.4"
 
 [dev-dependencies]
-millennium-core = { version = "1.0.0-beta.1", path = "../millennium-core" }
+millennium-core = { version = "1.0.0-beta.2", path = "../millennium-core" }
 
 [target."cfg(target_os = \"windows\")".dependencies.windows-sys]
 version = "0.34.0"

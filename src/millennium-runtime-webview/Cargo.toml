@@ -1,7 +1,7 @@
 [package]
 name = "millennium-runtime-webview"
 description = "Millennium Webview bindings to the Millennium runtime"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 license = "Apache-2.0 OR MIT"
 readme = "README.md"
 repository = "https://github.com/pykeio/millennium"
@@ -17,9 +17,9 @@ exclude = [
 ]
 
 [dependencies]
-millennium-webview = { version = "1.0.0-beta.1", path = "../millennium-webview", default-features = false, features = [ "file-drop", "protocol" ] }
-millennium-runtime = { version = "1.0.0-beta.1", path = "../millennium-runtime" }
-millennium-utils = { version = "1.0.0-beta.1", path = "../millennium-utils" }
+millennium-webview = { version = "1.0.0-beta.2", path = "../millennium-webview", default-features = false, features = [ "file-drop", "protocol" ] }
+millennium-runtime = { version = "1.0.0-beta.2", path = "../millennium-runtime" }
+millennium-utils = { version = "1.0.0-beta.2", path = "../millennium-utils" }
 uuid = { version = "0.8.2", features = [ "v4" ] }
 rand = "0.8"
 

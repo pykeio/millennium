@@ -2,7 +2,7 @@
 publish = false
 name = "millennium-bindings-cxx"
 description = "Make tiny, secure apps for all desktop platforms"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 license = "Apache-2.0 OR MIT"
 readme = "README.md"
 repository = "https://github.com/pykeio/millennium"
@@ -18,4 +18,4 @@ exclude = [
 
 [dependencies]
 regex = "1.5"
-millennium = { version = "1.0.0-beta.1", path = "../millennium" }
+millennium = { version = "1.0.0-beta.2", path = "../millennium" }
