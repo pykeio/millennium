@@ -13,10 +13,10 @@ include = [
 	"src/",
 	"/templates",
 	"MergeModules/",
+	"scripts/",
 	"*.json",
 	"*.rs",
-	"millennium.gitignore",
-	"vswhere.exe"
+	"millennium.gitignore"
 ]
 
 [[bin]]
