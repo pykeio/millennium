@@ -5,7 +5,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/vsDark');
 /** @type {import('@docusaurus/types').Config} */
 const config = {
 	title: 'Millennium',
-	tagline: 'Millennium is an experimental cross-platform GUI framework written in Rust. With Millennium, you can design consistent UI that works across all platforms, using HTML, CSS, and JavaScript.',
+	tagline: 'Millennium is a cross-platform GUI framework written in Rust. With Millennium, you can design consistent UI that works across all platforms, using HTML, CSS, and JavaScript.',
 	url: 'https://millennium.pyke.io',
 	baseUrl: '/',
 	onBrokenLinks: 'throw',
@@ -22,7 +22,7 @@ const config = {
 				docs: {
 					path: 'docs',
 					sidebarPath: require.resolve('./sidebars.js'),
-					editUrl: 'https://github.com/pykeio/millennium/edit/master/docs/',
+					editUrl: 'https://github.com/pykeio/millennium/edit/main/docs/',
 					versions: {
 						current: {
 							label: 'current'
@@ -32,9 +32,13 @@ const config = {
 					showLastUpdateAuthor: true,
 					showLastUpdateTime: true
 				},
+				sitemap: {
+					changefreq: 'weekly',
+					priority: 0.5
+				},
 				blog: {
 					showReadingTime: true,
-					editUrl: 'https://github.com/facebook/docusaurus/edit/master/docs/'
+					editUrl: 'https://github.com/pykeio/millennium/edit/main/docs/'
 				},
 				theme: {
 					customCss: require.resolve('./src/css/custom.css'),
@@ -42,7 +46,42 @@ const config = {
 			})
 		]
 	],
-	plugins: ['@millennium/image-loader', '@millennium/tailwind-loader'],
+	plugins: [
+		'@millennium/image-loader',
+		'@millennium/tailwind-loader',
+		[
+			'@docusaurus/plugin-pwa',
+			{
+				offlineModeActivationStrategies: [
+					'appInstalled',
+					'standalone',
+					'queryString'
+				],
+				pwaHead: [
+					{
+						tagName: 'link',
+						rel: 'icon',
+						href: '/img/millennium.png'
+					},
+					{
+						tagName: 'link',
+						rel: 'apple-touch-icon',
+						href: '/img/app-icon.png'
+					},
+					{
+						tagName: 'link',
+						rel: 'manifest',
+						href: '/manifest.json'
+					},
+					{
+						tagName: 'meta',
+						name: 'theme-color',
+						content: '#605b94'
+					}
+				]
+			}
+		]
+	],
 	themeConfig:
 		/** @type {import('@docusaurus/preset-classic').ThemeConfig} */
 		({
@@ -66,9 +105,16 @@ const config = {
 					},
 
 					{
+						href: 'https://discord.gg/CETPevXFgD',
+						position: 'right',
+						className: 'header-discord-link',
+						alt: 'Discord server'
+					},
+					{
 						href: 'https://github.com/pykeio/millennium',
 						position: 'right',
-						className: 'header-github-link'
+						className: 'header-github-link',
+						alt: 'GitHub repository'
 					}
 				]
 			},
@@ -84,7 +130,7 @@ const config = {
 						items: [
 							{
 								label: 'Tutorial',
-								to: '/docs/intro',
+								to: '/docs/main/intro',
 							},
 						],
 					},
@@ -121,7 +167,8 @@ const config = {
 				],
 				logo: {
 					alt: 'Millennium Logo',
-					src: 'img/millennium.png'
+					src: 'img/millennium.png',
+					width: 75
 				},
 				copyright: `Copyright © ${new Date().getFullYear()} <a href="https://pyke.io" target="_blank">pyke.io</a>, made with ❤️`,
 			},

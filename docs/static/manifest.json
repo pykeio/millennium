@@ -1,0 +1,24 @@
+{
+	"short_name": "Millennium Docs",
+	"name": "Millennium: Docs & API Reference",
+	"icons": [
+		{
+			"src": "/img/millennium.png",
+			"type": "image/png",
+			"sizes": "1024x1024"
+		},
+		{
+			"src": "/img/app-icon.png",
+			"type": "image/png",
+			"sizes": "512x512",
+			"purpose": "maskable"
+		}
+	],
+	"start_url": "/docs/main/intro",
+	"background_color": "#18191a",
+	"display": "standalone",
+	"scope": "/",
+	"theme_color": "#605b94",
+	"shortcuts": [],
+	"description": "Millennium: Docs & API Reference"
+}

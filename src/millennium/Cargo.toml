@@ -1,6 +1,6 @@
 [package]
 name = "millennium"
-description = "Make tiny, secure apps for all desktop platforms"
+description = "Create consistent, light, & secure apps that work on all platforms, using HTML, CSS, and JavaScript"
 version = "1.0.0-beta.1"
 license = "Apache-2.0 OR MIT"
 readme = "README.md"
