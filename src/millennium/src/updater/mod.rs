@@ -495,6 +495,8 @@
 mod core;
 mod error;
 
+use std::time::Duration;
+
 pub use self::error::Error;
 /// Alias for [`std::result::Result`] using our own [`Error`].
 pub type Result<T> = std::result::Result<T, Error>;
@@ -592,6 +594,12 @@ impl<R: Runtime> UpdateBuilder<R> {
 	/// ```
 	pub fn should_install<F: FnOnce(&str, &str) -> bool + Send + 'static>(mut self, f: F) -> Self {
 		self.inner = self.inner.should_install(f);
+		self
+	}
+
+	/// Sets the timeout for the requests to the updater endpoints.
+	pub fn timeout(mut self, timeout: Duration) -> Self {
+		self.inner = self.inner.timeout(timeout);
 		self
 	}
 
