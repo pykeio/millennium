@@ -541,11 +541,17 @@ impl TryFrom<WindowIcon> for MillenniumIcon {
 struct WindowEventWrapper(Option<WindowEvent>);
 
 impl WindowEventWrapper {
-	fn parse(webview: &WindowHandle, event: &MillenniumWindowEvent<'_>) -> Self {
+	fn parse(webview: &Option<WindowHandle>, event: &MillenniumWindowEvent<'_>) -> Self {
 		match event {
 			// resized event from Millennium Core doesn't include a reliable size on macOS
 			// because Millennium Webview replaces the NSView
-			MillenniumWindowEvent::Resized(_) => Self(Some(WindowEvent::Resized(PhysicalSizeWrapper(webview.inner_size()).into()))),
+			MillenniumWindowEvent::Resized(_) => {
+				if let Some(webview) = webview {
+					Self(Some(WindowEvent::Resized(PhysicalSizeWrapper(webview.inner_size()).into())))
+				} else {
+					Self(None)
+				}
+			}
 			e => e.into()
 		}
 	}
@@ -1339,7 +1345,7 @@ impl WindowHandle {
 #[derive(Debug)]
 pub struct WindowWrapper {
 	label: String,
-	inner: WindowHandle,
+	inner: Option<WindowHandle>,
 	menu_items: Option<HashMap<u16, MillenniumCustomMenuItem>>
 }
 
@@ -1755,24 +1761,29 @@ fn handle_user_message<T: UserEvent>(
 	match message {
 		Message::Task(task) => task(),
 		Message::Window(id, window_message) => {
-			if let Some(webview) = windows.lock().expect("poisoned webview collection").get_mut(&id) {
-				let window = webview.inner.window();
+			if let Some((Some(window_handle), menu_items)) = windows
+				.lock()
+				.expect("poisoned webview collection")
+				.get_mut(&id)
+				.map(|w| (w.inner.as_ref(), &mut w.menu_items))
+			{
+				let window = window_handle.window();
 				match window_message {
 					#[cfg(any(debug_assertions, feature = "devtools"))]
 					WindowMessage::OpenDevTools => {
-						if let WindowHandle::Webview(w) = &webview.inner {
+						if let WindowHandle::Webview(w) = &window_handle {
 							w.open_devtools();
 						}
 					}
 					#[cfg(any(debug_assertions, feature = "devtools"))]
 					WindowMessage::CloseDevTools => {
-						if let WindowHandle::Webview(w) = &webview.inner {
+						if let WindowHandle::Webview(w) = &window_handle {
 							w.close_devtools();
 						}
 					}
 					#[cfg(any(debug_assertions, feature = "devtools"))]
 					WindowMessage::IsDevToolsOpen(tx) => {
-						if let WindowHandle::Webview(w) = &webview.inner {
+						if let WindowHandle::Webview(w) = &window_handle {
 							tx.send(w.is_devtools_open()).unwrap();
 						} else {
 							tx.send(false).unwrap();
@@ -1796,7 +1807,7 @@ fn handle_user_message<T: UserEvent>(
 								.map_err(|_| Error::FailedToSendMessage)
 						)
 						.unwrap(),
-					WindowMessage::InnerSize(tx) => tx.send(PhysicalSizeWrapper(webview.inner.inner_size()).into()).unwrap(),
+					WindowMessage::InnerSize(tx) => tx.send(PhysicalSizeWrapper(window_handle.inner_size()).into()).unwrap(),
 					WindowMessage::OuterSize(tx) => tx.send(PhysicalSizeWrapper(window.outer_size()).into()).unwrap(),
 					WindowMessage::IsFullscreen(tx) => tx.send(window.fullscreen().is_some()).unwrap(),
 					WindowMessage::IsMaximized(tx) => tx.send(window.is_maximized()).unwrap(),
@@ -1815,7 +1826,7 @@ fn handle_user_message<T: UserEvent>(
 					WindowMessage::GtkWindow(tx) => tx.send(GtkWindow(window.gtk_window().clone())).unwrap(),
 					// Setters
 					WindowMessage::Center(tx) => {
-						tx.send(center_window(window, webview.inner.inner_size())).unwrap();
+						tx.send(center_window(window, window_handle.inner_size())).unwrap();
 					}
 					WindowMessage::RequestUserAttention(request_type) => {
 						window.request_user_attention(request_type.map(|r| r.0));
@@ -1864,7 +1875,7 @@ fn handle_user_message<T: UserEvent>(
 						let _ = window.drag_window();
 					}
 					WindowMessage::UpdateMenuItem(id, update) => {
-						if let Some(menu_items) = webview.menu_items.as_mut() {
+						if let Some(menu_items) = menu_items.as_mut() {
 							let item = menu_items.get_mut(&id).expect("menu item not found");
 							match update {
 								MenuUpdate::SetEnabled(enabled) => item.set_enabled(enabled),
@@ -1883,7 +1894,12 @@ fn handle_user_message<T: UserEvent>(
 		}
 		Message::Webview(id, webview_message) => match webview_message {
 			WebviewMessage::EvaluateScript(script) => {
-				if let Some(WindowHandle::Webview(webview)) = windows.lock().expect("poisoned webview collection").get(&id).map(|w| &w.inner) {
+				if let Some(WindowHandle::Webview(webview)) = windows
+					.lock()
+					.expect("poisoned webview collection")
+					.get(&id)
+					.and_then(|w| w.inner.as_ref())
+				{
 					#[cfg_attr(not(debug_assertions), allow(unused_variables))]
 					if let Err(e) = webview.evaluate_script(&script) {
 						#[cfg(debug_assertions)]
@@ -1892,7 +1908,12 @@ fn handle_user_message<T: UserEvent>(
 				}
 			}
 			WebviewMessage::Print => {
-				if let Some(WindowHandle::Webview(webview)) = windows.lock().expect("poisoned webview collection").get(&id).map(|w| &w.inner) {
+				if let Some(WindowHandle::Webview(webview)) = windows
+					.lock()
+					.expect("poisoned webview collection")
+					.get(&id)
+					.and_then(|w| w.inner.as_ref())
+				{
 					let _ = webview.print();
 				}
 			}
@@ -1933,7 +1954,7 @@ fn handle_user_message<T: UserEvent>(
 					window_id,
 					WindowWrapper {
 						label,
-						inner: WindowHandle::Window(w.clone()),
+						inner: Some(WindowHandle::Window(w.clone())),
 						menu_items: Default::default()
 					}
 				);
@@ -2128,7 +2149,12 @@ fn handle_event_loop<T: UserEvent>(
 			// because we want to focus the webview as soon as possible, especially on
 			// windows.
 			if event == MillenniumWindowEvent::Focused(true) {
-				if let Some(WindowHandle::Webview(webview)) = windows.lock().expect("poisoned webview collection").get(&window_id).map(|w| &w.inner) {
+				if let Some(WindowHandle::Webview(webview)) = windows
+					.lock()
+					.expect("poisoned webview collection")
+					.get(&window_id)
+					.and_then(|w| w.inner.as_ref())
+				{
 					if webview.window().is_visible() {
 						webview.focus();
 					}
@@ -2154,20 +2180,27 @@ fn handle_event_loop<T: UserEvent>(
 					on_close_requested(callback, window_id, windows.clone(), window_event_listeners, menu_event_listeners.clone());
 				}
 				MillenniumWindowEvent::Destroyed => {
-					let is_empty = windows.lock().unwrap().is_empty();
-					if is_empty {
-						let (tx, rx) = channel();
-						callback(RunEvent::ExitRequested { tx });
+					if windows.lock().unwrap().remove(&window_id).is_some() {
+						let is_empty = windows.lock().unwrap().is_empty();
+						if is_empty {
+							let (tx, rx) = channel();
+							callback(RunEvent::ExitRequested { tx });
 
-						let recv = rx.try_recv();
-						let should_prevent = matches!(recv, Ok(ExitRequestedEventAction::Prevent));
-						if !should_prevent {
-							*control_flow = ControlFlow::Exit;
+							let recv = rx.try_recv();
+							let should_prevent = matches!(recv, Ok(ExitRequestedEventAction::Prevent));
+							if !should_prevent {
+								*control_flow = ControlFlow::Exit;
+							}
 						}
 					}
 				}
 				MillenniumWindowEvent::Resized(_) => {
-					if let Some(WindowHandle::Webview(webview)) = windows.lock().expect("poisoned webview collection").get(&window_id).map(|w| &w.inner) {
+					if let Some(WindowHandle::Webview(webview)) = windows
+						.lock()
+						.expect("poisoned webview collection")
+						.get(&window_id)
+						.and_then(|w| w.inner.as_ref())
+					{
 						#[cfg_attr(not(debug_assertions), allow(unused_variables))]
 						if let Err(e) = webview.resize() {
 							#[cfg(debug_assertions)]
@@ -2215,7 +2248,7 @@ fn on_close_requested<'a, T: UserEvent>(
 	windows: Arc<Mutex<HashMap<WebviewId, WindowWrapper>>>,
 	window_event_listeners: &WindowEventListeners,
 	menu_event_listeners: MenuEventListeners
-) -> Option<WindowWrapper> {
+) {
 	let (tx, rx) = channel();
 	let windows_guard = windows.lock().expect("poisoned webview collection");
 	if let Some(w) = windows_guard.get(&window_id) {
@@ -2229,28 +2262,17 @@ fn on_close_requested<'a, T: UserEvent>(
 			event: WindowEvent::CloseRequested { signal_tx: tx }
 		});
 		if let Ok(true) = rx.try_recv() {
-			None
 		} else {
-			on_window_close(window_id, windows.lock().expect("poisoned webview collection"), menu_event_listeners)
+			on_window_close(window_id, windows.lock().expect("poisoned webview collection"), menu_event_listeners);
 		}
-	} else {
-		None
 	}
 }
 
-fn on_window_close(
-	window_id: WebviewId,
-	mut windows: MutexGuard<'_, HashMap<WebviewId, WindowWrapper>>,
-	menu_event_listeners: MenuEventListeners
-) -> Option<WindowWrapper> {
-	#[allow(unused_mut)]
-	let w = if let Some(mut webview) = windows.remove(&window_id) {
+fn on_window_close(window_id: WebviewId, mut windows: MutexGuard<'_, HashMap<WebviewId, WindowWrapper>>, menu_event_listeners: MenuEventListeners) {
+	if let Some(mut window_wrapper) = windows.get_mut(&window_id) {
+		window_wrapper.inner = None;
 		menu_event_listeners.lock().unwrap().remove(&window_id);
-		Some(webview)
-	} else {
-		None
-	};
-	w
+	}
 }
 
 fn center_window(window: &Window, window_size: MillenniumPhysicalSize<u32>) -> Result<()> {
@@ -2417,7 +2439,7 @@ fn create_webview<T: UserEvent>(
 
 	Ok(WindowWrapper {
 		label,
-		inner: WindowHandle::Webview(webview),
+		inner: Some(WindowHandle::Webview(webview)),
 		menu_items
 	})
 }
