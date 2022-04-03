@@ -413,14 +413,12 @@ fn millennium_config_to_bundle_settings(
 		external_bin: config.external_bin,
 		deb: DebianSettings {
 			depends: if depends.is_empty() { None } else { Some(depends) },
-			use_bootstrapper: Some(config.deb.use_bootstrapper),
 			files: config.deb.files
 		},
 		macos: MacOsSettings {
 			frameworks: config.macos.frameworks,
 			minimum_system_version: config.macos.minimum_system_version,
 			license: config.macos.license,
-			use_bootstrapper: Some(config.macos.use_bootstrapper),
 			exception_domain: config.macos.exception_domain,
 			signing_identity,
 			provider_short_name,

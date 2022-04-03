@@ -104,9 +104,6 @@ impl BundleTarget {
 pub struct DebConfig {
 	/// The list of deb dependencies your application relies on.
 	pub depends: Option<Vec<String>>,
-	/// Enable the boostrapper script.
-	#[serde(default)]
-	pub use_bootstrapper: bool,
 	/// The files to include on the package.
 	#[serde(default)]
 	pub files: HashMap<PathBuf, PathBuf>
@@ -149,9 +146,6 @@ pub struct MacConfig {
 	pub exception_domain: Option<String>,
 	/// The path to the license file to add to the DMG bundle.
 	pub license: Option<String>,
-	/// Enable the boostrapper script.
-	#[serde(default)]
-	pub use_bootstrapper: bool,
 	/// Identity to use for code signing.
 	pub signing_identity: Option<String>,
 	/// Provider short name for notarization.
@@ -167,7 +161,6 @@ impl Default for MacConfig {
 			minimum_system_version: minimum_system_version(),
 			exception_domain: None,
 			license: None,
-			use_bootstrapper: false,
 			signing_identity: None,
 			provider_short_name: None,
 			entitlements: None
