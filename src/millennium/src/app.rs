@@ -38,7 +38,7 @@ use crate::runtime::RuntimeHandle;
 use crate::runtime::{SystemTrayEvent as RuntimeSystemTrayEvent, TrayIcon};
 #[cfg(shell_scope)]
 use crate::scope::ShellScope;
-#[cfg(feature = "updater")]
+#[cfg(updater)]
 use crate::updater;
 #[cfg(target_os = "macos")]
 use crate::ActivationPolicy;
