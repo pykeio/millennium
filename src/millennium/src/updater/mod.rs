@@ -269,6 +269,7 @@
 //!
 //! - **Pending** is emitted when the download is started and **Done** when the install is complete. You can then ask to
 //! restart the application to finish applying the update.
+//! - **Downloaded** is emitted when the download is complete.
 //! - **UpToDate** is emitted when the app already has the latest version installed and an update is not needed.
 //! - **Error** is emitted when there is an error with the updater. We recommend listening to this event if the built-in
 //!   updater dialog is enabled.
@@ -286,6 +287,9 @@
 //! 		}
 //! 		millennium::UpdaterEvent::Pending => {
 //! 			println!("an update is pending");
+//! 		}
+//! 		millennium::UpdaterEvent::Downloaded => {
+//! 			println!("update finished downloading!");
 //! 		}
 //! 		millennium::UpdaterEvent::Updated => {
 //! 			println!("app has been updated");
@@ -514,6 +518,8 @@ pub const EVENT_STATUS_PENDING: &str = "PENDING";
 /// When you got this status, something went wrong
 /// you can find the error message inside the `error` field.
 pub const EVENT_STATUS_ERROR: &str = "ERROR";
+/// The update has finished downloading and is ready to be installed.
+pub const EVENT_STATUS_DOWNLOADED: &str = "DOWNLOADED";
 /// When you receive this status, you should ask the user to restart
 pub const EVENT_STATUS_SUCCESS: &str = "DONE";
 /// When you receive this status, this is because the application is running
@@ -752,14 +758,21 @@ pub(crate) async fn download_and_install<R: Runtime>(update: core::Update<R>) ->
 	send_status_update(&update.app, UpdaterEvent::Pending);
 
 	let handle = update.app.clone();
+	let handle_ = handle.clone();
 
 	// Launch updater download process. On macOS, we display the `Ready to restart` dialog asking to restart.
 	// On Windows, we close the current app and launch the downloaded MSI when ready, and on Linux we replace the
 	// AppImage by launching a new install, which starts a new AppImage instance, and closes the old one.
 	let update_result = update
-		.download_and_install(update.app.config().millennium.updater.pubkey.clone(), move |chunk_length, content_length| {
-			send_download_progress_event(&handle, chunk_length, content_length);
-		})
+		.download_and_install(
+			update.app.config().millennium.updater.pubkey.clone(),
+			move |chunk_length, content_length| {
+				send_download_progress_event(&handle, chunk_length, content_length);
+			},
+			move || {
+				send_status_update(&handle_, UpdaterEvent::Downloaded);
+			}
+		)
 		.await;
 
 	if let Err(err) = &update_result {
@@ -853,7 +866,7 @@ Release Notes:
 		// (the process stop here) Linux we replace the AppImage by launching a new
 		// install, it start a new AppImage instance, so we're closing the previous.
 		// (the process stop here)
-		update.download_and_install(pubkey.clone(), |_, _| ()).await?;
+		update.download_and_install(pubkey.clone(), |_, _| (), || ()).await?;
 
 		// Ask user if we need to restart the application
 		let should_exit = ask(parent_window, "Ready to Restart", "The installation was successful, do you want to restart the application now?");

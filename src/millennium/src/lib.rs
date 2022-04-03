@@ -294,6 +294,8 @@ pub enum UpdaterEvent {
 		/// The total download size if it is known.
 		content_length: Option<u64>
 	},
+	/// The update has been downloaded and is ready to be installed.
+	Downloaded,
 	/// The update has been applied and the app is now up to date.
 	Updated,
 	/// The app is already up to date.
@@ -307,6 +309,7 @@ impl UpdaterEvent {
 	pub(crate) fn status_message(self) -> &'static str {
 		match self {
 			Self::Pending => updater::EVENT_STATUS_PENDING,
+			Self::Downloaded => updater::EVENT_STATUS_DOWNLOADED,
 			Self::Updated => updater::EVENT_STATUS_SUCCESS,
 			Self::AlreadyUpToDate => updater::EVENT_STATUS_UPTODATE,
 			Self::Error(_) => updater::EVENT_STATUS_ERROR,

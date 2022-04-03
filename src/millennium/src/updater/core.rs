@@ -463,7 +463,7 @@ impl<R: Runtime> Update<R> {
 	// Download and install our update
 	// @todo(lemarier): Split into download and install (two step) but need to be
 	// thread safe
-	pub async fn download_and_install<F: Fn(usize, Option<u64>)>(&self, pub_key: String, on_chunk: F) -> Result {
+	pub async fn download_and_install<C: Fn(usize, Option<u64>), D: FnOnce()>(&self, pub_key: String, on_chunk: C, on_download_finish: D) -> Result {
 		// make sure we can install the update on linux
 		// We fail here because later we can add more linux support
 		// actually if we use APPIMAGE, our extract path should already
@@ -507,6 +507,8 @@ impl<R: Runtime> Update<R> {
 			on_chunk(bytes.len(), content_length);
 			buffer.extend(bytes);
 		}
+
+		on_download_finish();
 
 		// create memory buffer from our archive (Seek + Read)
 		let mut archive_buffer = Cursor::new(buffer);
