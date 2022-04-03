@@ -213,7 +213,7 @@ impl WindowFlags {
 		style_ex |= WS_EX_ACCEPTFILES;
 
 		if self.contains(WindowFlags::RESIZABLE) {
-			style |= WS_THICKFRAME | WS_MAXIMIZEBOX;
+			style |= WS_SIZEBOX | WS_MAXIMIZEBOX;
 		}
 		if self.contains(WindowFlags::DECORATIONS) {
 			if !self.contains(WindowFlags::RESIZABLE) {

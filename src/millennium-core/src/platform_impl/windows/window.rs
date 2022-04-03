@@ -235,6 +235,7 @@ impl Window {
 		let (width, mut height) = size.to_physical::<u32>(scale_factor).into();
 
 		let window_state = Arc::clone(&self.window_state);
+		let is_decorated = window_state.lock().window_flags().contains(WindowFlags::DECORATIONS);
 		let window = self.window.clone();
 		self.thread_executor.execute_in_thread(move || {
 			WindowState::set_window_flags(window_state.lock(), window.0, |f| f.set(WindowFlags::MAXIMIZED, false));
@@ -245,7 +246,7 @@ impl Window {
 			height -= 6;
 		}
 
-		util::set_inner_size_physical(self.window.0, width, height);
+		util::set_inner_size_physical(self.window.0, width, height, is_decorated);
 	}
 
 	#[inline]
