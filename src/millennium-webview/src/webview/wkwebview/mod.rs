@@ -27,12 +27,9 @@ use std::{
 };
 
 #[cfg(target_os = "macos")]
+use cocoa::appkit::{NSView, NSViewHeightSizable, NSViewWidthSizable};
 use cocoa::{
-	appkit::{NSView, NSViewHeightSizable, NSViewWidthSizable},
-	base::YES
-};
-use cocoa::{
-	base::id,
+	base::{id, YES},
 	foundation::{NSDictionary, NSFastEnumeration, NSInteger}
 };
 use core_graphics::geometry::{CGPoint, CGRect, CGSize};
@@ -183,7 +180,7 @@ impl InnerWebView {
 						// Send data
 						let bytes = content.as_ptr() as *mut c_void;
 						let data: id = msg_send![class!(NSData), alloc];
-						let data: id = msg_send![data, initWithBytes:bytes length:content.len()];
+						let data: id = msg_send![data, initWithBytesNoCopy:bytes length:content.len() freeWhenDone: YES];
 						let () = msg_send![task, didReceiveData: data];
 					} else {
 						let urlresponse: id = msg_send![class!(NSHTTPURLResponse), alloc];
