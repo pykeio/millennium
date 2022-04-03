@@ -615,7 +615,7 @@ pub struct WindowConfig {
 	/// Whether the window is transparent or not.
 	///
 	/// Note that on `macOS` this requires the `macos-private-api` feature flag,
-	/// enabled under `.millenniumrc > millennium > macosPrivateApi`.
+	/// enabled under `.millenniumrc > millennium > macOSPrivateApi`.
 	/// WARNING: Using private APIs on `macOS` prevents your application from
 	/// being accepted for the `App Store`.
 	#[serde(default)]

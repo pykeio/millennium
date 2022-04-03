@@ -644,7 +644,7 @@ export interface WindowOptions {
 	focus?: boolean;
 	/**
 	 * Whether the window is transparent or not.
-	 * Note that on macOS, this requires the `macos-private-api` feature flag, enabled under `.millenniumrc > millennium > macosPrivateApi`.
+	 * Note that on macOS, this requires the `macos-private-api` feature flag, enabled under `.millenniumrc > millennium > macOSPrivateApi`.
 	 * **Using private APIs on macOS will make your application ineligible for the App Store.**
 	 */
 	transparent?: boolean;
