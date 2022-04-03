@@ -37,9 +37,9 @@
     }
   },
   "devDependencies": {
-    "@napi-rs/cli": "2.4.5",
-    "cross-spawn": "7.0.3",
-    "fs-extra": "10.0.1"
+    "@napi-rs/cli": "^2.5.0",
+    "cross-spawn": "^7.0.3",
+    "fs-extra": "^10.0.1"
   },
   "engines": {
     "node": ">= 10"
