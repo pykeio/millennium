@@ -50,14 +50,14 @@ use crate::{
 	runtime::{
 		http::{MimeType, Request as HttpRequest, Response as HttpResponse, ResponseBuilder as HttpResponseBuilder},
 		webview::{WebviewIpcHandler, WindowBuilder},
-		window::{dpi::PhysicalSize, DetachedWindow, FileDropEvent, PendingWindow, WindowEvent}
+		window::{dpi::PhysicalSize, DetachedWindow, FileDropEvent, PendingWindow}
 	},
 	utils::{
 		assets::Assets,
 		config::{AppUrl, Config, WindowUrl},
 		PackageInfo
 	},
-	Context, EventLoopMessage, Icon, Invoke, Manager, Pattern, Runtime, Scopes, StateManager, Window
+	Context, EventLoopMessage, Icon, Invoke, Manager, Pattern, Runtime, Scopes, StateManager, Window, WindowEvent
 };
 use crate::{runtime::menu::Menu, MenuEvent};
 
@@ -1009,7 +1009,7 @@ impl<R: Runtime> WindowManager<R> {
 			for handler in window_event_listeners.iter() {
 				handler(GlobalWindowEvent {
 					window: window_.clone(),
-					event: event.clone().into()
+					event: event.clone()
 				});
 			}
 		});
@@ -1108,9 +1108,9 @@ fn on_window_event<R: Runtime>(window: &Window<R>, manager: &WindowManager<R>, e
 	match event {
 		WindowEvent::Resized(size) => window.emit(WINDOW_RESIZED_EVENT, size)?,
 		WindowEvent::Moved(position) => window.emit(WINDOW_MOVED_EVENT, position)?,
-		WindowEvent::CloseRequested { signal_tx } => {
+		WindowEvent::CloseRequested { api } => {
 			if window.has_js_listener(Some(window.label().into()), WINDOW_CLOSE_REQUESTED_EVENT) {
-				signal_tx.send(true).unwrap();
+				api.prevent_close();
 			}
 			window.emit(WINDOW_CLOSE_REQUESTED_EVENT, ())?;
 		}
