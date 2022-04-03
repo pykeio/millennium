@@ -688,7 +688,7 @@ impl<R: Runtime> UpdateResponse<R> {
 
 	/// The update description.
 	pub fn body(&self) -> Option<&String> {
-		&self.update.body.as_ref()
+		self.update.body.as_ref()
 	}
 
 	/// Downloads and installs the update.
