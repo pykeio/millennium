@@ -38,7 +38,6 @@ pub mod dpi;
 
 /// An event from a window.
 #[derive(Debug, Clone)]
-#[non_exhaustive]
 pub enum WindowEvent {
 	/// The size of the window has changed. Contains the client area's new
 	/// dimensions.
@@ -48,8 +47,6 @@ pub enum WindowEvent {
 	Moved(dpi::PhysicalPosition<i32>),
 	/// The window has been requested to close.
 	CloseRequested {
-		/// The window label.
-		label: String,
 		/// A signal sender. If a `true` value is emitted, the window won't be
 		/// closed.
 		signal_tx: Sender<bool>

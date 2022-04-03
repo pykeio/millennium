@@ -2137,9 +2137,11 @@ fn handle_event_loop<T: UserEvent>(
 
 			{
 				let windows_lock = windows.lock().expect("poisoned webview collection");
-				if let Some(window_handle) = windows_lock.get(&window_id).map(|w| &w.inner) {
+				if let Some((label, window_handle)) = windows_lock.get(&window_id).map(|w| (&w.label, &w.inner)) {
 					if let Some(event) = WindowEventWrapper::parse(window_handle, &event).0 {
+						let label = label.clone();
 						drop(windows_lock);
+						callback(RunEvent::WindowEvent { label, event: event.clone() });
 						for handler in window_event_listeners.lock().unwrap().get(&window_id).unwrap().lock().unwrap().values() {
 							handler(&event);
 						}
@@ -2178,7 +2180,7 @@ fn handle_event_loop<T: UserEvent>(
 		}
 		Event::UserEvent(message) => match message {
 			Message::Window(id, WindowMessage::Close) => {
-				on_window_close(callback, id, windows.lock().expect("poisoned webview collection"), menu_event_listeners.clone());
+				on_window_close(id, windows.lock().expect("poisoned webview collection"), menu_event_listeners.clone());
 			}
 			Message::UserEvent(t) => callback(RunEvent::UserEvent(t)),
 			message => {
@@ -2220,34 +2222,30 @@ fn on_close_requested<'a, T: UserEvent>(
 		let label = w.label.clone();
 		drop(windows_guard);
 		for handler in window_event_listeners.lock().unwrap().get(&window_id).unwrap().lock().unwrap().values() {
-			handler(&WindowEvent::CloseRequested {
-				label: label.clone(),
-				signal_tx: tx.clone()
-			});
+			handler(&WindowEvent::CloseRequested { signal_tx: tx.clone() });
 		}
-		callback(RunEvent::CloseRequested { label, signal_tx: tx });
+		callback(RunEvent::WindowEvent {
+			label,
+			event: WindowEvent::CloseRequested { signal_tx: tx }
+		});
 		if let Ok(true) = rx.try_recv() {
 			None
 		} else {
-			on_window_close(callback, window_id, windows.lock().expect("poisoned webview collection"), menu_event_listeners)
+			on_window_close(window_id, windows.lock().expect("poisoned webview collection"), menu_event_listeners)
 		}
 	} else {
 		None
 	}
 }
 
-fn on_window_close<'a, T: UserEvent>(
-	callback: &'a mut (dyn FnMut(RunEvent<T>) + 'static),
+fn on_window_close(
 	window_id: WebviewId,
-	mut windows: MutexGuard<'a, HashMap<WebviewId, WindowWrapper>>,
+	mut windows: MutexGuard<'_, HashMap<WebviewId, WindowWrapper>>,
 	menu_event_listeners: MenuEventListeners
 ) -> Option<WindowWrapper> {
 	#[allow(unused_mut)]
 	let w = if let Some(mut webview) = windows.remove(&window_id) {
-		drop(windows);
 		menu_event_listeners.lock().unwrap().remove(&window_id);
-		callback(RunEvent::WindowClose(webview.label.clone()));
-
 		Some(webview)
 	} else {
 		None
