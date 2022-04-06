@@ -124,9 +124,8 @@ macro_rules! null_pointer_check {
 	($ptr:expr, $null:expr) => {{
 		#[allow(unused_imports)]
 		if <_ as crate::Nullable>::is_null(&$ptr) {
-			println!("null pointer");
-			// update_last_error(crate::NullPointer);
-			return $null;
+			// TODO: real error handling
+			panic!("null pointer");
 		}
 	}};
 }
@@ -256,6 +255,16 @@ mod millennium_builder {
 				callback(opaque.get(), &mut invoke);
 			})
 		});
+	}
+
+	#[no_mangle]
+	pub unsafe extern "C" fn millennium_builder_free(builder_ptr: *mut BuilderFFI) {
+		null_pointer_check!(builder_ptr);
+
+		let builder = builder_ptr as *mut millennium::Builder<millennium::MillenniumWebview>;
+		let builder = builder.read();
+		drop(builder);
+		Box::from_raw(builder_ptr);
 	}
 }
 

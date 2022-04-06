@@ -21,7 +21,7 @@
 		},
 		"windows": [
 			{
-				"title": "Millennium Example",
+				"title": "Millennium C++ Example",
 				"width": 600,
 				"height": 600,
 				"resizable": true,

@@ -37,6 +37,8 @@ extern void millennium_builder_setup(MillenniumBuilder builder, void (*setup)(vo
 
 extern void millennium_builder_invoke_handler(MillenniumBuilder builder, void (*handler)(void *opaque, MillenniumInvoke *invoke), void *opaque);
 
+extern void millennium_builder_free(MillenniumBuilder builder);
+
 extern const char *millennium_invoke_message_command(void *message);
 
 extern MillenniumWindowBuilder millennium_window_builder_new(void *app, const char *title, const char *url);
@@ -48,6 +50,66 @@ extern void millennium_window_builder_center(MillenniumWindowBuilder builder);
 extern void millennium_window_builder_build(MillenniumWindowBuilder builder);
 
 #ifdef __cplusplus
+}
+
+#ifndef MILLENNIUM_NAMESPACE
+	#define MILLENNIUM_NAMESPACE millennium
+#endif
+
+namespace MILLENNIUM_NAMESPACE {
+
+class Builder {
+	public:
+		Builder() : builder(millennium_builder_new()) {}
+
+		~Builder() {
+			millennium_builder_free(builder);
+		}
+
+		inline Builder &setup(void (*setup)(void *opaque, void *app), void *opaque) {
+			millennium_builder_setup(builder, setup, opaque);
+			return *this;
+		}
+
+		inline Builder &invoke_handler(void (*handler)(void *opaque, MillenniumInvoke *invoke), void *opaque) {
+			millennium_builder_invoke_handler(builder, handler, opaque);
+			return *this;
+		}
+
+		inline Builder &run() {
+			millennium_builder_run(builder);
+			return *this;
+		}
+	private:
+		MillenniumBuilder builder;
+};
+
+class WindowBuilder {
+	public:
+		WindowBuilder(void *app, const char *title, const char *url) : builder(millennium_window_builder_new(app, title, url)) {}
+
+		// ~WindowBuilder() {
+		// 	millennium_window_builder_free(builder);
+		// }
+
+		inline WindowBuilder &title(const char *title) {
+			millennium_window_builder_title(builder, title);
+			return *this;
+		}
+
+		inline WindowBuilder &center() {
+			millennium_window_builder_center(builder);
+			return *this;
+		}
+
+		inline WindowBuilder &build() {
+			millennium_window_builder_build(builder);
+			return *this;
+		}
+	private:
+		MillenniumWindowBuilder builder;
+};
+
 }
 #endif
 

@@ -10,17 +10,19 @@ int main(int argc, char **argv) {
     	SetConsoleOutputCP(CP_UTF8);
 	#endif
 
-	MillenniumBuilder builder = millennium_builder_new();
-	millennium_builder_invoke_handler(builder, [](void *, MillenniumInvoke *invoke) {
-		printf("Event invoked: %s\n", millennium_invoke_message_command(invoke->message));
-	}, NULL);
-	millennium_builder_setup(builder, [](void *, void *app) {
-		printf("Hello, world! Callback from C++ ⚡\n");
+	millennium::Builder builder;
+	builder
+		.invoke_handler([](void *, MillenniumInvoke *invoke) {
+			printf("Event invoked: %s\n", millennium_invoke_message_command(invoke->message));
+		}, NULL)
+		.setup([](void *, void *app) {
+			printf("Hello, world! Callback from C++ ⚡\n");
 
-		MillenniumWindowBuilder windowBuilder = millennium_window_builder_new(app, "second-window", "https://www.pyke.io");
-		millennium_window_builder_title(windowBuilder, "pyke");
-		millennium_window_builder_build(windowBuilder);
-	}, NULL);
-	millennium_builder_run(builder);
+			millennium::WindowBuilder windowBuilder(app, "second-window", "https://www.pyke.io");
+			windowBuilder
+				.title("Second window")
+				.build();
+		}, NULL)
+		.run();
 	return 0;
 }
