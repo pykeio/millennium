@@ -29,7 +29,7 @@
 //!
 //! To build a release build (with size optimizations), run `cargo build --release`.
 //!
-//! On Windows, you need to link to the following libraries:
+//! On Windows, you need to link to the following libraries (if you are not using the CMake script):
 //! ```plaintext
 //! user32.lib kernel32.lib gdi32.lib shell32.lib advapi32.lib bcrypt.lib ws2_32.lib imm32.lib userenv.lib oleaut32.lib
 //! dwmapi.lib comctl32.lib uxtheme.lib WebView2LoaderStatic.lib
