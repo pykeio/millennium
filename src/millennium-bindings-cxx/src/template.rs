@@ -14,6 +14,7 @@
 
 extern crate millennium;
 extern crate serde_json;
+extern crate url;
 
 use std::{
 	mem, ptr,
@@ -216,7 +217,7 @@ mod millennium_builder {
 
 		let builder = builder_ptr as *mut millennium::Builder<millennium::MillenniumWebview>;
 		let builder = builder.read();
-		let _ = builder.run(millennium::generate_context!("$rc_path"));
+		builder.run(millennium::generate_context!("$rc_path")).expect("error running application");
 	}
 
 	#[no_mangle]
@@ -255,6 +256,62 @@ mod millennium_builder {
 				callback(opaque.get(), &mut invoke);
 			})
 		});
+	}
+}
+
+mod millennium_window_builder {
+	use std::ffi::CStr;
+	use std::os::raw::*;
+
+	#[repr(C)]
+	pub struct WindowBuilderFFI(());
+
+	#[no_mangle]
+	pub unsafe extern "C" fn millennium_window_builder_new(
+		app_ptr: *mut millennium::App,
+		label: *const c_char,
+		url: *const c_char
+	) -> *mut WindowBuilderFFI {
+		null_pointer_check!(app_ptr);
+
+		let builder = millennium::window::WindowBuilder::new(
+			&*app_ptr,
+			CStr::from_ptr(label).to_str().expect("error converting label to &str"),
+			millennium::utils::config::WindowUrl::External(url::Url::parse(CStr::from_ptr(url).to_str().expect("error converting url to &str")).expect("error parsing url"))
+		);
+		Box::into_raw(Box::new(builder)) as _
+	}
+
+	#[no_mangle]
+	pub unsafe extern "C" fn millennium_window_builder_title(
+		builder_ptr: *mut WindowBuilderFFI,
+		title: *const c_char
+	) {
+		null_pointer_check!(builder_ptr);
+
+		super::replace_with::<millennium::window::WindowBuilder<millennium::MillenniumWebview>, _, _>(builder_ptr, |builder| {
+			builder.title(CStr::from_ptr(title).to_str().expect("error converting title to &str"))
+		});
+	}
+
+	#[no_mangle]
+	pub unsafe extern "C" fn millennium_window_builder_center(builder_ptr: *mut WindowBuilderFFI) {
+		null_pointer_check!(builder_ptr);
+
+		super::replace_with::<millennium::window::WindowBuilder<millennium::MillenniumWebview>, _, _>(builder_ptr, |builder| {
+			builder.center()
+		});
+	}
+
+	#[no_mangle]
+	pub unsafe extern "C" fn millennium_window_builder_build(
+		window_builder_ptr: *mut WindowBuilderFFI
+	) {
+		null_pointer_check!(window_builder_ptr);
+
+		let window_builder = window_builder_ptr as *mut millennium::window::WindowBuilder<millennium::MillenniumWebview>;
+		let window_builder = window_builder.read();
+		window_builder.build().expect("error building window");
 	}
 }
 

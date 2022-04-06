@@ -16,6 +16,10 @@ int main(int argc, char **argv) {
 	}, NULL);
 	millennium_builder_setup(builder, [](void *, void *app) {
 		printf("Hello, world! Callback from C++ ⚡\n");
+
+		MillenniumWindowBuilder windowBuilder = millennium_window_builder_new(app, "second-window", "https://www.pyke.io");
+		millennium_window_builder_title(windowBuilder, "pyke");
+		millennium_window_builder_build(windowBuilder);
 	}, NULL);
 	millennium_builder_run(builder);
 	return 0;

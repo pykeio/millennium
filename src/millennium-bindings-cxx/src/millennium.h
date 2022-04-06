@@ -17,15 +17,12 @@
 #ifndef _MILLENNIUM_H__
 #define _MILLENNIUM_H__
 
-/** Pattern scanning functions **/
-
-#define MillenniumCommand(x) x
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef void *MillenniumBuilder;
+typedef void *MillenniumWindowBuilder;
 
 typedef struct MillenniumInvoke {
 	void *message;
@@ -41,6 +38,14 @@ extern void millennium_builder_setup(MillenniumBuilder builder, void (*setup)(vo
 extern void millennium_builder_invoke_handler(MillenniumBuilder builder, void (*handler)(void *opaque, MillenniumInvoke *invoke), void *opaque);
 
 extern const char *millennium_invoke_message_command(void *message);
+
+extern MillenniumWindowBuilder millennium_window_builder_new(void *app, const char *title, const char *url);
+
+extern void millennium_window_builder_title(MillenniumWindowBuilder builder, const char *title);
+
+extern void millennium_window_builder_center(MillenniumWindowBuilder builder);
+
+extern void millennium_window_builder_build(MillenniumWindowBuilder builder);
 
 #ifdef __cplusplus
 }
