@@ -18,10 +18,66 @@ extern crate url;
 
 use std::{
 	mem, ptr,
+	cell::RefCell,
+	os::raw::*,
 	sync::{Arc, Mutex}
 };
 
+use anyhow::anyhow;
 use thiserror::Error;
+
+thread_local! {
+    static LAST_ERROR: RefCell<Option<anyhow::Error>> = RefCell::new(None);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn millennium_last_error() -> *const c_char {
+	let error = LAST_ERROR.with(|cell| {
+		cell.borrow_mut().take()
+	});
+
+	if let Some(error) = error {
+		let error_str = error.to_string();
+		let error_str_ptr = error_str.as_ptr() as *const c_char;
+		LAST_ERROR.with(|cell| {
+			cell.borrow_mut().replace(error);
+		});
+		error_str_ptr
+	} else {
+		ptr::null()
+	}
+}
+
+fn update_last_error<E: Into<anyhow::Error>>(err: E) {
+	LAST_ERROR.with(|prev| *prev.borrow_mut() = Some(err.into()));
+}
+
+macro_rules! handle_error {
+	($e:expr) => {
+		handle_error!($e, -1);
+	};
+	($e:expr, $r:expr) => {{
+		match $e {
+			Ok(_) => (),
+			Err(error) => {
+				crate::update_last_error(error);
+				return $r;
+			}
+		}
+	}};
+}
+
+macro_rules! unwrap_value {
+	($e:expr, $r:expr) => {{
+		match $e {
+			Ok(value) => value,
+			Err(error) => {
+				crate::update_last_error(error);
+				return $r;
+			}
+		}
+	}};
+}
 
 // The following section contains code from `ffi-helpers`: https://github.com/Michael-F-Bryan/ffi_helpers
 // Licensed under the MIT license.
@@ -116,23 +172,21 @@ impl Nullable for () {
 /// The returned value is the [`NULL`] value for whatever type the calling
 /// function returns. The `LAST_ERROR` thread-local variable is also updated
 /// with [`NullPointer`].
-#[macro_export]
 macro_rules! null_pointer_check {
 	($ptr:expr) => {
 		null_pointer_check!($ptr, crate::Nullable::NULL)
 	};
 	($ptr:expr, $null:expr) => {{
-		#[allow(unused_imports)]
 		if <_ as crate::Nullable>::is_null(&$ptr) {
-			// TODO: real error handling
-			panic!("null pointer");
+			crate::update_last_error(crate::NullPointer);
+			return $null;
 		}
 	}};
 }
 
 /// A `null` pointer was encountered where it wasn't expected.
 #[derive(Debug, Clone, Copy, PartialEq, Error)]
-#[error("A null pointer was encountered where it wasn't expected")]
+#[error("a null pointer was encountered where it wasn't expected")]
 pub struct NullPointer;
 
 /////////////////////////////// end MIT code ///////////////////////////////
@@ -211,12 +265,13 @@ mod millennium_builder {
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn millennium_builder_run(builder_ptr: *mut BuilderFFI) {
-		null_pointer_check!(builder_ptr);
+	pub unsafe extern "C" fn millennium_builder_run(builder_ptr: *mut BuilderFFI) -> c_int {
+		null_pointer_check!(builder_ptr, -1);
 
 		let builder = builder_ptr as *mut millennium::Builder<millennium::MillenniumWebview>;
 		let builder = builder.read();
-		builder.run(millennium::generate_context!("$rc_path")).expect("error running application");
+		handle_error!(builder.run(millennium::generate_context!("$rc_path")));
+		0
 	}
 
 	#[no_mangle]
@@ -224,8 +279,8 @@ mod millennium_builder {
 		builder_ptr: *mut BuilderFFI,
 		callback: unsafe extern "C" fn(*mut c_void, *mut millennium::App),
 		opaque: *mut c_void
-	) {
-		null_pointer_check!(builder_ptr);
+	) -> c_int {
+		null_pointer_check!(builder_ptr, -1);
 
 		let opaque = super::OpaqueContainer(Arc::new(Mutex::new(Some(opaque))));
 		super::replace_with::<millennium::Builder<millennium::MillenniumWebview>, _, _>(builder_ptr, |builder| {
@@ -234,6 +289,7 @@ mod millennium_builder {
 				Ok(())
 			})
 		});
+		0
 	}
 
 	#[no_mangle]
@@ -241,8 +297,8 @@ mod millennium_builder {
 		builder_ptr: *mut BuilderFFI,
 		callback: unsafe extern "C" fn(*mut c_void, *mut super::millennium_invoke::MillenniumInvoke),
 		opaque: *mut c_void
-	) {
-		null_pointer_check!(builder_ptr);
+	) -> c_int {
+		null_pointer_check!(builder_ptr, -1);
 
 		let opaque = super::OpaqueContainer(Arc::new(Mutex::new(Some(opaque))));
 		super::replace_with::<millennium::Builder<millennium::MillenniumWebview>, _, _>(builder_ptr, |builder| {
@@ -255,16 +311,28 @@ mod millennium_builder {
 				callback(opaque.get(), &mut invoke);
 			})
 		});
+		0
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn millennium_builder_free(builder_ptr: *mut BuilderFFI) {
-		null_pointer_check!(builder_ptr);
+	pub unsafe extern "C" fn millennium_builder_free(builder_ptr: *mut BuilderFFI) -> c_int {
+		null_pointer_check!(builder_ptr, -1);
 
 		let builder = builder_ptr as *mut millennium::Builder<millennium::MillenniumWebview>;
 		let builder = builder.read();
 		drop(builder);
 		Box::from_raw(builder_ptr);
+		0
+	}
+}
+
+fn millennium_make_window_url(url: &str, is_external: u8) -> Result<millennium::utils::config::WindowUrl, anyhow::Error> {
+	if is_external == 1 {
+		let url = url::Url::parse(url)?;
+		Ok(millennium::utils::config::WindowUrl::External(url))
+	} else {
+		let path_buf = std::path::PathBuf::from(url);
+		Ok(millennium::utils::config::WindowUrl::App(path_buf))
 	}
 }
 
@@ -279,15 +347,17 @@ mod millennium_window_builder {
 	pub unsafe extern "C" fn millennium_window_builder_new(
 		app_ptr: *mut millennium::App,
 		label: *const c_char,
-		url: *const c_char
+		url: *const c_char,
+		is_external: u8
 	) -> *mut WindowBuilderFFI {
 		null_pointer_check!(app_ptr);
 
-		let builder = millennium::window::WindowBuilder::new(
-			&*app_ptr,
-			CStr::from_ptr(label).to_str().expect("error converting label to &str"),
-			millennium::utils::config::WindowUrl::External(url::Url::parse(CStr::from_ptr(url).to_str().expect("error converting url to &str")).expect("error parsing url"))
-		);
+		let label = unwrap_value!(CStr::from_ptr(label).to_str(), std::ptr::null_mut());
+		let url = unwrap_value!(CStr::from_ptr(url).to_str(), std::ptr::null_mut());
+
+		let url = unwrap_value!(super::millennium_make_window_url(url, is_external), std::ptr::null_mut());
+
+		let builder = millennium::window::WindowBuilder::new(&*app_ptr, label, url);
 		Box::into_raw(Box::new(builder)) as _
 	}
 
@@ -295,32 +365,36 @@ mod millennium_window_builder {
 	pub unsafe extern "C" fn millennium_window_builder_title(
 		builder_ptr: *mut WindowBuilderFFI,
 		title: *const c_char
-	) {
-		null_pointer_check!(builder_ptr);
+	) -> c_int {
+		null_pointer_check!(builder_ptr, -1);
 
+		let title = unwrap_value!(CStr::from_ptr(title).to_str(), -1);
 		super::replace_with::<millennium::window::WindowBuilder<millennium::MillenniumWebview>, _, _>(builder_ptr, |builder| {
-			builder.title(CStr::from_ptr(title).to_str().expect("error converting title to &str"))
+			builder.title(title)
 		});
+		0
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn millennium_window_builder_center(builder_ptr: *mut WindowBuilderFFI) {
-		null_pointer_check!(builder_ptr);
+	pub unsafe extern "C" fn millennium_window_builder_center(builder_ptr: *mut WindowBuilderFFI) -> c_int {
+		null_pointer_check!(builder_ptr, -1);
 
 		super::replace_with::<millennium::window::WindowBuilder<millennium::MillenniumWebview>, _, _>(builder_ptr, |builder| {
 			builder.center()
 		});
+		0
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn millennium_window_builder_build(
-		window_builder_ptr: *mut WindowBuilderFFI
-	) {
+	pub unsafe extern "C" fn millennium_window_builder_build(window_builder_ptr: *mut WindowBuilderFFI)
+		-> *mut millennium::window::Window<millennium::MillenniumWebview>
+	{
 		null_pointer_check!(window_builder_ptr);
 
 		let window_builder = window_builder_ptr as *mut millennium::window::WindowBuilder<millennium::MillenniumWebview>;
 		let window_builder = window_builder.read();
-		window_builder.build().expect("error building window");
+		let window = unwrap_value!(window_builder.build(), std::ptr::null_mut());
+		Box::into_raw(Box::new(window)) as _
 	}
 }
 
@@ -338,7 +412,7 @@ mod millennium_invoke {
 	pub extern "C" fn millennium_invoke_message_command(invoke_message_ptr: *mut millennium::InvokeMessage<millennium::MillenniumWebview>) -> *const c_char {
 		let invoke_message = unsafe { Box::from_raw(invoke_message_ptr) };
 		let command = invoke_message.command();
-		let command_cstring = CString::new(command).expect("CString failed in millennium_invoke_message_command");
+		let command_cstring = unwrap_value!(CString::new(command), std::ptr::null());
 		command_cstring.into_raw()
 	}
 
@@ -355,8 +429,8 @@ mod millennium_invoke {
 	pub extern "C" fn millennium_invoke_message_payload(invoke_message_ptr: *mut millennium::InvokeMessage<millennium::MillenniumWebview>) -> *const c_char {
 		let invoke_message = unsafe { Box::from_raw(invoke_message_ptr) };
 		let payload = invoke_message.payload();
-		let payload = serde_json::to_string(&payload).unwrap();
-		let payload_cstring = CString::new(payload).expect("CString failed in millennium_invoke_message_payload");
+		let payload = unwrap_value!(serde_json::to_string(&payload), std::ptr::null());
+		let payload_cstring = unwrap_value!(CString::new(payload), std::ptr::null());
 		payload_cstring.into_raw()
 	}
 }

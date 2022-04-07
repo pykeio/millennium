@@ -17,6 +17,8 @@
 #ifndef _MILLENNIUM_H__
 #define _MILLENNIUM_H__
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -29,38 +31,57 @@ typedef struct MillenniumInvoke {
 	void *resolver;
 } MillenniumInvoke;
 
+extern const char *millennium_last_error(void);
+
 extern MillenniumBuilder millennium_builder_new(void);
 
-extern void millennium_builder_run(MillenniumBuilder builder);
+extern int millennium_builder_run(MillenniumBuilder builder);
 
-extern void millennium_builder_setup(MillenniumBuilder builder, void (*setup)(void *opaque, void *app), void *opaque);
+extern int millennium_builder_setup(MillenniumBuilder builder, void (*setup)(void *opaque, void *app), void *opaque);
 
-extern void millennium_builder_invoke_handler(MillenniumBuilder builder, void (*handler)(void *opaque, MillenniumInvoke *invoke), void *opaque);
+extern int millennium_builder_invoke_handler(MillenniumBuilder builder, void (*handler)(void *opaque, MillenniumInvoke *invoke), void *opaque);
 
-extern void millennium_builder_free(MillenniumBuilder builder);
+extern int millennium_builder_free(MillenniumBuilder builder);
 
 extern const char *millennium_invoke_message_command(void *message);
 
-extern MillenniumWindowBuilder millennium_window_builder_new(void *app, const char *title, const char *url);
+extern MillenniumWindowBuilder millennium_window_builder_new(void *app, const char *title, const char *url, uint8_t is_external);
 
-extern void millennium_window_builder_title(MillenniumWindowBuilder builder, const char *title);
+extern int millennium_window_builder_title(MillenniumWindowBuilder builder, const char *title);
 
-extern void millennium_window_builder_center(MillenniumWindowBuilder builder);
+extern int millennium_window_builder_center(MillenniumWindowBuilder builder);
 
-extern void millennium_window_builder_build(MillenniumWindowBuilder builder);
+extern void *millennium_window_builder_build(MillenniumWindowBuilder builder);
 
 #ifdef __cplusplus
 }
+
+#include <stdexcept>
 
 #ifndef MILLENNIUM_NAMESPACE
 	#define MILLENNIUM_NAMESPACE millennium
 #endif
 
+#define millenniumHandleException(v) \
+	if (v != 0) { \
+		const char *error = millennium_last_error(); \
+		if (error != NULL) { \
+			throw std::runtime_error(error); \
+		} else { \
+			throw std::runtime_error("Unknown error"); \
+		} \
+	}
+
 namespace MILLENNIUM_NAMESPACE {
 
 class Builder {
 	public:
-		Builder() : builder(millennium_builder_new()) {}
+		Builder() {
+			MillenniumBuilder builder = millennium_builder_new();
+			if (builder == NULL)
+				throw std::runtime_error(millennium_last_error());
+			this->builder = builder;
+		}
 
 		~Builder() {
 			millennium_builder_free(builder);
@@ -68,22 +89,22 @@ class Builder {
 
 		template<typename F>
 		inline Builder &setup(F &&callback) {
-			millennium_builder_setup(builder, [](void *opaque, void *app) {
+			millenniumHandleException(millennium_builder_setup(builder, [](void *opaque, void *app) {
 				((F &&)opaque)(app);
-			}, (void *)callback);
+			}, (void *)callback))
 			return *this;
 		}
 
 		template<typename F>
 		inline Builder &invoke_handler(F &&callback) {
-			millennium_builder_invoke_handler(builder, [](void *opaque, MillenniumInvoke *invoke) {
+			millenniumHandleException(millennium_builder_invoke_handler(builder, [](void *opaque, MillenniumInvoke *invoke) {
 				((F &&)opaque)(invoke);
-			}, (void *)callback);
+			}, (void *)callback))
 			return *this;
 		}
 
 		inline Builder &run() {
-			millennium_builder_run(builder);
+			millenniumHandleException(millennium_builder_run(builder));
 			return *this;
 		}
 	private:
@@ -92,25 +113,28 @@ class Builder {
 
 class WindowBuilder {
 	public:
-		WindowBuilder(void *app, const char *title, const char *url) : builder(millennium_window_builder_new(app, title, url)) {}
-
-		// ~WindowBuilder() {
-		// 	millennium_window_builder_free(builder);
-		// }
+		WindowBuilder(void *app, const char *title, const char *url, bool is_external = false) {
+			MillenniumWindowBuilder builder = millennium_window_builder_new(app, title, url, (uint8_t)is_external);
+			if (builder == NULL)
+				throw std::runtime_error(millennium_last_error());
+			this->builder = builder;
+		}
 
 		inline WindowBuilder &title(const char *title) {
-			millennium_window_builder_title(builder, title);
+			millenniumHandleException(millennium_window_builder_title(builder, title));
 			return *this;
 		}
 
 		inline WindowBuilder &center() {
-			millennium_window_builder_center(builder);
+			millenniumHandleException(millennium_window_builder_center(builder));
 			return *this;
 		}
 
-		inline WindowBuilder &build() {
-			millennium_window_builder_build(builder);
-			return *this;
+		void *build() {
+			void *window = millennium_window_builder_build(builder);
+			if (window == NULL)
+				throw std::runtime_error(millennium_last_error());
+			return window;
 		}
 	private:
 		MillenniumWindowBuilder builder;
