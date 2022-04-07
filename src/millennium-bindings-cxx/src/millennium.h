@@ -66,13 +66,19 @@ class Builder {
 			millennium_builder_free(builder);
 		}
 
-		inline Builder &setup(void (*setup)(void *opaque, void *app), void *opaque) {
-			millennium_builder_setup(builder, setup, opaque);
+		template<typename F>
+		inline Builder &setup(F &&callback) {
+			millennium_builder_setup(builder, [](void *opaque, void *app) {
+				((F &&)opaque)(app);
+			}, (void *)callback);
 			return *this;
 		}
 
-		inline Builder &invoke_handler(void (*handler)(void *opaque, MillenniumInvoke *invoke), void *opaque) {
-			millennium_builder_invoke_handler(builder, handler, opaque);
+		template<typename F>
+		inline Builder &invoke_handler(F &&callback) {
+			millennium_builder_invoke_handler(builder, [](void *opaque, MillenniumInvoke *invoke) {
+				((F &&)opaque)(invoke);
+			}, (void *)callback);
 			return *this;
 		}
 

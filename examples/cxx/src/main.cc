@@ -15,14 +15,14 @@ int main(int argc, char **argv) {
 		.invoke_handler([](void *, MillenniumInvoke *invoke) {
 			printf("Event invoked: %s\n", millennium_invoke_message_command(invoke->message));
 		}, NULL)
-		.setup([](void *, void *app) {
+		.setup([](void *app) {
 			printf("Hello, world! Callback from C++ ⚡\n");
 
 			millennium::WindowBuilder windowBuilder(app, "second-window", "https://www.pyke.io");
 			windowBuilder
 				.title("Second window")
 				.build();
-		}, NULL)
+		})
 		.run();
 	return 0;
 }
