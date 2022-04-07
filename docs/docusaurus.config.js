@@ -129,8 +129,12 @@ const config = {
 						title: 'Docs',
 						items: [
 							{
-								label: 'Tutorial',
+								label: 'Architecture',
 								to: '/docs/main/intro',
+							},
+							{
+								label: 'Tutorial',
+								to: '/docs/main/your-first-app/prerequisites',
 							},
 						],
 					},
@@ -138,16 +142,16 @@ const config = {
 						title: 'Community',
 						items: [
 							{
-								label: 'Stack Overflow',
-								href: 'https://stackoverflow.com/questions/tagged/docusaurus',
+								label: 'GitHub Discussions',
+								href: 'https://github.com/pykeio/millennium/discussions',
 							},
 							{
 								label: 'Discord',
-								href: 'https://discordapp.com/invite/docusaurus',
+								href: 'https://discord.gg/CETPevXFgD',
 							},
 							{
 								label: 'Twitter',
-								href: 'https://twitter.com/docusaurus',
+								href: 'https://twitter.com/pyke_io',
 							},
 						],
 					},
@@ -160,7 +164,7 @@ const config = {
 							},
 							{
 								label: 'GitHub',
-								href: 'https://github.com/facebook/docusaurus',
+								href: 'https://github.com/pykeio/millennium',
 							},
 						],
 					},
@@ -172,7 +176,7 @@ const config = {
 				},
 				copyright: `Copyright © ${new Date().getFullYear()} <a href="https://pyke.io" target="_blank">pyke.io</a>, made with ❤️`,
 			},
-			image: 'img/millennium.png',
+			image: 'img/banner.png',
 			prism: {
 				theme: lightCodeTheme,
 				darkTheme: darkCodeTheme

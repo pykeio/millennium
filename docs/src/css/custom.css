@@ -197,7 +197,7 @@ svg {
 	}
 
 	[data-theme='dark'] .navbar.scroll {
-		background-color: rgba(0, 0, 0, 0.35);
+		background-color: rgba(0, 0, 0, 0.55);
 		box-shadow: 0 4px 10px 0 rgba(0, 0, 0, 0.3);
 	}
 

@@ -1,0 +1,111 @@
+---
+sidebar_position: 1
+---
+
+# Prerequisites
+In this section, we will cover installing:
+- Rust
+- Node.js (optional)
+- Build tools for your OS
+
+Before getting started with Millennium, you should have at least a basic understanding of Rust and HTML/CSS/JS.
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+<Tabs>
+<TabItem value="windows" label="Windows" default={typeof navigator !== 'undefined' ? /win/.test(navigator.userAgent) : true}>
+
+<h2>Installing Visual Studio Build Tools</h2>
+
+Visual Studio Build Tools are required to build some dependencies. We recommend [Build Tools for Visual Studio 2022](https://aka.ms/vs/17/release/vs_BuildTools.exe). This is a *big* install and will take a while.
+
+<h2>Installing Rust</h2>
+
+To install Rust on Windows, use <a href="https://rustup.rs" target="_blank">Rustup</a>. Download the installer [here](https://win.rustup.rs/x86_64) and follow the on-screen instructions to install.
+
+<h2>Installing Node.js (optional)</h2>
+
+Node.js is used by the Millennium CLI tool. Chances are that you already are or will be using Node.js to build your application's assets. We recommend [Node.js 16.14.2 LTS](https://nodejs.org/dist/v16.14.2/node-v16.14.2-x64.msi), but any version over Node.js 10 will do.
+
+**Don't install build tools when prompted** since we already installed them in the first step; you may encounter issues when you have multiple different versions of build tools installed.
+
+You can use the Millennium CLI without Node.js, but keep in mind when following these articles to use the Cargo commands instead of the npm commands.
+
+<h2>Installing Edge WebView2</h2>
+
+WebView2 is used by Millennium to render the web content. **WebView2 is pre-installed on Windows 11.** For other versions of Windows, you can install it via Microsoft's <a href="https://developer.microsoft.com/en-us/microsoft-edge/webview2/#download-section" target="_blank">Evergreen Bootstrapper</a>.
+
+End users of your application will not have to install WebView2 if you use `millennium-bundler`; it will automatically install WebView2 if the user doesn't have it installed.
+
+</TabItem>
+<TabItem value="linux" label="Linux" default={typeof navigator !== 'undefined' ? /linux/.test(navigator.userAgent) : false}>
+
+<h2>Installing build tools &amp; dependencies</h2>
+
+
+<Tabs>
+<TabItem value="debian" label="Ubuntu/Debian" default>
+
+```bash
+$ sudo apt update
+$ sudo apt install libwebkit2gtk-4.0-dev build-essential curl libssl-dev libgtk-3-dev \
+    libappindicator3-dev \ # optional - required for system tray
+    librsvg2-dev # optional - required for building AppImages
+```
+
+</TabItem>
+<TabItem value="arch" label="Arch Linux">
+
+```bash
+$ sudo pacman -Syu
+$ sudo pacman -S --needed webkit2gtk base-devel curl openssl appmenu-gtk-module gtk3 libvips \
+    libappindicator-gtk3 \ # optional - required for system tray
+    librsvg # optional - required for building AppImages
+```
+
+</TabItem>
+<TabItem value="fedora" label="Fedora">
+
+```bash
+$ sudo dnf check-update
+$ sudo dnf group install "C Development Tools and Libraries"
+$ sudo dnf install webkit2gtk3-devel.x86_64 openssl-devel curl \
+    libappindicator-gtk3 \ # optional - required for system tray
+    librsvg2-devel # optional - required for building AppImages
+```
+
+</TabItem>
+</Tabs>
+
+<h2>Installing Node.js</h2>
+
+We recommend using `nvm` to manage your Node.js installation. Install it with the following bash script:
+
+```bash
+$ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+```
+
+Then, **close and re-open your terminal** and run this to install the latest LTS version of Node:
+
+```bash
+$ nvm install node --lts --latest-npm
+$ nvm use node
+```
+
+If you have any problems with nvm, check their [readme](https://github.com/nvm-sh/nvm).
+
+<h2>Installing Rust</h2>
+
+The following command installs [Rustup](https://rustup.rs), the official Rust installer/version manager.
+
+```bash
+$ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+To make sure Rust has been installed, check to see if `rustc --version` succeeds.
+
+</TabItem>
+<TabItem value="macos" label="macOS" default={typeof navigator !== 'undefined' ? /mac/.test(navigator.userAgent) : false}>
+</TabItem>
+</Tabs>
