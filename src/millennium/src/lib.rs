@@ -813,9 +813,6 @@ where
 				let mut args = buffer.split('\r').collect::<Vec<_>>();
 				let pid: u32 = args.pop().unwrap().trim_end().parse().unwrap();
 				let cwd = args.pop().unwrap();
-				println!("cwd: {}", cwd);
-				println!("pid: {}", pid);
-				println!("args: {}", args.join(" "));
 				on_second_instance(args, PathBuf::from(cwd), pid);
 			}
 		});
