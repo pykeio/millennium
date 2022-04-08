@@ -204,8 +204,9 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// A task to run on the main thread.
 pub type SyncTask = Box<dyn FnOnce() + Send>;
 
-use std::{collections::HashMap, fmt, sync::Arc};
+use std::{collections::HashMap, fmt, path::PathBuf, sync::Arc};
 
+use interprocess::local_socket::*;
 /// Reads the config file at compile time and generates a [`Context`] based on
 /// its content.
 ///
@@ -780,6 +781,52 @@ pub(crate) mod sealed {
 		fn manager(&self) -> &WindowManager<R>;
 		fn runtime(&self) -> RuntimeOrDispatch<'_, R>;
 		fn managed_app_handle(&self) -> AppHandle<R>;
+	}
+}
+
+/// Requests a single instance lock for the application. This can be used to ensure that only one instance of your app
+/// is open at a time.
+///
+/// Returns `Ok(true)` if the lock was acquired (this is the first instance of the app), and `Ok(false)` if the lock was
+/// not acquired (this is the second instance of the app).
+///
+/// `on_second_instance` will be called when a second instance of the app is launched with the instance's command line
+/// arguments, current working directory, and process ID.
+pub fn request_single_instance_lock<F>(id: &str, on_second_instance: F) -> Result<bool>
+where
+	F: Fn(Vec<&str>, PathBuf, u32) + Send + 'static
+{
+	use std::io::{prelude::*, BufReader};
+
+	#[cfg(target_os = "windows")]
+	let path = id;
+	#[cfg(not(target_os = "windows"))]
+	let path = format!("/tmp/{}.lock", id);
+
+	if let Ok(listener) = LocalSocketListener::bind(path) {
+		std::thread::spawn(move || {
+			for conn in listener.incoming().flatten() {
+				let mut conn = BufReader::new(conn);
+				let mut buffer = String::new();
+				conn.read_line(&mut buffer).unwrap();
+
+				let mut args = buffer.split('\r').collect::<Vec<_>>();
+				let pid: u32 = args.pop().unwrap().trim_end().parse().unwrap();
+				let cwd = args.pop().unwrap();
+				println!("cwd: {}", cwd);
+				println!("pid: {}", pid);
+				println!("args: {}", args.join(" "));
+				on_second_instance(args, PathBuf::from(cwd), pid);
+			}
+		});
+		Ok(true)
+	} else {
+		let mut conn = LocalSocketStream::connect(path)?;
+		let args = std::env::args().collect::<Vec<_>>();
+		let cwd = std::env::current_dir()?;
+		let pid = std::process::id();
+		conn.write_all(format!("{}\r{}\r{}\n", args.join("\r"), cwd.to_str().unwrap(), pid).as_bytes())?;
+		Ok(false)
 	}
 }
 
