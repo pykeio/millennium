@@ -90,16 +90,16 @@ class Builder {
 		template<typename F>
 		inline Builder &setup(F &&callback) {
 			millenniumHandleException(millennium_builder_setup(builder, [](void *opaque, void *app) {
-				((F &&)opaque)(app);
-			}, (void *)callback))
+				(*(F* &&)opaque)(app);
+			}, (void *)&callback))
 			return *this;
 		}
 
 		template<typename F>
 		inline Builder &invoke_handler(F &&callback) {
 			millenniumHandleException(millennium_builder_invoke_handler(builder, [](void *opaque, MillenniumInvoke *invoke) {
-				((F &&)opaque)(invoke);
-			}, (void *)callback))
+				(*(F* &&)opaque)(invoke);
+			}, (void *)&callback))
 			return *this;
 		}
 
