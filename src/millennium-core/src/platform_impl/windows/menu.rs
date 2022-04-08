@@ -206,7 +206,7 @@ impl Menu {
 				}
 			}
 			MENU_IDS.lock().unwrap().push(menu_id.0 as _);
-			CustomMenuItem(MenuItemAttributes(menu_id.0, self.hmenu, accelerator.clone()))
+			CustomMenuItem(MenuItemAttributes(menu_id.0, self.hmenu, accelerator))
 		}
 	}
 
@@ -406,8 +406,10 @@ impl Accelerator {
 			cmd: menu_id
 		})
 	}
+}
 
-	fn to_string(&self) -> String {
+impl fmt::Display for Accelerator {
+	fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
 		let mut s = String::new();
 		let key_mods: ModifiersState = self.mods;
 		if key_mods.control_key() {
@@ -484,6 +486,6 @@ impl Accelerator {
 			KeyCode::ArrowDown => s.push_str("Down"),
 			_ => s.push_str(&format!("{:?}", self.key))
 		}
-		s
+		write!(fmt, "{}", s)
 	}
 }
