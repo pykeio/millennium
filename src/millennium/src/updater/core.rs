@@ -304,11 +304,8 @@ impl<R: Runtime> UpdateBuilder<R> {
 		let executable_path = self.executable_path.unwrap_or(current_exe()?);
 
 		let has_custom_target = self.target.is_some();
-		let target = self
-			.target
-			.or_else(|| get_updater_target().map(Into::into))
-			.ok_or(Error::UnsupportedPlatform)?;
-		let arch = get_updater_arch().ok_or(Error::UnsupportedPlatform)?;
+		let target = self.target.or_else(|| get_updater_target().map(Into::into)).ok_or(Error::UnsupportedOs)?;
+		let arch = get_updater_arch().ok_or(Error::UnsupportedArch)?;
 		let json_target = if has_custom_target { target.clone() } else { format!("{}-{}", target, arch) };
 
 		// Get the extract_path from the provided executable_path
@@ -482,7 +479,7 @@ impl<R: Runtime> Update<R> {
 		// anythin with it yet
 		#[cfg(target_os = "linux")]
 		if self.app.state::<Env>().appimage.is_none() {
-			return Err(Error::UnsupportedPlatform);
+			return Err(Error::UnsupportedLinuxPackage);
 		}
 
 		// set our headers
