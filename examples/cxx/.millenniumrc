@@ -31,8 +31,7 @@
 		],
 		"security": {
 			"csp": {
-				"default-src": "blob: data: filesystem: ws: wss: http: https: millennium: 'unsafe-eval' 'unsafe-inline' 'self'",
-				"style-src-elem": "https: 'unsafe-inline'"
+				"default-src": "millennium: millennium.localhost 'unsafe-inline' 'self'"
 			}
 		}
 	}
