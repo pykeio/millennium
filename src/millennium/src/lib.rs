@@ -799,11 +799,12 @@ where
 	use std::io::{prelude::*, BufReader};
 
 	#[cfg(target_os = "windows")]
-	let path = id;
+	let path: String = id.into();
 	#[cfg(not(target_os = "windows"))]
 	let path = format!("/tmp/{}.lock", id);
 
-	if let Ok(listener) = LocalSocketListener::bind(path) {
+	let _path = path.clone();
+	if let Ok(listener) = LocalSocketListener::bind(_path) {
 		std::thread::spawn(move || {
 			for conn in listener.incoming().flatten() {
 				let mut conn = BufReader::new(conn);
