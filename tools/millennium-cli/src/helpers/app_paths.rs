@@ -87,7 +87,7 @@ fn get_app_dir() -> Option<PathBuf> {
 }
 
 pub fn app_dir() -> &'static PathBuf {
-	static APP_DIR: Lazy<PathBuf> = Lazy::new(|| get_app_dir().unwrap_or_else(|| get_millennium_dir().parent().unwrap().to_path_buf()));
+	static APP_DIR: Lazy<PathBuf> = Lazy::new(|| get_app_dir().unwrap_or_else(|| get_millennium_dir()));
 	&APP_DIR
 }
 

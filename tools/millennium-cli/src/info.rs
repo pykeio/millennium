@@ -684,7 +684,7 @@ fn get_package_manager<T: AsRef<str>>(file_names: &[T]) -> crate::Result<Package
 	}
 
 	if !use_npm && !use_pnpm && !use_yarn {
-		println!("WARNING: no lock files found, defaulting to npm");
+		println!("{}", "WARNING: no lock files found, defaulting to npm".dimmed());
 		return Ok(PackageManager::Npm);
 	}
 
