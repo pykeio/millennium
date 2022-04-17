@@ -18,6 +18,7 @@
 
 export * as app from './app';
 export * as commandLine from './cli';
+export * as clipboard from './clipboard';
 export * as event from './event';
 export * as fs from './fs';
 export * as globalShortcut from './globalShortcut';
