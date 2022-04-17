@@ -16,6 +16,11 @@
 
 #![cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))]
 
+#[cfg(all(feature = "tray", feature = "gtk-tray", feature = "ayatana-tray"))]
+compile_error!("`gtk-tray` and `ayatana-tray` are mutually exclusive features. Please choose only one of them.");
+#[cfg(all(feature = "tray", not(any(feature = "gtk-tray", feature = "ayatana-tray"))))]
+compile_error!("`tray` requires `gtk-tray` *or* `ayatana-tray` to be enabled.");
+
 mod clipboard;
 mod event_loop;
 mod global_shortcut;
@@ -23,7 +28,11 @@ mod keyboard;
 mod keycode;
 mod menu;
 mod monitor;
-#[cfg(any(feature = "tray", feature = "ayatana"))]
+#[cfg(all(
+	feature = "tray",
+	any(feature = "gtk-tray", feature = "ayatana-tray"),
+	not(all(feature = "gtk-tray", feature = "ayatana-tray"))
+))]
 mod system_tray;
 mod window;
 
@@ -31,7 +40,11 @@ pub use event_loop::{EventLoop, EventLoopProxy, EventLoopWindowTarget};
 pub use monitor::{MonitorHandle, VideoMode};
 pub use window::{hit_test, PlatformIcon, Window, WindowId};
 
-#[cfg(any(feature = "tray", feature = "ayatana"))]
+#[cfg(all(
+	feature = "tray",
+	any(feature = "gtk-tray", feature = "ayatana-tray"),
+	not(all(feature = "gtk-tray", feature = "ayatana-tray"))
+))]
 pub use self::system_tray::{SystemTray, SystemTrayBuilder};
 pub use self::{
 	clipboard::Clipboard,
