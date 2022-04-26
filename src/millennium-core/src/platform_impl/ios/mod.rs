@@ -123,16 +123,16 @@ pub struct Menu;
 
 impl Default for Menu {
 	fn default() -> Self {
-		return Menu::new();
+		Menu::new()
 	}
 }
 
 impl Menu {
 	pub fn new() -> Self {
-		return Menu {};
+		Menu {}
 	}
 	pub fn new_popup_menu() -> Self {
-		return Self::new();
+		Self::new()
 	}
 	pub fn add_item(
 		&mut self,
@@ -143,17 +143,20 @@ impl Menu {
 		_selected: bool,
 		_menu_type: MenuType
 	) -> CustomMenuItem {
-		return CustomMenuItem(MenuItemAttributes {});
+		CustomMenuItem(MenuItemAttributes {})
 	}
 	pub fn add_submenu(&mut self, _title: &str, _enabled: bool, _submenu: Menu) {}
 	pub fn add_native_item(&mut self, _item: MenuItem, _menu_type: MenuType) -> Option<CustomMenuItem> {
-		return None;
+		None
 	}
 }
 
 impl MenuItemAttributes {
 	pub fn id(self) -> MenuId {
-		return MenuId::EMPTY;
+		MenuId::EMPTY
+	}
+	pub fn title(&self) -> &str {
+		"".to_owned()
 	}
 	pub fn set_enabled(&mut self, _is_enabled: bool) {}
 	pub fn set_title(&mut self, _title: &str) {}
@@ -168,7 +171,7 @@ pub struct DeviceId {
 
 impl DeviceId {
 	pub unsafe fn dummy() -> Self {
-		return DeviceId { uiscreen: std::ptr::null_mut() };
+		DeviceId { uiscreen: std::ptr::null_mut() }
 	}
 }
 
@@ -181,8 +184,8 @@ pub enum OsError {}
 
 impl fmt::Display for OsError {
 	fn fmt(&self, _: &mut fmt::Formatter<'_>) -> fmt::Result {
-		return match self {
+		match self {
 			_ => unreachable!()
-		};
+		}
 	}
 }

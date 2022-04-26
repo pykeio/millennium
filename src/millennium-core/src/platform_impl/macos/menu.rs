@@ -26,7 +26,7 @@ use objc::{
 	runtime::{Class, Object, Sel, NO, YES}
 };
 
-use super::{app_state::AppState, event::EventWrapper, window::get_window_id};
+use super::{app_state::AppState, event::EventWrapper, util::ns_string_to_rust, window::get_window_id};
 use crate::{
 	accelerator::{Accelerator, RawMods},
 	event::Event,
@@ -57,6 +57,13 @@ impl MenuItemAttributes {
 		// return empty menu value
 		// can be used to compare
 		MenuId::EMPTY
+	}
+
+	pub fn title(&self) -> String {
+		unsafe {
+			let title: id = msg_send![self.1, title];
+			ns_string_to_rust(title)
+		}
 	}
 
 	pub fn set_enabled(&mut self, is_enabled: bool) {
