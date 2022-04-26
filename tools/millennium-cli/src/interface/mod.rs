@@ -22,9 +22,11 @@ use millennium_bundler::bundle::{PackageType, Settings, SettingsBuilder};
 
 use crate::helpers::{config::Config, manifest::Manifest};
 
+#[allow(clippy::too_many_arguments)]
 pub fn get_bundler_settings(
 	app_settings: rust::AppSettings,
 	target: Option<String>,
+	features: &[String],
 	manifest: &Manifest,
 	config: &Config,
 	out_dir: &Path,
@@ -33,7 +35,7 @@ pub fn get_bundler_settings(
 ) -> crate::Result<Settings> {
 	let mut settings_builder = SettingsBuilder::new()
 		.package_settings(app_settings.get_package_settings())
-		.bundle_settings(app_settings.get_bundle_settings(config, manifest)?)
+		.bundle_settings(app_settings.get_bundle_settings(config, manifest, features)?)
 		.binaries(app_settings.get_binaries(config)?)
 		.project_out_directory(out_dir);
 

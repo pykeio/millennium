@@ -176,6 +176,8 @@ pub fn command(options: Options) -> Result<()> {
 	#[cfg(not(windows))]
 	let bin_path = out_dir.join(&bin_name);
 
+	let no_default_features = args.contains(&"--no-default-features".into());
+
 	if options.target == Some("universal-apple-darwin".into()) {
 		std::fs::create_dir_all(&out_dir).with_context(|| "failed to create project out directory")?;
 
@@ -278,9 +280,21 @@ pub fn command(options: Options) -> Result<()> {
 			None
 		};
 
-		let settings =
-			crate::interface::get_bundler_settings(app_settings, options.target.clone(), &manifest, config_, &out_dir, options.verbose, package_types)
-				.with_context(|| "failed to build bundler settings")?;
+		let mut enabled_features = features.clone();
+		if !no_default_features {
+			enabled_features.push("default".into());
+		}
+		let settings = crate::interface::get_bundler_settings(
+			app_settings,
+			options.target.clone(),
+			&enabled_features,
+			&manifest,
+			config_,
+			&out_dir,
+			options.verbose,
+			package_types
+		)
+		.with_context(|| "failed to build bundler settings")?;
 
 		let bundles = bundle_project(settings).with_context(|| "failed to bundle project")?;
 

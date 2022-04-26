@@ -165,9 +165,10 @@ impl AppSettings {
 		&self.cargo_package_settings
 	}
 
-	pub fn get_bundle_settings(&self, config: &Config, manifest: &Manifest) -> crate::Result<BundleSettings> {
+	pub fn get_bundle_settings(&self, config: &Config, manifest: &Manifest, features: &[String]) -> crate::Result<BundleSettings> {
 		millennium_config_to_bundle_settings(
 			manifest,
+			features,
 			config.millennium.bundle.clone(),
 			config.millennium.system_tray.clone(),
 			config.millennium.updater.clone()
@@ -334,10 +335,13 @@ pub fn get_workspace_dir(current_dir: &Path) -> PathBuf {
 #[allow(unused_variables)]
 fn millennium_config_to_bundle_settings(
 	manifest: &Manifest,
+	features: &[String],
 	config: crate::helpers::config::BundleConfig,
 	system_tray_config: Option<crate::helpers::config::SystemTrayConfig>,
 	updater_config: crate::helpers::config::UpdaterConfig
 ) -> crate::Result<BundleSettings> {
+	let enabled_features = manifest.all_enabled_features(features);
+
 	#[cfg(windows)]
 	let windows_icon_path = PathBuf::from(
 		config
@@ -361,7 +365,11 @@ fn millennium_config_to_bundle_settings(
 			let mut icon_path = system_tray_config.icon_path.clone();
 			icon_path.set_extension("png");
 			resources.push(icon_path.display().to_string());
-			depends.push("libappindicator3-1".to_string());
+			if enabled_features.contains(&"millennium/gtk-tray".into()) {
+				depends.push("libappindicator3-1".into());
+			} else {
+				depends.push("libayatana-appindicator3-1".into());
+			}
 		}
 
 		// provides `libwebkit2gtk-4.0.so.37` and all `4.0` versions have the -37 package name

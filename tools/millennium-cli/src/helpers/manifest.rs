@@ -15,7 +15,7 @@
 // limitations under the License.
 
 use std::{
-	collections::HashSet,
+	collections::{HashMap, HashSet},
 	fs::File,
 	io::{Read, Write},
 	iter::FromIterator,
@@ -32,7 +32,57 @@ use super::{
 
 #[derive(Default)]
 pub struct Manifest {
-	pub features: HashSet<String>
+	pub inner: Document,
+	pub millennium_features: HashSet<String>
+}
+
+impl Manifest {
+	pub fn features(&self) -> HashMap<String, Vec<String>> {
+		let mut f = HashMap::new();
+
+		if let Some(features) = self.inner.as_table().get("features").and_then(|f| f.as_table()) {
+			for (feature, enabled_features) in features.into_iter() {
+				if let Item::Value(Value::Array(enabled_features)) = enabled_features {
+					let mut enabled = Vec::new();
+					for value in enabled_features {
+						if let Value::String(s) = value {
+							enabled.push(s.value().clone());
+						}
+					}
+					f.insert(feature.to_string(), enabled);
+				}
+			}
+		}
+
+		f
+	}
+
+	pub fn all_enabled_features(&self, enabled_features: &[String]) -> Vec<String> {
+		let mut all_enabled_features: Vec<String> = self.millennium_features.iter().map(|f| format!("millennium/{}", f)).collect();
+
+		let manifest_features = self.features();
+		for f in enabled_features {
+			all_enabled_features.extend(get_enabled_features(&manifest_features, f));
+		}
+
+		all_enabled_features
+	}
+}
+
+fn get_enabled_features(list: &HashMap<String, Vec<String>>, feature: &str) -> Vec<String> {
+	let mut f = Vec::new();
+
+	if let Some(enabled_features) = list.get(feature) {
+		for enabled in enabled_features {
+			if list.contains_key(enabled) {
+				f.extend(get_enabled_features(list, enabled));
+			} else {
+				f.push(enabled.clone());
+			}
+		}
+	}
+
+	f
 }
 
 fn read_manifest(manifest_path: &Path) -> crate::Result<Document> {
@@ -157,9 +207,9 @@ pub fn rewrite_manifest(config: ConfigHandle) -> crate::Result<Manifest> {
           .as_bytes()
 			)?;
 			manifest_file.flush()?;
-			Ok(Manifest { features: millennium_features })
+			Ok(Manifest { inner: manifest, millennium_features })
 		}
-		Ok(false) => Ok(Manifest { features: millennium_features }),
+		Ok(false) => Ok(Manifest { inner: manifest, millennium_features }),
 		Err(e) => Err(e)
 	}
 }
