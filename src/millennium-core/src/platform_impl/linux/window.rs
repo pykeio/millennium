@@ -495,7 +495,7 @@ impl Window {
 	}
 
 	pub fn set_cursor_grab(&self, _grab: bool) -> Result<(), ExternalError> {
-		todo!()
+		Ok(())
 	}
 
 	pub fn set_cursor_visible(&self, visible: bool) {
