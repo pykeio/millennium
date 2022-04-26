@@ -29,7 +29,7 @@ use std::{
 #[cfg(target_os = "macos")]
 use cocoa::appkit::{NSView, NSViewHeightSizable, NSViewWidthSizable};
 use cocoa::{
-	base::{id, YES},
+	base::{id, nil, YES},
 	foundation::{NSDictionary, NSFastEnumeration, NSInteger}
 };
 use core_graphics::geometry::{CGPoint, CGRect, CGSize};
@@ -37,7 +37,7 @@ use core_graphics::geometry::{CGPoint, CGRect, CGSize};
 use file_drop::{add_file_drop_methods, set_file_drop_handler};
 use objc::{
 	declare::ClassDecl,
-	runtime::{Class, Object, Sel}
+	runtime::{Class, Object, Sel, BOOL}
 };
 use objc_id::Id;
 pub use web_context::WebContextImpl;
@@ -342,6 +342,40 @@ impl InnerWebView {
 			} else {
 				null_mut()
 			};
+
+			// File upload panel handler
+			extern "C" fn run_file_upload_panel(_this: &Object, _: Sel, _webview: id, open_panel_params: id, _frame: id, handler: id) {
+				unsafe {
+					let handler = handler as *mut block::Block<(id,), c_void>;
+					let cls = class!(NSOpenPanel);
+					let open_panel: id = msg_send![cls, openPanel];
+					let _: () = msg_send![open_panel, setCanChooseFiles: YES];
+					let allow_multi: BOOL = msg_send![open_panel_params, allowsMultipleSelection];
+					let _: () = msg_send![open_panel, setAllowsMultipleSelection: allow_multi];
+					let allow_dir: BOOL = msg_send![open_panel_params, allowsDirectories];
+					let _: () = msg_send![open_panel, setCanChooseDirectories: allow_dir];
+					let ok: NSInteger = msg_send![open_panel, runModal];
+					if ok == 1 {
+						let url: id = msg_send![open_panel, URLs];
+						(*handler).call((url,));
+					} else {
+						(*handler).call((nil,));
+					}
+				}
+			}
+
+			let ui_delegate = match ClassDecl::new("WebViewUIDelegate", class!(NSObject)) {
+				Some(mut ctl) => {
+					ctl.add_method(
+						sel!(webView:runOpenPanelWithParameters:initiatedByFrame:completionHandler:),
+						run_file_upload_panel as extern "C" fn(&Object, Sel, id, id, id, id)
+					);
+					ctl.register()
+				}
+				None => class!(UIFileUploadPanelController)
+			};
+			let ui_delegate: id = msg_send![ui_delegate, new];
+			let _: () = msg_send![webview, setUIDelegate: ui_delegate];
 
 			// File drop handling
 			#[cfg(target_os = "macos")]
