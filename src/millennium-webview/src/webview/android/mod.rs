@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{ffi::c_void, ptr::null_mut, rc::Rc, sync::RwLock};
+use std::{collections::HashSet, ffi::c_void, ptr::null_mut, rc::Rc, sync::RwLock};
 
 use jni::{
 	objects::{JClass, JObject},
@@ -60,12 +60,12 @@ impl InnerWebView {
 		let string_class = env.find_class("java/lang/String")?;
 		let WebViewAttributes {
 			url,
+			custom_protocols,
 			initialization_scripts,
 			ipc_handler,
 			..
 		} = self.attributes;
 
-		// TODO: IPC too?
 		if let Some(i) = ipc_handler {
 			let i = UnsafeIpc(Box::into_raw(Box::new(i)) as *mut _);
 			let mut ipc = IPC.write().unwrap();
@@ -73,7 +73,13 @@ impl InnerWebView {
 		}
 
 		if let Some(u) = url {
-			let url = env.new_string(u)?;
+			let mut url_string = String::from(u.as_str());
+			let schemes = custom_protocols.into_iter().map(|(s, _)| s).collect::<HashSet<_>>();
+			let name = u.scheme();
+			if schemes.contains(name) {
+				url_string = u.as_str().replace(&format!("{}://", name), "https://millennium.pyke/");
+			}
+			let url = env.new_string(url_string)?;
 			env.call_method(jobject, "loadUrl", "(Ljava/lang/String;)V", &[url.into()])?;
 		}
 
