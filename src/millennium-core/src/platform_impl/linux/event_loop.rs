@@ -283,7 +283,7 @@ impl<T: 'static> EventLoop<T> {
 					WindowRequest::CursorPosition((x, y)) => {
 						if let Some(cursor) = window.display().default_seat().and_then(|seat| seat.pointer()) {
 							if let Some(screen) = window.screen() {
-								cursor.wrap(&screen, x, y);
+								cursor.warp(&screen, x, y);
 							}
 						}
 					}
