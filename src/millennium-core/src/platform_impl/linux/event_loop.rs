@@ -198,8 +198,7 @@ impl<T: 'static> EventLoop<T> {
 						}
 					}
 					WindowRequest::DragWindow => {
-						let display = window.display();
-						if let Some(cursor) = display.default_seat().and_then(|device_manager| device_manager.pointer()) {
+						if let Some(cursor) = window.display().default_seat().and_then(|seat| seat.pointer()) {
 							let (_, x, y) = cursor.position();
 							window.begin_move_drag(1, x, y, 0);
 						}
@@ -280,6 +279,13 @@ impl<T: 'static> EventLoop<T> {
 								None => gdk_window.set_cursor(Cursor::for_display(&display, CursorType::BlankCursor).as_ref())
 							}
 						};
+					}
+					WindowRequest::CursorPosition((x, y)) => {
+						if let Some(cursor) = window.display().default_seat().and_then(|seat| seat.pointer()) {
+							if let Some(screen) = window.screen() {
+								cursor.wrap(&screen, x, y);
+							}
+						}
 					}
 					WindowRequest::WireUpEvents => {
 						window.add_events(
