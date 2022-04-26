@@ -63,6 +63,7 @@ impl InnerWebView {
 			custom_protocols,
 			initialization_scripts,
 			ipc_handler,
+			devtools,
 			..
 		} = self.attributes;
 
@@ -70,6 +71,14 @@ impl InnerWebView {
 			let i = UnsafeIpc(Box::into_raw(Box::new(i)) as *mut _);
 			let mut ipc = IPC.write().unwrap();
 			*ipc = i;
+		}
+
+		if devtools {
+			#[cfg(any(debug_assertions, feature = "devtools"))]
+			{
+				let class = env.find_class("android/webkit/WebView")?;
+				env.call_static_method(class, "setWebContentsDebuggingEnabled", "(Z)V", &[devtools.into()])?;
+			}
 		}
 
 		if let Some(u) = url {
