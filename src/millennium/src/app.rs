@@ -1200,41 +1200,20 @@ impl<R: Runtime> Builder<R> {
 			if let Some(menu) = system_tray.menu() {
 				tray::get_menu_ids(&mut ids, menu);
 			}
-			let mut tray = tray::SystemTray::new();
+			let mut tray = tray::SystemTray::new().with_icon(
+				system_tray
+					.icon
+					.or(system_tray_icon)
+					.expect("tray icon not found; please configure it in .millenniumrc")
+			);
 			if let Some(menu) = system_tray.menu {
 				tray = tray.with_menu(menu);
 			}
 
-			#[cfg(not(target_os = "macos"))]
-			let tray_handler = app
-				.runtime
-				.as_ref()
-				.unwrap()
-				.system_tray(
-					tray.with_icon(
-						system_tray
-							.icon
-							.or(system_tray_icon)
-							.expect("tray icon not found; please configure it in .millenniumrc")
-					)
-				)
-				.expect("failed to run tray");
-
 			#[cfg(target_os = "macos")]
-			let tray_handler = app
-				.runtime
-				.as_ref()
-				.unwrap()
-				.system_tray(
-					tray.with_icon(
-						system_tray
-							.icon
-							.or(system_tray_icon)
-							.expect("tray icon not found; please configure it in .millenniumrc")
-					)
-					.with_icon_as_template(system_tray_icon_as_template)
-				)
-				.expect("failed to run tray");
+			let tray = tray.with_icon_as_template(system_tray_icon_as_template);
+
+			let tray_handler = app.runtime.as_ref().unwrap().system_tray(tray).expect("failed to run tray");
 
 			let tray_handle = tray::SystemTrayHandle {
 				ids: Arc::new(std::sync::Mutex::new(ids)),

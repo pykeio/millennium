@@ -36,7 +36,7 @@ gtk = { version = "0.15", features = [ "v3_20" ] }
 [features]
 dox = [ "millennium-webview/dox" ]
 devtools = [ "millennium-webview/devtools", "millennium-runtime/devtools" ]
-system-tray = [ "millennium-webview/tray", "millennium-runtime/system-tray" ]
+system-tray = [ "millennium-runtime/system-tray", "millennium-webview/tray" ]
 macos-private-api = [
 	"millennium-webview/fullscreen",
 	"millennium-webview/transparent",
@@ -44,3 +44,5 @@ macos-private-api = [
 ]
 __rust_analyzer_hack = []
 objc-exception = [ "millennium-webview/objc-exception" ]
+gtk-tray = [ "millennium-webview/gtk-tray" ]
+ayatana-tray = [ "millennium-webview/ayatana-tray" ]

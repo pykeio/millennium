@@ -117,10 +117,12 @@ tokio-test = "0.4.2"
 tokio = { version = "1.16", features = [ "full" ] }
 
 [features]
-default = [ "millennium_webview", "compression", "objc-exception" ]
+default = [ "millennium_webview", "compression", "objc-exception", "ayatana-tray" ]
 compression = [ "millennium-macros/compression", "millennium-utils/compression" ]
 millennium_webview = [ "millennium-runtime-webview" ]
 objc-exception = [ "millennium-runtime-webview/objc-exception" ]
+ayatana-tray = [ "millennium-runtime-webview/ayatana-tray" ]
+gtk-tray = [ "millennium-runtime-webview/gtk-tray" ]
 isolation = [ "millennium-utils/isolation", "millennium-macros/isolation" ]
 custom-protocol = [ "millennium-macros/custom-protocol" ]
 updater = [ "minisign-verify", "base64", "http-api", "dialog-ask", "fs-extract-api" ]

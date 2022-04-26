@@ -231,9 +231,14 @@ pub fn try_build(attributes: Attributes) -> Result<()> {
 	if let Some(paths) = config.millennium.bundle.external_bin {
 		copy_binaries(ResourcePaths::new(external_binaries(&paths, &target_triple).as_slice(), true), &target_triple, target_dir)?;
 	}
-	if let Some(paths) = config.millennium.bundle.resources {
-		copy_resources(ResourcePaths::new(paths.as_slice(), true), target_dir)?;
+
+	#[allow(unused_mut)]
+	let mut resources = config.millennium.bundle.resources.unwrap_or_default();
+	#[cfg(target_os = "linux")]
+	if let Some(tray) = config.millennium.system_tray {
+		resources.push(tray.icon_path.display().to_string());
 	}
+	copy_resources(ResourcePaths::new(resources.as_slice(), true), target_dir)?;
 
 	#[cfg(target_os = "macos")]
 	{
