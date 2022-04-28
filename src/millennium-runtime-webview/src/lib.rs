@@ -48,6 +48,8 @@ use millennium_runtime::{menu::NativeImage, ActivationPolicy};
 use millennium_runtime::{SystemTray, SystemTrayEvent};
 use millennium_utils::config::WindowConfig;
 #[cfg(target_os = "macos")]
+use millennium_webview::application::platform::macos::WindowBuilderExtMacOS;
+#[cfg(target_os = "macos")]
 pub use millennium_webview::application::platform::macos::{
 	ActivationPolicy as MillenniumActivationPolicy, CustomMenuItemExtMacOS, EventLoopExtMacOS, NativeImage as MillenniumNativeImage, WindowExtMacOS
 };
@@ -840,7 +842,6 @@ impl WindowBuilder for WindowBuilderWrapper {
 
 	#[cfg(target_os = "macos")]
 	fn parent_window(mut self, parent: *mut std::ffi::c_void) -> Self {
-		use millennium_webview::application::platform::macos::WindowBuilderExtMacOS;
 		self.inner = self.inner.with_parent_window(parent);
 		self
 	}
@@ -2334,6 +2335,11 @@ fn create_webview<T: UserEvent>(
 	let webview_id_map = context.webview_id_map.clone();
 	#[cfg(all(windows, not(feature = "__rust_analyzer_hack")))]
 	let proxy = context.proxy.clone();
+
+	#[cfg(target_os = "macos")]
+	{
+		window_builder.inner = window_builder.inner.with_fullsize_content_view(true);
+	}
 
 	let is_window_transparent = window_builder.inner.window.transparent;
 	let menu_items = if let Some(menu) = window_builder.menu {
