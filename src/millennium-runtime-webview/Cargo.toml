@@ -20,7 +20,7 @@ exclude = [
 millennium-webview = { version = "1.0.0-beta.2", path = "../millennium-webview", default-features = false, features = [ "file-drop", "protocol" ] }
 millennium-runtime = { version = "1.0.0-beta.2", path = "../millennium-runtime" }
 millennium-utils = { version = "1.0.0-beta.2", path = "../millennium-utils" }
-uuid = { version = "0.8.2", features = [ "v4" ] }
+uuid = { version = "1", features = [ "v4" ] }
 rand = "0.8"
 
 [target."cfg(windows)".dependencies]
