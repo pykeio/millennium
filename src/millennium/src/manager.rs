@@ -1195,17 +1195,13 @@ mod tests {
 
 	#[test]
 	fn string_replace_with_callback() {
-		let mut millennium_index = 0;
-		for (src, pattern, replacement, result) in [(
-			"millennium is awesome, millennium is amazing",
-			"millennium",
-			|| {
-				millennium_index += 1;
-				millennium_index.to_string()
-			},
+		let mut idx = 0;
+		assert_eq!(
+			replace_with_callback("millennium is awesome, millennium is amazing", "millennium", || {
+				idx += 1;
+				idx.to_string()
+			}),
 			"1 is awesome, 2 is amazing"
-		)] {
-			assert_eq!(replace_with_callback(src, pattern, replacement), result);
-		}
+		);
 	}
 }

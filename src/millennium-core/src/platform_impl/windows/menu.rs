@@ -91,7 +91,7 @@ impl MenuItemAttributes {
 				cbSize: std::mem::size_of::<MENUITEMINFOW>() as _,
 				fMask: MIIM_STRING,
 				fType: MFT_STRING,
-				dwTypeData: PWSTR(0 as *mut u16),
+				dwTypeData: PWSTR(std::ptr::null_mut::<u16>()),
 				..Default::default()
 			};
 			GetMenuItemInfoW(self.1, self.0 as u32, false, &mut mif);
