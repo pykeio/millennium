@@ -182,6 +182,7 @@ fn generate_control_file(settings: &Settings, arch: &str, control_dir: &Path, da
 			writeln!(file, " {}", line)?;
 		}
 	}
+	writeln!(file, "Priority: optional")?;
 	file.flush()?;
 	Ok(())
 }
