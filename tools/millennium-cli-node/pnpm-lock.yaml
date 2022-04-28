@@ -1,19 +1,19 @@
 lockfileVersion: 5.3
 
 specifiers:
-  '@napi-rs/cli': 2.4.5
-  cross-spawn: 7.0.3
-  fs-extra: 10.0.1
+  '@napi-rs/cli': ^2.7.0
+  cross-spawn: ^7.0.3
+  fs-extra: ^10.1.0
 
 devDependencies:
-  '@napi-rs/cli': 2.4.5
+  '@napi-rs/cli': 2.7.0
   cross-spawn: 7.0.3
-  fs-extra: 10.0.1
+  fs-extra: 10.1.0
 
 packages:
 
-  /@napi-rs/cli/2.4.5:
-    resolution: {integrity: sha512-CLa3PSHh4Y760OXkHidzfHavVtfbQyfMhj3sWpta3SZjbWMk0tbdPhRez9y8KVApVVWjBxz5agEeFMfxxr+KTg==}
+  /@napi-rs/cli/2.7.0:
+    resolution: {integrity: sha512-bQb+r9/xW8LFRbpEN7A/4fX8LnEWbI0JzyOzXGDpO+cI8dXRxX7OPySOpzT2nBgP1brA2Ydkw/t9lyxLN9TlxQ==}
     engines: {node: '>= 10'}
     hasBin: true
     dev: true
@@ -27,17 +27,17 @@ packages:
       which: 2.0.2
     dev: true
 
-  /fs-extra/10.0.1:
-    resolution: {integrity: sha512-NbdoVMZso2Lsrn/QwLXOy6rm0ufY2zEOKCDzJR/0kBsb0E6qed0P3iYK+Ath3BfvXEeu4JhEtXLgILx5psUfag==}
+  /fs-extra/10.1.0:
+    resolution: {integrity: sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==}
     engines: {node: '>=12'}
     dependencies:
-      graceful-fs: 4.2.9
+      graceful-fs: 4.2.10
       jsonfile: 6.1.0
       universalify: 2.0.0
     dev: true
 
-  /graceful-fs/4.2.9:
-    resolution: {integrity: sha512-NtNxqUcXgpW2iMrfqSfR73Glt39K+BLwWsPs94yR63v45T0Wbej7eRmL5cWfwEgqXnmjQp3zaJTshdRW/qC2ZQ==}
+  /graceful-fs/4.2.10:
+    resolution: {integrity: sha512-9ByhssR2fPVsNZj478qUUbKfmL0+t5BDVyjShtyZZLiK7ZDAArFFfopyOTj0M05wE2tJPisA4iTnnXl2YoPvOA==}
     dev: true
 
   /isexe/2.0.0:
@@ -49,7 +49,7 @@ packages:
     dependencies:
       universalify: 2.0.0
     optionalDependencies:
-      graceful-fs: 4.2.9
+      graceful-fs: 4.2.10
     dev: true
 
   /path-key/3.1.1:
