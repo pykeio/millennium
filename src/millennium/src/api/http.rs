@@ -18,7 +18,7 @@
 
 //! Types and functions related to HTTP request.
 
-use std::{collections::HashMap, path::PathBuf, time::Duration};
+use std::{collections::HashMap, time::Duration};
 
 use http::{header::HeaderName, Method};
 pub use http::{HeaderMap, StatusCode};
@@ -142,7 +142,6 @@ impl Client {
 					for (name, part) in form_body.0 {
 						match part {
 							FormPart::Bytes(bytes) => form.push((name, serde_json::to_string(&bytes)?)),
-							FormPart::File(file_path) => form.push((name, serde_json::to_string(&file_path)?)),
 							FormPart::Text(text) => form.push((name, text))
 						}
 					}
@@ -185,7 +184,6 @@ impl Client {
 					for (name, part) in form_body.0 {
 						match part {
 							FormPart::Bytes(bytes) => form.push((name, serde_json::to_string(&bytes)?)),
-							FormPart::File(file_path) => form.push((name, serde_json::to_string(&file_path)?)),
 							FormPart::Text(text) => form.push((name, text))
 						}
 					}
@@ -227,8 +225,6 @@ pub enum ResponseType {
 #[serde(untagged)]
 #[non_exhaustive]
 pub enum FormPart {
-	/// A file path value.
-	File(PathBuf),
 	/// A string value.
 	Text(String),
 	/// A byte array value.
