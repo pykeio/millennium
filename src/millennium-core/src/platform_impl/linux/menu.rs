@@ -89,7 +89,7 @@ impl MenuItemAttributes {
 		self.id
 	}
 	pub fn title(&self) -> String {
-		self.gtk_item.label().map(|gstr| gstr.as_str().to_owned()).unwrap_or("".to_owned())
+		self.gtk_item.label().map(|gstr| gstr.as_str().to_owned()).unwrap_or_else(|| "".to_owned())
 	}
 	pub fn set_enabled(&mut self, is_enabled: bool) {
 		self.gtk_item.set_sensitive(is_enabled);
