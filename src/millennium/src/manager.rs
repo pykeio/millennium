@@ -68,6 +68,7 @@ const WINDOW_DESTROYED_EVENT: &str = "millennium://destroyed";
 const WINDOW_FOCUS_EVENT: &str = "millennium://focus";
 const WINDOW_BLUR_EVENT: &str = "millennium://blur";
 const WINDOW_SCALE_FACTOR_CHANGED_EVENT: &str = "millennium://scale-change";
+const WINDOW_THEME_CHANGED: &str = "millennium://theme-changed";
 const MENU_EVENT: &str = "millennium://menu";
 
 #[derive(Default)]
@@ -1147,7 +1148,8 @@ fn on_window_event<R: Runtime>(window: &Window<R>, manager: &WindowManager<R>, e
 			}
 			FileDropEvent::Cancelled => window.emit("millennium://file-drop-cancelled", ())?,
 			_ => unimplemented!()
-		}
+		},
+		WindowEvent::ThemeChanged(theme) => window.emit(WINDOW_THEME_CHANGED, theme.to_string())?
 	}
 	Ok(())
 }

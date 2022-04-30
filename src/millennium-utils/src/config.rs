@@ -631,7 +631,9 @@ pub struct WindowConfig {
 	pub always_on_top: bool,
 	/// Whether or not the window icon should be added to the taskbar.
 	#[serde(default)]
-	pub skip_taskbar: bool
+	pub skip_taskbar: bool,
+	/// The initial window theme. Defaults to the system theme. Currently only implemented on Windows.
+	pub theme: Option<crate::Theme>
 }
 
 impl Default for WindowConfig {
@@ -659,7 +661,8 @@ impl Default for WindowConfig {
 			decorations: default_decorations(),
 			titlebar_hidden: default_titlebar_hidden(),
 			always_on_top: false,
-			skip_taskbar: false
+			skip_taskbar: false,
+			theme: None
 		}
 	}
 }
@@ -2361,6 +2364,17 @@ mod build {
 		}
 	}
 
+	impl ToTokens for crate::Theme {
+		fn to_tokens(&self, tokens: &mut TokenStream) {
+			let prefix = quote! { ::millennium::utils::Theme };
+
+			tokens.append_all(match self {
+				Self::Light => quote! { #prefix::Light },
+				Self::Dark => quote! { #prefix::Dark }
+			})
+		}
+	}
+
 	impl ToTokens for WindowConfig {
 		fn to_tokens(&self, tokens: &mut TokenStream) {
 			let label = str_lit(&self.label);
@@ -2386,6 +2400,7 @@ mod build {
 			let titlebar_hidden = self.titlebar_hidden;
 			let always_on_top = self.always_on_top;
 			let skip_taskbar = self.skip_taskbar;
+			let theme = opt_lit(self.theme.as_ref());
 
 			literal_struct!(
 				tokens,
@@ -2412,7 +2427,8 @@ mod build {
 				decorations,
 				titlebar_hidden,
 				always_on_top,
-				skip_taskbar
+				skip_taskbar,
+				theme
 			);
 		}
 	}

@@ -58,7 +58,7 @@ use crate::{
 	sealed::{ManagerBase, RuntimeOrDispatch},
 	utils::config::Config,
 	utils::{assets::Assets, Env},
-	Context, EventLoopMessage, Invoke, InvokeError, InvokeResponse, Manager, Runtime, Scopes, StateManager, Window
+	Context, EventLoopMessage, Invoke, InvokeError, InvokeResponse, Manager, Runtime, Scopes, StateManager, Theme, Window
 };
 
 pub(crate) type GlobalMenuEventListener<R> = Box<dyn Fn(WindowMenuEvent<R>) + Send + Sync>;
@@ -123,7 +123,17 @@ pub enum WindowEvent {
 		new_inner_size: PhysicalSize<u32>
 	},
 	/// An event associated with the file drop action.
-	FileDrop(FileDropEvent)
+	FileDrop(FileDropEvent),
+	/// The system theme has changed.
+	///
+	/// Applications might wish to react to this to change the theme of the content of the window when the system
+	/// changes the theme.
+	///
+	/// ## Platform-specific
+	///
+	/// - **macOS / Linux**: Not supported.
+	/// - **Windows**: Only delivered if the window [`theme`](`crate::window::WindowBuilder#method.theme`) is `None`.
+	ThemeChanged(Theme)
 }
 
 impl From<RuntimeWindowEvent> for WindowEvent {
@@ -135,7 +145,8 @@ impl From<RuntimeWindowEvent> for WindowEvent {
 			RuntimeWindowEvent::Destroyed => Self::Destroyed,
 			RuntimeWindowEvent::Focused(flag) => Self::Focused(flag),
 			RuntimeWindowEvent::ScaleFactorChanged { scale_factor, new_inner_size } => Self::ScaleFactorChanged { scale_factor, new_inner_size },
-			RuntimeWindowEvent::FileDrop(event) => Self::FileDrop(event)
+			RuntimeWindowEvent::FileDrop(event) => Self::FileDrop(event),
+			RuntimeWindowEvent::ThemeChanged(theme) => Self::ThemeChanged(theme)
 		}
 	}
 }

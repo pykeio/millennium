@@ -21,7 +21,7 @@ use std::{
 	sync::{mpsc::Sender, Arc, Mutex}
 };
 
-use millennium_utils::config::WindowConfig;
+use millennium_utils::{config::WindowConfig, Theme};
 use serde::Serialize;
 
 use crate::{
@@ -72,7 +72,14 @@ pub enum WindowEvent {
 		new_inner_size: dpi::PhysicalSize<u32>
 	},
 	/// An event associated with the file drop action.
-	FileDrop(FileDropEvent)
+	FileDrop(FileDropEvent),
+	/// The system theme has changed.
+	///
+	/// Applications might wish to react to this to change the theme of the content of the window when the system
+	/// changes the theme.
+	///
+	/// Currently only implemented on Windows.
+	ThemeChanged(Theme)
 }
 
 /// The file drop event payload.

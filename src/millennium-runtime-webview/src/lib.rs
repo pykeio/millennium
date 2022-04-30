@@ -46,7 +46,7 @@ use millennium_runtime::{
 use millennium_runtime::{menu::NativeImage, ActivationPolicy};
 #[cfg(feature = "system-tray")]
 use millennium_runtime::{SystemTray, SystemTrayEvent};
-use millennium_utils::config::WindowConfig;
+use millennium_utils::{config::WindowConfig, Theme};
 #[cfg(target_os = "macos")]
 use millennium_webview::application::platform::macos::WindowBuilderExtMacOS;
 #[cfg(target_os = "macos")]
@@ -81,7 +81,7 @@ use millennium_webview::{
 			MenuItem as MillenniumMenuItem, MenuItemAttributes as MillenniumMenuItemAttributes, MenuType
 		},
 		monitor::MonitorHandle,
-		window::{Fullscreen, Icon as MillenniumWindowIcon, UserAttentionType as MillenniumUserAttentionType}
+		window::{Fullscreen, Icon as MillenniumWindowIcon, Theme as MillenniumTheme, UserAttentionType as MillenniumUserAttentionType}
 	},
 	http::{
 		Request as MillenniumHttpRequest, RequestParts as MillenniumRequestParts, Response as MillenniumHttpResponse, ResponseParts as MillenniumResponseParts
@@ -558,6 +558,14 @@ impl WindowEventWrapper {
 	}
 }
 
+fn map_theme(theme: &MillenniumTheme) -> Theme {
+	match theme {
+		MillenniumTheme::Light => Theme::Light,
+		MillenniumTheme::Dark => Theme::Dark,
+		_ => Theme::Light
+	}
+}
+
 impl<'a> From<&MillenniumWindowEvent<'a>> for WindowEventWrapper {
 	fn from(event: &MillenniumWindowEvent<'a>) -> Self {
 		let event = match event {
@@ -570,6 +578,7 @@ impl<'a> From<&MillenniumWindowEvent<'a>> for WindowEventWrapper {
 			},
 			#[cfg(any(target_os = "linux", target_os = "macos"))]
 			MillenniumWindowEvent::Focused(focused) => WindowEvent::Focused(*focused),
+			MillenniumWindowEvent::ThemeChanged(theme) => WindowEvent::ThemeChanged(map_theme(theme)),
 			_ => return Self(None)
 		};
 		Self(Some(event))
@@ -713,7 +722,8 @@ impl WindowBuilder for WindowBuilderWrapper {
 			.decorations(config.decorations)
 			.maximized(config.maximized)
 			.always_on_top(config.always_on_top)
-			.skip_taskbar(config.skip_taskbar);
+			.skip_taskbar(config.skip_taskbar)
+			.theme(config.theme);
 
 		#[cfg(any(not(target_os = "macos"), feature = "macos-private-api"))]
 		{
@@ -868,6 +878,22 @@ impl WindowBuilder for WindowBuilderWrapper {
 		self
 	}
 
+	#[allow(unused_variables, unused_mut)]
+	fn theme(mut self, theme: Option<Theme>) -> Self {
+		#[cfg(windows)]
+		{
+			self.inner = self.inner.with_theme(if let Some(t) = theme {
+				match t {
+					Theme::Dark => Some(MillenniumTheme::Dark),
+					_ => Some(MillenniumTheme::Light)
+				}
+			} else {
+				None
+			});
+		}
+		self
+	}
+
 	fn has_icon(&self) -> bool {
 		self.inner.window.window_icon.is_some()
 	}
@@ -938,6 +964,7 @@ pub enum WindowMessage {
 	Hwnd(Sender<Hwnd>),
 	#[cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))]
 	GtkWindow(Sender<GtkWindow>),
+	Theme(Sender<Theme>),
 	// Setters
 	Center(Sender<Result<()>>),
 	RequestUserAttention(Option<UserAttentionTypeWrapper>),
@@ -1168,6 +1195,10 @@ impl<T: UserEvent> Dispatch<T> for MillenniumDispatcher<T> {
 	#[cfg(windows)]
 	fn hwnd(&self) -> Result<HWND> {
 		window_getter!(self, WindowMessage::Hwnd).map(|w| w.0)
+	}
+
+	fn theme(&self) -> Result<Theme> {
+		window_getter!(self, WindowMessage::Theme)
 	}
 
 	/// Returns the `ApplicatonWindow` from gtk crate that is used by this
@@ -1824,6 +1855,12 @@ fn handle_user_message<T: UserEvent>(
 					WindowMessage::Hwnd(tx) => tx.send(Hwnd(HWND(window.hwnd() as _))).unwrap(),
 					#[cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))]
 					WindowMessage::GtkWindow(tx) => tx.send(GtkWindow(window.gtk_window().clone())).unwrap(),
+					WindowMessage::Theme(tx) => {
+						#[cfg(windows)]
+						tx.send(map_theme(&window.theme())).unwrap();
+						#[cfg(not(windows))]
+						tx.send(Theme::Light).unwrap();
+					}
 					// Setters
 					WindowMessage::Center(tx) => {
 						tx.send(center_window(window, window_handle.inner_size())).unwrap();

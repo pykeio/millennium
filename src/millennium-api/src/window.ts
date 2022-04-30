@@ -122,6 +122,8 @@
 import { invokeMillenniumCommand } from './helpers/millennium';
 import { emit, listen, once, EventName, EventCallback, Unlistener } from './event';
 
+export type Theme = 'light' | 'dark';
+
 export interface Monitor {
 	name: string | null;
 	/** The monitor's resolution. */
@@ -425,6 +427,11 @@ class WindowManager extends WebviewWindowHandle {
 		return await this._manage('close');
 	}
 
+	/** Gets the system theme. */
+	public async theme(): Promise<Theme | null> {
+		return await this._manage('theme');
+	}
+
 	/** Sets whether or not the window should have borders and bars. */
 	async setDecorations(decorations: boolean): Promise<void> {
 		return await this._manage('setDecorations', decorations);
@@ -655,6 +662,12 @@ export interface WindowOptions {
 	alwaysOnTop?: boolean;
 	skipTaskbar?: boolean;
 	fileDropEnabled?: boolean;
+	/**
+	 * The initial window theme. Defaults to the system theme.
+	 *
+	 * Currently only implemented on Windows.
+	 */
+	theme?: Theme;
 }
 
 /**

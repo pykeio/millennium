@@ -45,7 +45,8 @@ export type EventName = LiteralUnion<
 	| 'millennium://menu'
 	| 'millennium://file-drop'
 	| 'millennium://file-drop-hover'
-	| 'millennium://file-drop-cancelled',
+	| 'millennium://file-drop-cancelled'
+	| 'millennium://theme-changed',
 	string
 >;
 
