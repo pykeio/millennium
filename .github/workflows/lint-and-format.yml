@@ -10,6 +10,9 @@ on:
       - '.github/workflows/lint-and-format.yml'
       - 'src/**/*.rs'
       - 'rustfmt.toml'
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
 env:
   RUST_BACKTRACE: 1
   CARGO_INCREMENTAL: 0 # This is set to 0 by rust-cache.
