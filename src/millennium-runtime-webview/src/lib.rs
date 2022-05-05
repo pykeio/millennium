@@ -37,7 +37,7 @@ use millennium_runtime::{
 	webview::{WebviewIpcHandler, WindowBuilder, WindowBuilderBase},
 	window::{
 		dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize, Position, Size},
-		DetachedWindow, FileDropEvent, JsEventListenerKey, PendingWindow, WindowEvent
+		CursorIcon, DetachedWindow, FileDropEvent, JsEventListenerKey, PendingWindow, WindowEvent
 	},
 	ClipboardManager, Dispatch, Error, EventLoopProxy, ExitRequestedEventAction, GlobalShortcutManager, Result, RunEvent, RunIteration, Runtime, RuntimeHandle,
 	UserAttentionType, UserEvent, WindowIcon
@@ -81,7 +81,10 @@ use millennium_webview::{
 			MenuItem as MillenniumMenuItem, MenuItemAttributes as MillenniumMenuItemAttributes, MenuType
 		},
 		monitor::MonitorHandle,
-		window::{Fullscreen, Icon as MillenniumWindowIcon, Theme as MillenniumTheme, UserAttentionType as MillenniumUserAttentionType}
+		window::{
+			CursorIcon as MillenniumCursorIcon, Fullscreen, Icon as MillenniumWindowIcon, Theme as MillenniumTheme,
+			UserAttentionType as MillenniumUserAttentionType
+		}
 	},
 	http::{
 		Request as MillenniumHttpRequest, RequestParts as MillenniumRequestParts, Response as MillenniumHttpResponse, ResponseParts as MillenniumResponseParts
@@ -686,12 +689,60 @@ impl From<Position> for PositionWrapper {
 pub struct UserAttentionTypeWrapper(MillenniumUserAttentionType);
 
 impl From<UserAttentionType> for UserAttentionTypeWrapper {
-	fn from(request_type: UserAttentionType) -> UserAttentionTypeWrapper {
+	fn from(request_type: UserAttentionType) -> Self {
 		let o = match request_type {
 			UserAttentionType::Critical => MillenniumUserAttentionType::Critical,
 			UserAttentionType::Informational => MillenniumUserAttentionType::Informational
 		};
 		Self(o)
+	}
+}
+
+#[derive(Debug)]
+pub struct CursorIconWrapper(MillenniumCursorIcon);
+
+impl From<CursorIcon> for CursorIconWrapper {
+	fn from(icon: CursorIcon) -> Self {
+		use CursorIcon::*;
+		let i = match icon {
+			Default => MillenniumCursorIcon::Default,
+			Crosshair => MillenniumCursorIcon::Crosshair,
+			Hand => MillenniumCursorIcon::Hand,
+			Arrow => MillenniumCursorIcon::Arrow,
+			Move => MillenniumCursorIcon::Move,
+			Text => MillenniumCursorIcon::Text,
+			Wait => MillenniumCursorIcon::Wait,
+			Help => MillenniumCursorIcon::Help,
+			Progress => MillenniumCursorIcon::Progress,
+			NotAllowed => MillenniumCursorIcon::NotAllowed,
+			ContextMenu => MillenniumCursorIcon::ContextMenu,
+			Cell => MillenniumCursorIcon::Cell,
+			VerticalText => MillenniumCursorIcon::VerticalText,
+			Alias => MillenniumCursorIcon::Alias,
+			Copy => MillenniumCursorIcon::Copy,
+			NoDrop => MillenniumCursorIcon::NoDrop,
+			Grab => MillenniumCursorIcon::Grab,
+			Grabbing => MillenniumCursorIcon::Grabbing,
+			AllScroll => MillenniumCursorIcon::AllScroll,
+			ZoomIn => MillenniumCursorIcon::ZoomIn,
+			ZoomOut => MillenniumCursorIcon::ZoomOut,
+			EResize => MillenniumCursorIcon::EResize,
+			NResize => MillenniumCursorIcon::NResize,
+			NeResize => MillenniumCursorIcon::NeResize,
+			NwResize => MillenniumCursorIcon::NwResize,
+			SResize => MillenniumCursorIcon::SResize,
+			SeResize => MillenniumCursorIcon::SeResize,
+			SwResize => MillenniumCursorIcon::SwResize,
+			WResize => MillenniumCursorIcon::WResize,
+			EwResize => MillenniumCursorIcon::EwResize,
+			NsResize => MillenniumCursorIcon::NsResize,
+			NeswResize => MillenniumCursorIcon::NeswResize,
+			NwseResize => MillenniumCursorIcon::NwseResize,
+			ColResize => MillenniumCursorIcon::ColResize,
+			RowResize => MillenniumCursorIcon::RowResize,
+			_ => MillenniumCursorIcon::Default
+		};
+		Self(i)
 	}
 }
 
@@ -989,6 +1040,10 @@ pub enum WindowMessage {
 	SetFocus,
 	SetIcon(MillenniumWindowIcon),
 	SetSkipTaskbar(bool),
+	SetCursorGrab(bool),
+	SetCursorVisible(bool),
+	SetCursorIcon(CursorIcon),
+	SetCursorPosition(Position),
 	DragWindow,
 	UpdateMenuItem(u16, MenuUpdate),
 	RequestRedraw
@@ -1316,6 +1371,22 @@ impl<T: UserEvent> Dispatch<T> for MillenniumDispatcher<T> {
 
 	fn set_skip_taskbar(&self, skip: bool) -> Result<()> {
 		send_user_message(&self.context, Message::Window(self.window_id, WindowMessage::SetSkipTaskbar(skip)))
+	}
+
+	fn set_cursor_grab(&self, grab: bool) -> crate::Result<()> {
+		send_user_message(&self.context, Message::Window(self.window_id, WindowMessage::SetCursorGrab(grab)))
+	}
+
+	fn set_cursor_visible(&self, visible: bool) -> crate::Result<()> {
+		send_user_message(&self.context, Message::Window(self.window_id, WindowMessage::SetCursorVisible(visible)))
+	}
+
+	fn set_cursor_icon(&self, icon: CursorIcon) -> crate::Result<()> {
+		send_user_message(&self.context, Message::Window(self.window_id, WindowMessage::SetCursorIcon(icon)))
+	}
+
+	fn set_cursor_position<Pos: Into<Position>>(&self, position: Pos) -> crate::Result<()> {
+		send_user_message(&self.context, Message::Window(self.window_id, WindowMessage::SetCursorPosition(position.into())))
 	}
 
 	fn start_dragging(&self) -> Result<()> {
@@ -1904,9 +1975,26 @@ fn handle_user_message<T: UserEvent>(
 					WindowMessage::SetIcon(icon) => {
 						window.set_window_icon(Some(icon));
 					}
-					WindowMessage::SetSkipTaskbar(_skip) => {
+					#[allow(unused_variables)]
+					WindowMessage::SetSkipTaskbar(skip) => {
 						#[cfg(any(windows, target_os = "linux"))]
-						window.set_skip_taskbar(_skip);
+						window.set_skip_taskbar(skip);
+					}
+					#[allow(unused_variables)]
+					WindowMessage::SetCursorGrab(grab) => {
+						#[cfg(any(windows, target_os = "macos"))]
+						let _ = window.set_cursor_grab(grab);
+					}
+					WindowMessage::SetCursorVisible(visible) => {
+						window.set_cursor_visible(visible);
+					}
+					WindowMessage::SetCursorIcon(icon) => {
+						window.set_cursor_icon(CursorIconWrapper::from(icon).0);
+					}
+					#[allow(unused_variables)]
+					WindowMessage::SetCursorPosition(position) => {
+						#[cfg(any(windows, target_os = "macos"))]
+						let _ = window.set_cursor_position(PositionWrapper::from(position).0);
 					}
 					WindowMessage::DragWindow => {
 						let _ = window.drag_window();

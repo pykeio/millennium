@@ -53,7 +53,7 @@ use crate::{
 	sealed::ManagerBase,
 	sealed::RuntimeOrDispatch,
 	utils::config::WindowUrl,
-	EventLoopMessage, Icon, Invoke, InvokeError, InvokeMessage, InvokeResolver, Manager, PageLoadPayload, Runtime, Theme, WindowEvent
+	CursorIcon, EventLoopMessage, Icon, Invoke, InvokeError, InvokeMessage, InvokeResolver, Manager, PageLoadPayload, Runtime, Theme, WindowEvent
 };
 
 #[derive(Clone, Serialize)]
@@ -1066,6 +1066,43 @@ impl<R: Runtime> Window<R> {
 	/// Whether to show the window icon in the task bar or not.
 	pub fn set_skip_taskbar(&self, skip: bool) -> crate::Result<()> {
 		self.window.dispatcher.set_skip_taskbar(skip).map_err(Into::into)
+	}
+
+	/// Grabs the cursor, preventing it from leaving the window.
+	///
+	/// There's no guarantee that the cursor will be hidden. You should
+	/// hide it by yourself with `set_cursor_visible` or via CSS.
+	///
+	/// ## Platform-specific
+	///
+	/// - **Linux**: Unsupported.
+	/// - **macOS**: This locks the cursor in a fixed location, which looks visually awkward.
+	pub fn set_cursor_grab(&self, grab: bool) -> crate::Result<()> {
+		self.window.dispatcher.set_cursor_grab(grab).map_err(Into::into)
+	}
+
+	/// Modifies the cursor's visibility.
+	///
+	/// If `false`, this will hide the cursor. If `true`, this will show the cursor.
+	///
+	/// ## Platform-specific
+	///
+	/// - **Linux**: Unsupported.
+	/// - **Windows**: The cursor is only hidden within the confines of the window.
+	/// - **macOS**: The cursor is hidden as long as the window has input focus, even if the cursor is outside of the
+	///   window.
+	pub fn set_cursor_visible(&self, visible: bool) -> crate::Result<()> {
+		self.window.dispatcher.set_cursor_visible(visible).map_err(Into::into)
+	}
+
+	/// Modifies the cursor icon of the window.
+	pub fn set_cursor_icon(&self, icon: CursorIcon) -> crate::Result<()> {
+		self.window.dispatcher.set_cursor_icon(icon).map_err(Into::into)
+	}
+
+	/// Changes the position of the cursor in window coordinates.
+	pub fn set_cursor_position<Pos: Into<Position>>(&self, position: Pos) -> crate::Result<()> {
+		self.window.dispatcher.set_cursor_position(position).map_err(Into::into)
 	}
 
 	/// Starts dragging the window.

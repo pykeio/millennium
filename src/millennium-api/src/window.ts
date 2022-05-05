@@ -50,6 +50,10 @@
  * 				"setFocus": true,
  * 				"setIcon": true,
  * 				"setSkipTaskbar": true,
+ * 				"setCursorGrab": true,
+ * 				"setCursorVisible": true,
+ * 				"setCursorIcon": true,
+ * 				"setCursorPosition": true,
  * 				"startDragging": true,
  * 				"print": true
  * 			}
@@ -203,6 +207,43 @@ export enum UserAttentionType {
 	 */
 	INFORMATIONAL = 2
 }
+
+export type CursorIcon =
+	| 'default'
+	| 'crosshair'
+	| 'hand'
+	| 'arrow'
+	| 'move'
+	| 'text'
+	| 'wait'
+	| 'help'
+	| 'progress'
+	| 'notAllowed'
+	| 'contextMenu'
+	| 'cell'
+	| 'verticalText'
+	| 'alias'
+	| 'copy'
+	| 'noDrop'
+	| 'grab'
+	| 'grabbing'
+	| 'allScroll'
+	| 'zoomIn'
+	| 'zoomOut'
+	| 'eResize'
+	| 'nResize'
+	| 'neResize'
+	| 'nwResize'
+	| 'sResize'
+	| 'seResize'
+	| 'swResize'
+	| 'wResize'
+	| 'ewResize'
+	| 'nsResize'
+	| 'neswResize'
+	| 'nwseResize'
+	| 'colResize'
+	| 'rowResize';
 
 /**
  * Get an instance of `WebviewWindow` for the current webview window.
@@ -529,6 +570,44 @@ class WindowManager extends WebviewWindowHandle {
 	/** Whether to show the window icon in the taskbar or not. */
 	async setShowInTaskbar(show: boolean = true): Promise<void> {
 		return await this._manage('setSkipTaskbar', show);
+	}
+
+	/**
+	 * Grabs the cursor, preventing it from leaving the window.
+	 *
+	 * There's no guarantee that the cursor will be hidden. You should hide it yourself
+	 * via `setCursorVisible` or via CSS.
+	 *
+	 * @param grab `true` to grab the cursor, `false` to release it.
+	 */
+	async setCursorGrab(grab: boolean): Promise<void> {
+		return await this._manage('setCursorGrab', grab);
+	}
+
+	/**
+	 * Modifies the cursor's visibility.
+	 *
+	 * @param visible `true` to show the cursor, `false` to hide the cursor.
+	 */
+	async setCursorVisible(visible: boolean): Promise<void> {
+		return await this._manage('setCursorVisible', visible);
+	}
+
+	/** Modifies the cursor icon to be shown. */
+	async setCursorIcon(cursor: CursorIcon): Promise<void> {
+		return await this._manage('setCursorIcon', cursor);
+	}
+
+	/** Changes the position of the cursor in window coordinates. */
+	async setCursorPosition(position: LogicalPosition | PhysicalPosition): Promise<void> {
+		validatePosition(position);
+		return await this._manage('setCursorPosition', {
+			type: position.TYPE,
+			data: {
+				x: position.x,
+				y: position.y
+			}
+		});
 	}
 
 	/** Starts dragging the window. */
