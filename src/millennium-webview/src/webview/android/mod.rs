@@ -111,6 +111,8 @@ impl InnerWebView {
 			}
 		}
 	}
+
+	pub fn zoom(&self, scale_factor: f64) {}
 }
 
 pub struct UnsafeIpc(*mut c_void);
