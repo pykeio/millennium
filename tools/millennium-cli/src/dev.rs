@@ -51,6 +51,8 @@ static KILL_BEFORE_DEV_FLAG: OnceCell<AtomicBool> = OnceCell::new();
 #[cfg(unix)]
 const KILL_CHILDREN_SCRIPT: &[u8] = include_bytes!("../scripts/kill-children.sh");
 
+const DEV_WATCHER_GITIGNORE: &[u8] = include_bytes!("../millennium-dev-watcher.gitignore");
+
 #[derive(Debug, Parser)]
 #[clap(about = "Start Millennium in development mode", trailing_var_arg(true))]
 pub struct Options {
@@ -213,7 +215,9 @@ fn command_internal(options: Options) -> Result<()> {
 
 	let process = start_app(&options, &runner, &manifest, &cargo_features, child_wait_rx.clone())?;
 	let shared_process = Arc::new(Mutex::new(process));
-	if let Err(e) = watch(shared_process.clone(), child_wait_tx, child_wait_rx, millennium_path, merge_config, config, options, runner, manifest, cargo_features) {
+	if let Err(e) =
+		watch(shared_process.clone(), child_wait_tx, child_wait_rx, millennium_path, merge_config, config, options, runner, manifest, cargo_features)
+	{
 		shared_process.lock().unwrap().kill().with_context(|| "failed to kill app process")?;
 		Err(e)
 	} else {
@@ -221,12 +225,24 @@ fn command_internal(options: Options) -> Result<()> {
 	}
 }
 
-fn lookup<F: FnMut(&OsStr, FileType, PathBuf)>(dir: &Path, mut f: F) {
+fn lookup<F: FnMut(FileType, PathBuf)>(dir: &Path, mut f: F) {
+	let mut default_gitignore = std::env::temp_dir();
+	default_gitignore.push(".millennium-dev");
+	let _ = std::fs::create_dir_all(&default_gitignore);
+	default_gitignore.push(".gitignore");
+	if !default_gitignore.exists() {
+		if let Ok(mut file) = std::fs::File::create(default_gitignore.clone()) {
+			use std::io::Write;
+			let _ = file.write_all(DEV_WATCHER_GITIGNORE);
+		}
+	}
+
 	let mut builder = ignore::WalkBuilder::new(dir);
+	let _ = builder.add_ignore(default_gitignore);
 	builder.require_git(false).ignore(false).max_depth(Some(1));
 
 	for entry in builder.build().flatten() {
-		f(entry.file_name(), entry.file_type().unwrap(), dir.join(entry.path()));
+		f(entry.file_type().unwrap(), dir.join(entry.path()));
 	}
 }
 
@@ -246,8 +262,8 @@ fn watch(
 	let (tx, rx) = channel();
 
 	let mut watcher = watcher(tx, Duration::from_secs(1)).unwrap();
-	lookup(&millennium_path, |file_name, file_type, path| {
-		if file_name != "target" && file_name != "Cargo.lock" {
+	lookup(&millennium_path, |file_type, path| {
+		if path != millennium_path {
 			let _ = watcher.watch(path, if file_type.is_dir() { RecursiveMode::Recursive } else { RecursiveMode::NonRecursive });
 		}
 	});

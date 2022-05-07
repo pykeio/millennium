@@ -16,7 +16,8 @@ include = [
 	"scripts/",
 	"*.json",
 	"*.rs",
-	"millennium.gitignore"
+	"millennium.gitignore",
+	"millennium-dev-watcher.gitignore"
 ]
 
 [[bin]]
