@@ -83,11 +83,8 @@ pub enum Error {
 	/// Client with specified ID not found.
 	#[error("http client dropped or not initialized")]
 	HttpClientNotInitialized,
-	/// API not enabled by Millennium.
-	#[error("{0}")]
-	ApiNotEnabled(String),
 	/// API not whitelisted on .millenniumrc
-	#[error("'{0}' not on the allowlist")]
+	#[error("The API '{0}' is not enabled in the allowlist; check your Cargo.toml & .millenniumrc")]
 	ApiNotAllowlisted(String),
 	/// Invalid args when running a command.
 	#[error("invalid args `{1}` for command `{0}`: {2}")]
@@ -150,6 +147,7 @@ pub(crate) fn into_anyhow<T: std::fmt::Display>(err: T) -> anyhow::Error {
 }
 
 impl Error {
+	#[allow(dead_code)]
 	pub(crate) fn into_anyhow(self) -> anyhow::Error {
 		anyhow::anyhow!(self.to_string())
 	}

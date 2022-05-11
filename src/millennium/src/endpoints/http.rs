@@ -14,13 +14,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#![allow(unused_imports)]
+
 #[cfg(http_request)]
 use std::{
 	collections::HashMap,
 	sync::{Arc, Mutex}
 };
 
-use millennium_macros::{module_command_handler, CommandModule};
+use millennium_macros::{command_enum, module_command_handler, CommandModule};
 use serde::Deserialize;
 
 use super::InvokeContext;
@@ -32,6 +34,7 @@ type ClientBuilder = ();
 #[cfg(not(http_request))]
 type HttpRequestBuilder = ();
 #[cfg(not(http_request))]
+#[allow(dead_code)]
 type ResponseData = ();
 
 type ClientId = u32;
@@ -46,20 +49,24 @@ fn clients() -> &'static ClientStore {
 }
 
 /// The API descriptor.
+#[command_enum]
 #[derive(Deserialize, CommandModule)]
 #[cmd(async)]
 #[serde(tag = "cmd", rename_all = "camelCase")]
 pub enum Cmd {
 	/// Create a new HTTP client.
+	#[cmd(http_request, "http > request")]
 	CreateClient { options: Option<ClientBuilder> },
 	/// Drop a HTTP client.
+	#[cmd(http_request, "http > request")]
 	DropClient { client: ClientId },
 	/// The HTTP request API.
+	#[cmd(http_request, "http > request")]
 	HttpRequest { client: ClientId, options: Box<HttpRequestBuilder> }
 }
 
 impl Cmd {
-	#[module_command_handler(http_request, "http > request")]
+	#[module_command_handler(http_request)]
 	async fn create_client<R: Runtime>(_context: InvokeContext<R>, options: Option<ClientBuilder>) -> super::Result<ClientId> {
 		let client = options.unwrap_or_default().build()?;
 		let mut store = clients().lock().unwrap();
@@ -68,14 +75,14 @@ impl Cmd {
 		Ok(id)
 	}
 
-	#[module_command_handler(http_request, "http > request")]
+	#[module_command_handler(http_request)]
 	async fn drop_client<R: Runtime>(_context: InvokeContext<R>, client: ClientId) -> super::Result<()> {
 		let mut store = clients().lock().unwrap();
 		store.remove(&client);
 		Ok(())
 	}
 
-	#[module_command_handler(http_request, "http > request")]
+	#[module_command_handler(http_request)]
 	async fn http_request<R: Runtime>(context: InvokeContext<R>, client_id: ClientId, options: Box<HttpRequestBuilder>) -> super::Result<ResponseData> {
 		use crate::Manager;
 		let scopes = context.window.state::<crate::Scopes>();
@@ -112,13 +119,13 @@ impl Cmd {
 mod tests {
 	use super::{ClientBuilder, ClientId};
 
-	#[millennium_macros::module_command_test(http_request, "http > request", async)]
+	#[millennium_macros::module_command_test(http_request, "http > request")]
 	#[quickcheck_macros::quickcheck]
 	fn create_client(options: Option<ClientBuilder>) {
 		assert!(crate::async_runtime::block_on(super::Cmd::create_client(crate::test::mock_invoke_context(), options)).is_ok());
 	}
 
-	#[millennium_macros::module_command_test(http_request, "http > request", async)]
+	#[millennium_macros::module_command_test(http_request, "http > request")]
 	#[quickcheck_macros::quickcheck]
 	fn drop_client(client_id: ClientId) {
 		crate::async_runtime::block_on(async move {

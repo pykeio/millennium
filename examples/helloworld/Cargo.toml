@@ -6,6 +6,7 @@ edition = "2021"
 rust-version = "1.57"
 
 [profile.release]
+strip = true
 panic = "abort"
 codegen-units = 1
 lto = true

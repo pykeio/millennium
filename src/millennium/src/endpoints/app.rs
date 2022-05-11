@@ -14,13 +14,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use millennium_macros::CommandModule;
+use millennium_macros::{command_enum, CommandModule};
 use serde::Deserialize;
 
 use super::InvokeContext;
 use crate::Runtime;
 
 /// The API descriptor.
+#[command_enum]
 #[derive(Deserialize, CommandModule)]
 #[serde(tag = "cmd", rename_all = "camelCase")]
 #[allow(clippy::enum_variant_names)]

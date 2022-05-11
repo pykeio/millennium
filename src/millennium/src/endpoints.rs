@@ -30,7 +30,6 @@ mod cli;
 mod clipboard;
 mod dialog;
 mod event;
-#[allow(unused_imports)]
 mod file_system;
 mod global_shortcut;
 mod http;

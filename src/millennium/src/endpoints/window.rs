@@ -14,7 +14,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use millennium_macros::{module_command_handler, CommandModule};
+#![allow(unused_imports)]
+
+use millennium_macros::{command_enum, module_command_handler, CommandModule};
 use serde::Deserialize;
 
 use super::{InvokeContext, InvokeResponse};
@@ -151,16 +153,23 @@ impl WindowManagerCmd {
 }
 
 /// The API descriptor.
+#[command_enum]
 #[derive(Deserialize, CommandModule)]
 #[cmd(async)]
 #[serde(tag = "cmd", content = "data", rename_all = "camelCase")]
 pub enum Cmd {
-	CreateWebview { options: Box<WindowConfig> },
-	Manage { label: Option<String>, cmd: WindowManagerCmd }
+	#[cmd(window_create, "window > create")]
+	CreateWebview {
+		options: Box<WindowConfig>
+	},
+	Manage {
+		label: Option<String>,
+		cmd: WindowManagerCmd
+	}
 }
 
 impl Cmd {
-	#[module_command_handler(window_create, "window > create")]
+	#[module_command_handler(window_create)]
 	async fn create_webview<R: Runtime>(context: InvokeContext<R>, options: Box<WindowConfig>) -> super::Result<()> {
 		let label = options.label.clone();
 		let url = options.url.clone();

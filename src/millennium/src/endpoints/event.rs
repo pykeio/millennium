@@ -14,7 +14,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use millennium_macros::CommandModule;
+#![allow(unused_imports)]
+
+use millennium_macros::{command_enum, CommandModule};
 use serde::{de::Deserializer, Deserialize};
 
 use super::InvokeContext;
@@ -60,6 +62,7 @@ impl<'de> Deserialize<'de> for WindowLabel {
 }
 
 /// The API descriptor.
+#[command_enum]
 #[derive(Deserialize, CommandModule)]
 #[serde(tag = "cmd", rename_all = "camelCase")]
 pub enum Cmd {

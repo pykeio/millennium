@@ -14,14 +14,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use millennium_macros::{module_command_handler, CommandModule};
+#![allow(unused_imports)]
+
+use millennium_macros::{command_enum, module_command_handler, CommandModule};
 use serde::Deserialize;
 
 use super::{InvokeContext, InvokeResponse};
 use crate::Runtime;
 
 /// The API descriptor.
-#[derive(Deserialize, CommandModule)]
+#[command_enum]
+#[derive(CommandModule, Deserialize)]
 #[serde(tag = "cmd", rename_all = "camelCase")]
 pub enum Cmd {
 	/// The get CLI matches API.
@@ -29,15 +32,20 @@ pub enum Cmd {
 }
 
 impl Cmd {
-	#[module_command_handler(cli, "CLI definition not set under .millenniumrc > millennium > cli")]
+	#[module_command_handler(cli)]
 	fn cli_matches<R: Runtime>(context: InvokeContext<R>) -> super::Result<InvokeResponse> {
 		if let Some(cli) = &context.config.millennium.cli {
 			crate::api::cli::get_matches(cli, &context.package_info)
 				.map(Into::into)
 				.map_err(Into::into)
 		} else {
-			Err(crate::Error::ApiNotAllowlisted("CLI definition not set under .millenniumrc > millennium > cli".into()).into_anyhow())
+			Err(crate::error::into_anyhow("CLI definition not set under .millenniumrc > millennium > cli"))
 		}
+	}
+
+	#[cfg(not(cli))]
+	fn cli_matches<R: Runtime>(_: InvokeContext<R>) -> super::Result<InvokeResponse> {
+		Err(crate::error::into_anyhow("CLI definition not set under .millenniumrc > millennium > cli"))
 	}
 }
 

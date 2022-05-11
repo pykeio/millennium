@@ -14,11 +14,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#![allow(unused_imports)]
+
 use std::path::PathBuf;
 #[cfg(path_all)]
 use std::path::{Component, Path, MAIN_SEPARATOR};
 
-use millennium_macros::{module_command_handler, CommandModule};
+use millennium_macros::{command_enum, module_command_handler, CommandModule};
 use serde::Deserialize;
 
 use super::InvokeContext;
@@ -27,26 +29,35 @@ use crate::{api::path::BaseDirectory, Runtime};
 use crate::{Env, Manager};
 
 /// The API descriptor.
+#[command_enum]
 #[derive(Deserialize, CommandModule)]
 #[serde(tag = "cmd", rename_all = "camelCase")]
 pub enum Cmd {
+	#[cmd(path_all, "path > all")]
 	ResolvePath { path: String, directory: Option<BaseDirectory> },
+	#[cmd(path_all, "path > all")]
 	Resolve { paths: Vec<String> },
+	#[cmd(path_all, "path > all")]
 	Normalize { path: String },
+	#[cmd(path_all, "path > all")]
 	Join { paths: Vec<String> },
+	#[cmd(path_all, "path > all")]
 	Dirname { path: String },
+	#[cmd(path_all, "path > all")]
 	Extname { path: String },
+	#[cmd(path_all, "path > all")]
 	Basename { path: String, ext: Option<String> },
+	#[cmd(path_all, "path > all")]
 	IsAbsolute { path: String }
 }
 
 impl Cmd {
-	#[module_command_handler(path_all, "path > all")]
+	#[module_command_handler(path_all)]
 	fn resolve_path<R: Runtime>(context: InvokeContext<R>, path: String, directory: Option<BaseDirectory>) -> super::Result<PathBuf> {
 		crate::api::path::resolve_path(&context.config, &context.package_info, context.window.state::<Env>().inner(), path, directory).map_err(Into::into)
 	}
 
-	#[module_command_handler(path_all, "path > all")]
+	#[module_command_handler(path_all)]
 	fn resolve<R: Runtime>(_context: InvokeContext<R>, paths: Vec<String>) -> super::Result<PathBuf> {
 		// Start with current directory then start adding paths from the vector one by
 		// one using `PathBuf.push()` which will ensure that if an absolute path is
@@ -63,7 +74,7 @@ impl Cmd {
 		Ok(normalize_path(&path))
 	}
 
-	#[module_command_handler(path_all, "path > all")]
+	#[module_command_handler(path_all)]
 	fn normalize<R: Runtime>(_context: InvokeContext<R>, path: String) -> super::Result<String> {
 		let mut p = normalize_path_no_absolute(Path::new(&path)).to_string_lossy().to_string();
 		Ok(
@@ -84,7 +95,7 @@ impl Cmd {
 		)
 	}
 
-	#[module_command_handler(path_all, "path > all")]
+	#[module_command_handler(path_all)]
 	fn join<R: Runtime>(_context: InvokeContext<R>, mut paths: Vec<String>) -> super::Result<String> {
 		let path = PathBuf::from(
 			paths
@@ -106,7 +117,7 @@ impl Cmd {
 		Ok(if p.is_empty() { ".".into() } else { p })
 	}
 
-	#[module_command_handler(path_all, "path > all")]
+	#[module_command_handler(path_all)]
 	fn dirname<R: Runtime>(_context: InvokeContext<R>, path: String) -> super::Result<PathBuf> {
 		match Path::new(&path).parent() {
 			Some(p) => Ok(p.to_path_buf()),
@@ -114,7 +125,7 @@ impl Cmd {
 		}
 	}
 
-	#[module_command_handler(path_all, "path > all")]
+	#[module_command_handler(path_all)]
 	fn extname<R: Runtime>(_context: InvokeContext<R>, path: String) -> super::Result<String> {
 		match Path::new(&path).extension().and_then(std::ffi::OsStr::to_str) {
 			Some(p) => Ok(p.to_string()),
@@ -122,7 +133,7 @@ impl Cmd {
 		}
 	}
 
-	#[module_command_handler(path_all, "path > all")]
+	#[module_command_handler(path_all)]
 	fn basename<R: Runtime>(_context: InvokeContext<R>, path: String, ext: Option<String>) -> super::Result<String> {
 		match Path::new(&path).file_name().and_then(std::ffi::OsStr::to_str) {
 			Some(p) => Ok(if let Some(ext) = ext { p.replace(ext.as_str(), "") } else { p.to_string() }),
@@ -130,7 +141,7 @@ impl Cmd {
 		}
 	}
 
-	#[module_command_handler(path_all, "path > all")]
+	#[module_command_handler(path_all)]
 	fn is_absolute<R: Runtime>(_context: InvokeContext<R>, path: String) -> super::Result<bool> {
 		Ok(Path::new(&path).is_absolute())
 	}

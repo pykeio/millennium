@@ -14,9 +14,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#![allow(unused_imports)]
+
 use std::path::PathBuf;
 
-use millennium_macros::{module_command_handler, CommandModule};
+use millennium_macros::{command_enum, module_command_handler, CommandModule};
 use serde::Deserialize;
 
 use super::{InvokeContext, InvokeResponse};
@@ -71,33 +73,27 @@ pub struct SaveDialogOptions {
 }
 
 /// The API descriptor.
+#[command_enum]
 #[derive(Deserialize, CommandModule)]
 #[serde(tag = "cmd", rename_all = "camelCase")]
 #[allow(clippy::enum_variant_names)]
 pub enum Cmd {
 	/// The open dialog API.
-	OpenDialog {
-		options: OpenDialogOptions
-	},
+	#[cmd(dialog_open, "dialog > open")]
+	OpenDialog { options: OpenDialogOptions },
 	/// The save dialog API.
-	SaveDialog {
-		options: SaveDialogOptions
-	},
-	MessageDialog {
-		message: String
-	},
-	AskDialog {
-		title: Option<String>,
-		message: String
-	},
-	ConfirmDialog {
-		title: Option<String>,
-		message: String
-	}
+	#[cmd(dialog_save, "dialog > save")]
+	SaveDialog { options: SaveDialogOptions },
+	#[cmd(dialog_message, "dialog > message")]
+	MessageDialog { message: String },
+	#[cmd(dialog_ask, "dialog > ask")]
+	AskDialog { title: Option<String>, message: String },
+	#[cmd(dialog_confirm, "dialog > confirm")]
+	ConfirmDialog { title: Option<String>, message: String }
 }
 
 impl Cmd {
-	#[module_command_handler(dialog_open, "dialog > open")]
+	#[module_command_handler(dialog_open)]
 	#[allow(unused_variables)]
 	fn open_dialog<R: Runtime>(context: InvokeContext<R>, options: OpenDialogOptions) -> super::Result<InvokeResponse> {
 		let mut dialog_builder = FileDialogBuilder::new();
@@ -139,7 +135,7 @@ impl Cmd {
 		Ok(res)
 	}
 
-	#[module_command_handler(dialog_save, "dialog > save")]
+	#[module_command_handler(dialog_save)]
 	#[allow(unused_variables)]
 	fn save_dialog<R: Runtime>(context: InvokeContext<R>, options: SaveDialogOptions) -> super::Result<Option<PathBuf>> {
 		let mut dialog_builder = FileDialogBuilder::new();
@@ -164,13 +160,13 @@ impl Cmd {
 		Ok(path)
 	}
 
-	#[module_command_handler(dialog_message, "dialog > message")]
+	#[module_command_handler(dialog_message)]
 	fn message_dialog<R: Runtime>(context: InvokeContext<R>, message: String) -> super::Result<()> {
 		crate::api::dialog::blocking::message(Some(&context.window), &context.window.app_handle.package_info().name, message);
 		Ok(())
 	}
 
-	#[module_command_handler(dialog_ask, "dialog > ask")]
+	#[module_command_handler(dialog_ask)]
 	fn ask_dialog<R: Runtime>(context: InvokeContext<R>, title: Option<String>, message: String) -> super::Result<bool> {
 		Ok(crate::api::dialog::blocking::ask(
 			Some(&context.window),
@@ -179,7 +175,7 @@ impl Cmd {
 		))
 	}
 
-	#[module_command_handler(dialog_confirm, "dialog > confirm")]
+	#[module_command_handler(dialog_confirm)]
 	fn confirm_dialog<R: Runtime>(context: InvokeContext<R>, title: Option<String>, message: String) -> super::Result<bool> {
 		Ok(crate::api::dialog::blocking::confirm(
 			Some(&context.window),

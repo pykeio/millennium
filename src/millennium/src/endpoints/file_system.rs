@@ -14,6 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#![allow(unused_imports)]
+
 use std::fmt::{Debug, Formatter};
 use std::{
 	fs,
@@ -25,7 +27,7 @@ use std::{
 
 #[allow(unused_imports)]
 use anyhow::Context;
-use millennium_macros::{module_command_handler, CommandModule};
+use millennium_macros::{command_enum, module_command_handler, CommandModule};
 use serde::{
 	de::{Deserializer, Error as DeError},
 	Deserialize, Serialize
@@ -65,34 +67,44 @@ pub struct FileOperationOptions {
 }
 
 /// The API descriptor.
+#[command_enum]
 #[derive(Deserialize, CommandModule)]
 #[serde(tag = "cmd", rename_all = "camelCase")]
 pub(crate) enum Cmd {
 	/// The read binary file API.
+	#[cmd(fs_read_file, "fs > readFile")]
 	ReadFile { path: SafePathBuf, options: Option<FileOperationOptions> },
 	/// The read text file API.
+	#[cmd(fs_read_file, "fs > readFile")]
 	ReadTextFile { path: SafePathBuf, options: Option<FileOperationOptions> },
 	/// The write file API.
+	#[cmd(fs_write_file, "fs > writeFile")]
 	WriteFile {
 		path: SafePathBuf,
 		contents: Vec<u8>,
 		options: Option<FileOperationOptions>
 	},
 	/// The read dir API.
+	#[cmd(fs_read_dir, "fs > readDir")]
 	ReadDir { path: SafePathBuf, options: Option<DirOperationOptions> },
 	/// The copy file API.
+	#[cmd(fs_copy_file, "fs > copyFile")]
 	CopyFile {
 		source: SafePathBuf,
 		destination: SafePathBuf,
 		options: Option<FileOperationOptions>
 	},
 	/// The create dir API.
+	#[cmd(fs_create_dir, "fs > createDir")]
 	CreateDir { path: SafePathBuf, options: Option<DirOperationOptions> },
 	/// The remove dir API.
+	#[cmd(fs_remove_dir, "fs > removeDir")]
 	RemoveDir { path: SafePathBuf, options: Option<DirOperationOptions> },
 	/// The remove file API.
+	#[cmd(fs_remove_file, "fs > removeFile")]
 	RemoveFile { path: SafePathBuf, options: Option<FileOperationOptions> },
 	/// The rename API.
+	#[cmd(fs_rename, "fs > rename")]
 	#[serde(rename_all = "camelCase")]
 	Rename {
 		old_path: SafePathBuf,
@@ -100,11 +112,12 @@ pub(crate) enum Cmd {
 		options: Option<FileOperationOptions>
 	},
 	/// The file exists API.
+	#[cmd(fs_exists, "fs > exists")]
 	Exists { path: SafePathBuf, options: Option<FileOperationOptions> }
 }
 
 impl Cmd {
-	#[module_command_handler(fs_read_file, "fs > readFile")]
+	#[module_command_handler(fs_read_file)]
 	fn read_file<R: Runtime>(context: InvokeContext<R>, path: SafePathBuf, options: Option<FileOperationOptions>) -> super::Result<Vec<u8>> {
 		let resolved_path = resolve_path(&context.config, &context.package_info, &context.window, path, options.and_then(|o| o.dir))?;
 		file::read_binary(&resolved_path)
@@ -112,7 +125,7 @@ impl Cmd {
 			.map_err(Into::into)
 	}
 
-	#[module_command_handler(fs_read_file, "fs > readFile")]
+	#[module_command_handler(fs_read_file)]
 	fn read_text_file<R: Runtime>(context: InvokeContext<R>, path: SafePathBuf, options: Option<FileOperationOptions>) -> super::Result<String> {
 		let resolved_path = resolve_path(&context.config, &context.package_info, &context.window, path, options.and_then(|o| o.dir))?;
 		file::read_string(&resolved_path)
@@ -120,7 +133,7 @@ impl Cmd {
 			.map_err(Into::into)
 	}
 
-	#[module_command_handler(fs_write_file, "fs > writeFile")]
+	#[module_command_handler(fs_write_file)]
 	fn write_file<R: Runtime>(context: InvokeContext<R>, path: SafePathBuf, contents: Vec<u8>, options: Option<FileOperationOptions>) -> super::Result<()> {
 		let resolved_path = resolve_path(&context.config, &context.package_info, &context.window, path, options.and_then(|o| o.dir))?;
 		File::create(&resolved_path)
@@ -129,7 +142,7 @@ impl Cmd {
 			.and_then(|mut f| f.write_all(&contents).map_err(|err| err.into()))
 	}
 
-	#[module_command_handler(fs_read_dir, "fs > readDir")]
+	#[module_command_handler(fs_read_dir)]
 	fn read_dir<R: Runtime>(context: InvokeContext<R>, path: SafePathBuf, options: Option<DirOperationOptions>) -> super::Result<Vec<dir::DiskEntry>> {
 		let (recursive, dir) = if let Some(options_value) = options {
 			(options_value.recursive, options_value.dir)
@@ -142,7 +155,7 @@ impl Cmd {
 			.map_err(Into::into)
 	}
 
-	#[module_command_handler(fs_copy_file, "fs > copyFile")]
+	#[module_command_handler(fs_copy_file)]
 	fn copy_file<R: Runtime>(
 		context: InvokeContext<R>,
 		source: SafePathBuf,
@@ -160,7 +173,7 @@ impl Cmd {
 		Ok(())
 	}
 
-	#[module_command_handler(fs_create_dir, "fs > createDir")]
+	#[module_command_handler(fs_create_dir)]
 	fn create_dir<R: Runtime>(context: InvokeContext<R>, path: SafePathBuf, options: Option<DirOperationOptions>) -> super::Result<()> {
 		let (recursive, dir) = if let Some(options_value) = options {
 			(options_value.recursive, options_value.dir)
@@ -177,7 +190,7 @@ impl Cmd {
 		Ok(())
 	}
 
-	#[module_command_handler(fs_remove_dir, "fs > removeDir")]
+	#[module_command_handler(fs_remove_dir)]
 	fn remove_dir<R: Runtime>(context: InvokeContext<R>, path: SafePathBuf, options: Option<DirOperationOptions>) -> super::Result<()> {
 		let (recursive, dir) = if let Some(options_value) = options {
 			(options_value.recursive, options_value.dir)
@@ -194,14 +207,14 @@ impl Cmd {
 		Ok(())
 	}
 
-	#[module_command_handler(fs_remove_file, "fs > removeFile")]
+	#[module_command_handler(fs_remove_file)]
 	fn remove_file<R: Runtime>(context: InvokeContext<R>, path: SafePathBuf, options: Option<FileOperationOptions>) -> super::Result<()> {
 		let resolved_path = resolve_path(&context.config, &context.package_info, &context.window, path, options.and_then(|o| o.dir))?;
 		fs::remove_file(&resolved_path).with_context(|| format!("path: {}", resolved_path.display()))?;
 		Ok(())
 	}
 
-	#[module_command_handler(fs_rename, "fs > rename")]
+	#[module_command_handler(fs_rename)]
 	fn rename<R: Runtime>(context: InvokeContext<R>, old_path: SafePathBuf, new_path: SafePathBuf, options: Option<FileOperationOptions>) -> super::Result<()> {
 		let (old, new) = match options.and_then(|o| o.dir) {
 			Some(dir) => (
@@ -215,7 +228,7 @@ impl Cmd {
 			.map_err(Into::into)
 	}
 
-	#[module_command_handler(fs_exists, "fs > exists")]
+	#[module_command_handler(fs_exists)]
 	fn exists<R: Runtime>(context: InvokeContext<R>, path: SafePathBuf, options: Option<FileOperationOptions>) -> super::Result<bool> {
 		let resolved_path = resolve_path(&context.config, &context.package_info, &context.window, path, options.and_then(|o| o.dir))?;
 		Ok(fs::metadata(&resolved_path).is_ok())

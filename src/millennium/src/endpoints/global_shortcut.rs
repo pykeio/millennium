@@ -14,7 +14,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use millennium_macros::{module_command_handler, CommandModule};
+#![allow(unused_imports)]
+
+use millennium_macros::{command_enum, module_command_handler, CommandModule};
 use serde::Deserialize;
 
 use super::InvokeContext;
@@ -23,30 +25,36 @@ use crate::runtime::GlobalShortcutManager;
 use crate::{api::ipc::CallbackFn, Runtime};
 
 /// The API descriptor.
+#[command_enum]
 #[derive(Deserialize, CommandModule)]
 #[serde(tag = "cmd", rename_all = "camelCase")]
 pub enum Cmd {
 	/// Register a global shortcut.
+	#[cmd(global_shortcut_all, "globalShortcut > all")]
 	Register { shortcut: String, handler: CallbackFn },
 	/// Register a list of global shortcuts.
+	#[cmd(global_shortcut_all, "globalShortcut > all")]
 	RegisterAll { shortcuts: Vec<String>, handler: CallbackFn },
 	/// Unregister a global shortcut.
+	#[cmd(global_shortcut_all, "globalShortcut > all")]
 	Unregister { shortcut: String },
 	/// Unregisters all registered shortcuts.
+	#[cmd(global_shortcut_all, "globalShortcut > all")]
 	UnregisterAll,
 	/// Determines whether the given hotkey is registered or not.
+	#[cmd(global_shortcut_all, "globalShortcut > all")]
 	IsRegistered { shortcut: String }
 }
 
 impl Cmd {
-	#[module_command_handler(global_shortcut_all, "globalShortcut > all")]
+	#[module_command_handler(global_shortcut_all)]
 	fn register<R: Runtime>(context: InvokeContext<R>, shortcut: String, handler: CallbackFn) -> super::Result<()> {
 		let mut manager = context.window.app_handle.global_shortcut_manager();
 		register_shortcut(context.window, &mut manager, shortcut, handler)?;
 		Ok(())
 	}
 
-	#[module_command_handler(global_shortcut_all, "globalShortcut > all")]
+	#[module_command_handler(global_shortcut_all)]
 	fn register_all<R: Runtime>(context: InvokeContext<R>, shortcuts: Vec<String>, handler: CallbackFn) -> super::Result<()> {
 		let mut manager = context.window.app_handle.global_shortcut_manager();
 		for shortcut in shortcuts {
@@ -55,7 +63,7 @@ impl Cmd {
 		Ok(())
 	}
 
-	#[module_command_handler(global_shortcut_all, "globalShortcut > all")]
+	#[module_command_handler(global_shortcut_all)]
 	fn unregister<R: Runtime>(context: InvokeContext<R>, shortcut: String) -> super::Result<()> {
 		context
 			.window
@@ -66,7 +74,7 @@ impl Cmd {
 		Ok(())
 	}
 
-	#[module_command_handler(global_shortcut_all, "globalShortcut > all")]
+	#[module_command_handler(global_shortcut_all)]
 	fn unregister_all<R: Runtime>(context: InvokeContext<R>) -> super::Result<()> {
 		context
 			.window
@@ -77,7 +85,12 @@ impl Cmd {
 		Ok(())
 	}
 
-	#[module_command_handler(global_shortcut_all, "globalShortcut > all")]
+	#[cfg(not(global_shortcut_all))]
+	fn unregister_all<R: Runtime>(_: InvokeContext<R>) -> super::Result<()> {
+		Err(crate::Error::ApiNotAllowlisted("globalShortcut > all".into()).into_anyhow())
+	}
+
+	#[module_command_handler(global_shortcut_all)]
 	fn is_registered<R: Runtime>(context: InvokeContext<R>, shortcut: String) -> super::Result<bool> {
 		context
 			.window
@@ -131,7 +144,7 @@ mod tests {
 		assert!(!super::Cmd::is_registered(ctx, shortcut).unwrap());
 	}
 
-	#[millennium_macros::module_command_test(global_shortcut_all, "globalShortcut > all")]
+	#[millennium_macros::module_command_test(global_shortcut_all, "globalShortcut > all", runtime)]
 	#[quickcheck_macros::quickcheck]
 	fn unregister_all() {
 		let shortcuts = vec!["CTRL+X".to_string(), "SUPER+C".to_string(), "D".to_string()];

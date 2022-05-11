@@ -14,7 +14,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use millennium_macros::{module_command_handler, CommandModule};
+#![allow(unused_imports)]
+
+use millennium_macros::{command_enum, module_command_handler, CommandModule};
 use serde::Deserialize;
 
 use super::InvokeContext;
@@ -42,10 +44,12 @@ pub struct NotificationOptions {
 }
 
 /// The API descriptor.
+#[command_enum]
 #[derive(Deserialize, CommandModule)]
 #[serde(tag = "cmd", rename_all = "camelCase")]
 pub enum Cmd {
 	/// The show notification API.
+	#[cmd(notification_all, "notification > all")]
 	Notification { options: NotificationOptions },
 	/// The request notification permission API.
 	RequestNotificationPermission,
@@ -54,7 +58,7 @@ pub enum Cmd {
 }
 
 impl Cmd {
-	#[module_command_handler(notification_all, "notification > all")]
+	#[module_command_handler(notification_all)]
 	fn notification<R: Runtime>(context: InvokeContext<R>, options: NotificationOptions) -> super::Result<()> {
 		let allowed = match is_permission_granted(&context) {
 			Some(p) => p,
