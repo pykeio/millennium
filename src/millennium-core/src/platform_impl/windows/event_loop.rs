@@ -1609,7 +1609,7 @@ unsafe fn public_window_callback_inner<T: 'static>(
 				false => old_physical_inner_size
 			};
 
-			let _ = subclass_input.send_event(Event::WindowEvent {
+			subclass_input.send_event(Event::WindowEvent {
 				window_id: RootWindowId(WindowId(window.0)),
 				event: ScaleFactorChanged {
 					scale_factor: new_scale_factor,

@@ -16,7 +16,7 @@
 
 mod file_drop;
 
-use std::{collections::HashSet, rc::Rc, sync::mpsc};
+use std::{collections::HashSet, fmt::Write, rc::Rc, sync::mpsc};
 
 use file_drop::FileDropController;
 use once_cell::unsync::OnceCell;
@@ -107,7 +107,7 @@ impl InnerWebView {
 					.map_err(webview2_com::Error::WindowsError);
 				let _ = take_pwstr(data_directory);
 
-				return result;
+				result
 			}),
 			Box::new(move |error_code, environment| {
 				error_code?;
@@ -183,7 +183,7 @@ impl InnerWebView {
 			settings.SetIsZoomControlEnabled(false).map_err(webview2_com::Error::WindowsError)?;
 			settings.SetAreDevToolsEnabled(false).map_err(webview2_com::Error::WindowsError)?;
 			if attributes.devtools {
-				let _ = settings.SetAreDevToolsEnabled(true).map_err(webview2_com::Error::WindowsError)?;
+				settings.SetAreDevToolsEnabled(true).map_err(webview2_com::Error::WindowsError)?;
 			}
 
 			let mut rect = RECT::default();
@@ -369,14 +369,14 @@ impl InnerWebView {
 
 											// set mime type if provided
 											if let Some(mime) = sent_response.mimetype() {
-												headers_map.push_str(&format!("Content-Type: {}\n", mime))
+												writeln!(headers_map, "Content-Type: {}", mime).unwrap();
 											}
 
 											// build headers
 											for (name, value) in sent_response.headers().iter() {
 												let header_key = name.to_string();
 												if let Ok(value) = value.to_str() {
-													headers_map.push_str(&format!("{}: {}\n", header_key, value))
+													writeln!(headers_map, "{}: {}", header_key, value).unwrap();
 												}
 											}
 

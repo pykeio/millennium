@@ -38,7 +38,7 @@ use crate::{
 struct AccelWrapper(ACCEL);
 impl fmt::Debug for AccelWrapper {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-		f.pad(&String::new())
+		f.pad("")
 	}
 }
 
@@ -98,7 +98,7 @@ impl MenuItemAttributes {
 			mif.dwTypeData = PWSTR(Vec::with_capacity(mif.cch as usize).as_mut_ptr());
 			GetMenuItemInfoW(self.1, self.0 as u32, false, &mut mif);
 			util::wchar_ptr_to_string(mif.dwTypeData)
-				.split("\t")
+				.split('\t')
 				.next()
 				.unwrap_or_default()
 				.to_string()
@@ -429,6 +429,8 @@ impl Accelerator {
 
 impl fmt::Display for Accelerator {
 	fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+		use std::fmt::Write;
+
 		let mut s = String::new();
 		let key_mods: ModifiersState = self.mods;
 		if key_mods.control_key() {
@@ -503,7 +505,7 @@ impl fmt::Display for Accelerator {
 			KeyCode::ArrowRight => s.push_str("Right"),
 			KeyCode::ArrowUp => s.push_str("Up"),
 			KeyCode::ArrowDown => s.push_str("Down"),
-			_ => s.push_str(&format!("{:?}", self.key))
+			_ => write!(s, "{:?}", self.key)?
 		}
 		write!(fmt, "{}", s)
 	}

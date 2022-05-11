@@ -1484,6 +1484,7 @@ impl<T: UserEvent> MillenniumWebview<T> {
 		#[cfg(feature = "system-tray")]
 		let tray_context = TrayContext::default();
 
+		#[allow(unused_variables)]
 		let event_loop_context = Context {
 			webview_id_map: webview_id_map.clone(),
 			main_thread_id,
