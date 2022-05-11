@@ -65,4 +65,4 @@ jobs:
       - name: Test Rust packages
         run: |
           cargo test --verbose -p millennium
-          cargo test --verbose -p millennium --features compression,millennium_webview,isolation,custom-protocol,api-all,cli,updater,system-tray
+          cargo test --verbose -p millennium --features compression,millennium_webview,isolation,custom-protocol,api-all,cli,updater,system-tray,http-multipart

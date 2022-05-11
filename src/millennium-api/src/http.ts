@@ -65,22 +65,42 @@ export enum ResponseType {
 	BINARY = 3
 }
 
-type Part = string | Uint8Array;
+interface FilePart<T> {
+	value: string | T;
+	mime?: string;
+	fileName?: string;
+}
+
+type Part = string | Uint8Array | FilePart<Uint8Array>;
 type BodyType = 'Form' | 'Json' | 'Text' | 'Bytes';
 
 export class Body {
 	private constructor(public readonly type: BodyType, public readonly payload: unknown) {}
 
 	/**
-	 * Creates a new form data body.
+	 * Creates a new form data body. The form data is an object where each key is the entry name,
+	 * and the value is either a string or a file object.
+	 *
+	 * By default, it sets the `application/x-www-form-urlencoded` Content-Type header, but you can
+	 * set it to `multipart/form-data` if the Cargo feature `http-multipart` is enabled.
+	 *
+	 * Note that a file path must be allowed in the `fs` scope configuration.
+	 *
+	 *
 	 *
 	 * @param data The body data.
 	 */
 	public static form(data: Record<string, Part>): Body {
-		const form: Record<string, string | number[]> = {};
+		const form: Record<string, string | number[] | FilePart<number[]>> = {};
 		for (const key in data) {
 			const v = data[key];
-			form[key] = typeof v === 'string' ? v : Array.from(v);
+			form[key] = typeof v === 'string'
+				? v
+				: v instanceof Uint8Array || Array.isArray(v)
+					? Array.from(v)
+					: typeof v.value === 'string'
+						? { value: v.value, mime: v.mime, fileName: v.fileName }
+						: { value: Array.from(v.value), mime: v.mime, fileName: v.fileName };
 		}
 		return new Body('Form', form);
 	}
