@@ -18,11 +18,12 @@ use std::{
 	env::set_current_dir,
 	ffi::OsStr,
 	fs::FileType,
+	io::BufReader,
 	path::{Path, PathBuf},
 	process::{exit, Command},
 	sync::{
 		atomic::{AtomicBool, Ordering},
-		mpsc::{channel, Receiver, Sender},
+		mpsc::channel,
 		Arc, Mutex
 	},
 	time::Duration
@@ -163,8 +164,7 @@ fn command_internal(options: Options) -> Result<()> {
 		cargo_features.extend(features.clone());
 	}
 
-	let (child_wait_tx, child_wait_rx) = channel();
-	let child_wait_rx = Arc::new(Mutex::new(child_wait_rx));
+	let manually_killed_app = Arc::new(AtomicBool::default());
 
 	if std::env::var_os("MILLENNIUM_SKIP_DEVSERVER_CHECK") != Some("true".into()) {
 		if let AppUrl::Url(WindowUrl::External(dev_server_url)) = config.lock().unwrap().as_ref().unwrap().build.dev_path.clone() {
@@ -213,11 +213,9 @@ fn command_internal(options: Options) -> Result<()> {
 		}
 	}
 
-	let process = start_app(&options, &runner, &manifest, &cargo_features, child_wait_rx.clone())?;
+	let process = start_app(&options, &runner, &manifest, &cargo_features, manually_killed_app.clone())?;
 	let shared_process = Arc::new(Mutex::new(process));
-	if let Err(e) =
-		watch(shared_process.clone(), child_wait_tx, child_wait_rx, millennium_path, merge_config, config, options, runner, manifest, cargo_features)
-	{
+	if let Err(e) = watch(shared_process.clone(), manually_killed_app, millennium_path, merge_config, config, options, runner, manifest, cargo_features) {
 		shared_process.lock().unwrap().kill().with_context(|| "failed to kill app process")?;
 		Err(e)
 	} else {
@@ -249,8 +247,7 @@ fn lookup<F: FnMut(FileType, PathBuf)>(dir: &Path, mut f: F) {
 #[allow(clippy::too_many_arguments)]
 fn watch(
 	process: Arc<Mutex<Arc<SharedChild>>>,
-	child_wait_tx: Sender<()>,
-	child_wait_rx: Arc<Mutex<Receiver<()>>>,
+	manually_killed_app: Arc<AtomicBool>,
 	millennium_path: PathBuf,
 	merge_config: Option<String>,
 	config: ConfigHandle,
@@ -285,7 +282,7 @@ fn watch(
 				} else {
 					// When .millenniumrc is changed, rewrite_manifest will be called, which will trigger the watcher again.
 					// The app should only be started when a file other than .millenniumrc is changed.
-					let _ = child_wait_tx.send(());
+					manually_killed_app.store(true, Ordering::Relaxed);
 					let mut p = process.lock().unwrap();
 					p.kill().with_context(|| "failed to kill app process")?;
 					// wait for the process to exit
@@ -294,7 +291,7 @@ fn watch(
 							break;
 						}
 					}
-					*p = start_app(&options, &runner, &manifest, &cargo_features, child_wait_rx.clone())?;
+					*p = start_app(&options, &runner, &manifest, &cargo_features, manually_killed_app.clone())?;
 				}
 			}
 		}
@@ -331,9 +328,12 @@ fn kill_before_dev_process() {
 	}
 }
 
-fn start_app(options: &Options, runner: &str, manifest: &Manifest, features: &[String], child_wait_rx: Arc<Mutex<Receiver<()>>>) -> Result<Arc<SharedChild>> {
+fn start_app(options: &Options, runner: &str, manifest: &Manifest, features: &[String], manually_killed_app: Arc<AtomicBool>) -> Result<Arc<SharedChild>> {
 	let mut command = Command::new(runner);
-	command.arg("run");
+	command
+		.env("CARGO_TERM_PROGRESS_WIDTH", term_size::dimensions_stderr().map(|(w, _)| w).unwrap_or(80).to_string())
+		.env("CARGO_TERM_PROGRESS_WHEN", "always");
+	command.arg("run").arg("--color").arg("always");
 
 	if !options.args.contains(&"--no-default-features".into()) {
 		let manifest_features = manifest.features();
@@ -372,33 +372,59 @@ fn start_app(options: &Options, runner: &str, manifest: &Manifest, features: &[S
 		command.args(&options.args);
 	}
 
-	command.pipe().unwrap();
+	command.stdout(os_pipe::dup_stdout().unwrap());
+	command.stderr(std::process::Stdio::piped());
 
 	let child = SharedChild::spawn(&mut command).with_context(|| format!("failed to run {}", runner))?;
 	let child_arc = Arc::new(child);
+	let child_stderr = child_arc.take_stderr().unwrap();
+	let mut stderr = BufReader::new(child_stderr);
+	let stderr_lines = Arc::new(Mutex::new(Vec::new()));
+	let stderr_lines_ = stderr_lines.clone();
+	std::thread::spawn(move || {
+		let mut buf = Vec::new();
+		let mut lines = stderr_lines_.lock().unwrap();
+		loop {
+			buf.clear();
+			match millennium_utils::io::read_line(&mut stderr, &mut buf) {
+				Ok(s) if s == 0 => break,
+				_ => ()
+			}
+			let line = String::from_utf8_lossy(&buf).into_owned();
+			if line.ends_with('\r') {
+				eprint!("{}", line);
+			} else {
+				eprintln!("{}", line);
+			}
+			lines.push(line);
+		}
+	});
 
 	let child_clone = child_arc.clone();
 	let exit_on_panic = options.exit_on_panic;
 	std::thread::spawn(move || {
 		let status = child_clone.wait().expect("failed to wait on child");
 		if exit_on_panic {
-			// we exit if the status is a success code (app closed) or code is 101 (compilation error)
-			// if the process wasn't killed by the file watcher
-			if (status.success() || status.code() == Some(101))
-          // `child_wait_rx` indicates that the process was killed by the file watcher
-          && child_wait_rx
-          .lock()
-          .expect("failed to get child_wait_rx lock")
-          .try_recv()
-          .is_err()
-			{
+			if !manually_killed_app.load(Ordering::Relaxed) {
 				kill_before_dev_process();
-				exit(0);
+				exit(status.code().unwrap_or(0));
 			}
-		} else if status.success() {
-			// if we're no exiting on panic, we only exit if the status is a success code (app closed)
-			kill_before_dev_process();
-			exit(0);
+		} else {
+			let is_cargo_compile_error = stderr_lines
+				.lock()
+				.unwrap()
+				.last()
+				.map(|l| l.contains("could not compile"))
+				.unwrap_or_default();
+			stderr_lines.lock().unwrap().clear();
+
+			// if we're exiting on panic, we only exit if:
+			// - the status is a success code (app closed)
+			// - status code is a Cargo error & error is not a cargo compilation error
+			if status.success() || (status.code() == Some(101) && !is_cargo_compile_error) {
+				kill_before_dev_process();
+				exit(status.code().unwrap_or(1));
+			}
 		}
 	});
 
