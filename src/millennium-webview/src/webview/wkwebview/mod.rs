@@ -392,7 +392,7 @@ impl InnerWebView {
 				let ns_window = window.ns_window() as id;
 
 				let can_set_titlebar_style: BOOL = msg_send![ns_window, respondsToSelector: sel!(setTitlebarSeparatorStyle:)];
-				if can_set_titlebar_style {
+				if can_set_titlebar_style == YES {
 					// `1` means `none`, see https://developer.apple.com/documentation/appkit/nstitlebarseparatorstyle/none
 					let () = msg_send![ns_window, setTitlebarSeparatorStyle: 1];
 				}
@@ -520,7 +520,7 @@ impl InnerWebView {
 		#[cfg(target_os = "macos")]
 		unsafe {
 			let can_print: BOOL = msg_send![self.webview, respondsToSelector: sel!(printOperationWithPrintInfo:)];
-			if can_print {
+			if can_print == YES {
 				// Create a shared print info
 				let print_info: id = msg_send![class!(NSPrintInfo), sharedPrintInfo];
 				let print_info: id = msg_send![print_info, init];
