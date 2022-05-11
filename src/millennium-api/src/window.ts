@@ -578,6 +578,11 @@ class WindowManager extends WebviewWindowHandle {
 	 * There's no guarantee that the cursor will be hidden. You should hide it yourself
 	 * via `setCursorVisible` or via CSS.
 	 *
+	 * ### Platform-specific
+	 *
+	 * - **Linux**: Unsupported.
+	 * - **macOS**: This locks the cursor in a fixed position, which looks visually awkward.
+	 *
 	 * @param grab `true` to grab the cursor, `false` to release it.
 	 */
 	async setCursorGrab(grab: boolean): Promise<void> {
@@ -586,6 +591,13 @@ class WindowManager extends WebviewWindowHandle {
 
 	/**
 	 * Modifies the cursor's visibility.
+	 *
+	 * ### Platform-specific
+	 *
+	 * - **Linux**: Unsupported.
+	 * - **Windows**: The cursor is only hidden within the confines of the window.
+	 * - **macOS**: The cursor is hidden as long as the window has input focus, even if the
+	 *   cursor is outside of the window.
 	 *
 	 * @param visible `true` to show the cursor, `false` to hide the cursor.
 	 */

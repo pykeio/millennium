@@ -28,6 +28,9 @@
 //!
 //! - **millennium_webview** *(enabled by default)*: Enables the Millennium Webview runtime. Only disable it if you want
 //!   a custom runtime.
+//! - **dox**: Internal feature to generate Rust documentation without linking on Linux.
+//! - **objc-exception**: Wrap each `msg_send!` in a @try/@catch and panics if an exception is caught, preventing
+//!   Objective-C from unwinding into Rust.
 //! - **isolation**: Enables the isolation pattern. Enabled by default if the `millennium > pattern > use` config option
 //!   is set to `isolation` in the `.millenniumrc` file.
 //! - **custom-protocol**: Feature managed by the Millennium CLI. When enabled, Millennium assumes a production
@@ -35,23 +38,35 @@
 //! - **updater**: Enables the application auto updater. Enabled by default if the `updater` config is defined in the
 //!   `.millenniumrc` file.
 //! - **devtools**: Enables the developer tools (Web inspector) and [`Window::open_devtools`]. Enabled by default on
-//!   debug builds.
-//! On macOS it uses private APIs, so you can't enable it if your app will be
-//! published to the App Store.
+//!   debug builds. On macOS it uses private APIs, so you can't enable it if your app will be published to the App
+//!   Store.
+//! - **shell-open-api**: Enables the [`api::shell`] module.
 //! - **http-api**: Enables the [`api::http`] module.
+//! - **http-multipart**: Adds support for `multipart/form-data` HTTP requests.
 //! - **reqwest-client**: Uses `reqwest` as HTTP client on the `http` APIs. Improves performance, but increases the
 //!   bundle size.
-//! - **command**: Enables the [`api::process::Command`] APIs.
+//! - **process-command-api**: Enables the [`api::process::Command`] APIs.
+//! - **process-relaunch-dangerous-allow-symlink-macos**: Allows the [`api::process::current_binary`] function to allow
+//!   symlinks on macOS. **This is dangerous**, see the Security section in the function's documentation.
 //! - **dialog**: Enables the [`api::dialog`] module.
 //! - **notification**: Enables the [`api::notification`] module.
+//! - **fs-extract-api**: Enables the [`api::file::Extract`] API.
 //! - **cli**: Enables usage of `clap` for CLI argument parsing. Enabled by default if the `cli` config is defined on
 //!   the `.millenniumrc` file.
 //! - **system-tray**: Enables application system tray API. Enabled by default if the `systemTray` config is defined on
 //!   the `.millenniumrc` file.
+//! - **ayatana-tray**: Uses `libayatana-appindicator` for system trays on Linux.
+//! - **gtk-tray**: Uses the older `libappindicator3-1` for system trays on Linux. To enable this, you need to disable
+//!   the default features, as `ayatana-tray` is enabled by default.
 //! - **macos-private-api**: Enables features only available in **macOS**'s private APIs, currently the `transparent`
 //!   window functionality and the `fullScreenEnabled` preference setting to `true`. Enabled by default if the
 //!   `millennium > macosPrivateApi` config flag is set to `true` on the `.millenniumrc` file.
 //! - **window-data-url**: Enables usage of data URLs on the webview.
+//! - **compression**: Enables asset compression. You should only disable this if you want faster compile times in
+//!   release builds, though it produces larger binaries.
+//! - **config-json5**: Adds support for the JSON5 format for `.millenniumrc`.
+//! - **icon-ico**: Adds support to set `.ico` window icons. Enables [`Icon::File`] and [`Icon::Raw`] variants.
+//! - **icon-png**: Adds support to set `.png` window icons. Enables [`Icon::File`] and [`Icon::Raw`] variants.
 //!
 //! ## Cargo allowlist features
 //!
@@ -154,6 +169,10 @@
 //! - **window-set-focus**: Enables the [`setFocus` API](https://tauri.studio/en/docs/api/js/classes/window.WebviewWindow#setfocus).
 //! - **window-set-icon**: Enables the [`setIcon` API](https://tauri.studio/en/docs/api/js/classes/window.WebviewWindow#seticon).
 //! - **window-set-skip-taskbar**: Enables the [`setSkipTaskbar` API](https://tauri.studio/en/docs/api/js/classes/window.WebviewWindow#setskiptaskbar).
+//! - **window-set-cursor-grab**: Enables the [`setCursorGrab` API](https://tauri.studio/en/docs/api/js/classes/window.WebviewWindow#setcursorgrab).
+//! - **window-set-cursor-visible**: Enables the [`setCursorVisible` API](https://tauri.studio/en/docs/api/js/classes/window.WebviewWindow#setcursorvisible).
+//! - **window-set-cursor-icon**: Enables the [`setCursorIcon` API](https://tauri.studio/en/docs/api/js/classes/window.WebviewWindow#setcursoricon).
+//! - **window-set-cursor-position**: Enables the [`setCursorPosition` API](https://tauri.studio/en/docs/api/js/classes/window.WebviewWindow#setcursorposition).
 //! - **window-start-dragging**: Enables the [`startDragging` API](https://tauri.studio/en/docs/api/js/classes/window.WebviewWindow#startdragging).
 //! - **window-print**: Enables the [`print` API](https://tauri.studio/en/docs/api/js/classes/window.WebviewWindow#print).
 
@@ -831,6 +850,27 @@ where
 /// Utilities for unit testing on Millennium applications.
 #[cfg(test)]
 pub mod test;
+
+#[cfg(test)]
+mod tests {
+	#[test]
+	fn features_are_documented() {
+		use std::{env::var, fs::read_to_string, path::PathBuf};
+
+		use cargo_toml::Manifest;
+		// this env var is always set by Cargo
+		let manifest_dir = PathBuf::from(var("CARGO_MANIFEST_DIR").unwrap());
+		let manifest = Manifest::from_path(manifest_dir.join("Cargo.toml")).expect("failed to parse Cargo manifest");
+
+		let lib_code = read_to_string(manifest_dir.join("src/lib.rs")).expect("failed to read lib.rs");
+
+		for (f, _) in manifest.features {
+			if !(f.starts_with("__") || f == "default" || lib_code.contains(&format!("*{}**", f))) {
+				panic!("Feature {} is not documented", f);
+			}
+		}
+	}
+}
 
 #[cfg(test)]
 mod test_utils {
