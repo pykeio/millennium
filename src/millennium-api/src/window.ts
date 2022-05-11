@@ -580,7 +580,6 @@ class WindowManager extends WebviewWindowHandle {
 	 *
 	 * ### Platform-specific
 	 *
-	 * - **Linux**: Unsupported.
 	 * - **macOS**: This locks the cursor in a fixed position, which looks visually awkward.
 	 *
 	 * @param grab `true` to grab the cursor, `false` to release it.
@@ -594,7 +593,6 @@ class WindowManager extends WebviewWindowHandle {
 	 *
 	 * ### Platform-specific
 	 *
-	 * - **Linux**: Unsupported.
 	 * - **Windows**: The cursor is only hidden within the confines of the window.
 	 * - **macOS**: The cursor is hidden as long as the window has input focus, even if the
 	 *   cursor is outside of the window.
