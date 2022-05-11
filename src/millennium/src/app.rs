@@ -295,6 +295,7 @@ pub struct AppHandle<R: Runtime> {
 	manager: WindowManager<R>,
 	#[cfg(feature = "global-shortcut")]
 	global_shortcut_manager: R::GlobalShortcutManager,
+	#[cfg(feature = "clipboard")]
 	clipboard_manager: R::ClipboardManager,
 	#[cfg(feature = "system-tray")]
 	tray_handle: Option<tray::SystemTrayHandle<R>>,
@@ -340,6 +341,7 @@ impl<R: Runtime> Clone for AppHandle<R> {
 			manager: self.manager.clone(),
 			#[cfg(feature = "global-shortcut")]
 			global_shortcut_manager: self.global_shortcut_manager.clone(),
+			#[cfg(feature = "clipboard")]
 			clipboard_manager: self.clipboard_manager.clone(),
 			#[cfg(feature = "system-tray")]
 			tray_handle: self.tray_handle.clone(),
@@ -432,6 +434,7 @@ pub struct App<R: Runtime> {
 	manager: WindowManager<R>,
 	#[cfg(feature = "global-shortcut")]
 	global_shortcut_manager: R::GlobalShortcutManager,
+	#[cfg(feature = "clipboard")]
 	clipboard_manager: R::ClipboardManager,
 	#[cfg(feature = "system-tray")]
 	tray_handle: Option<tray::SystemTrayHandle<R>>,
@@ -502,6 +505,7 @@ macro_rules! shared_app_impl {
 			}
 
 			/// Gets a copy of the clipboard manager instance.
+			#[cfg(feature = "clipboard")]
 			pub fn clipboard_manager(&self) -> R::ClipboardManager {
 				self.clipboard_manager.clone()
 			}
@@ -1164,6 +1168,7 @@ impl<R: Runtime> Builder<R> {
 		let runtime_handle = runtime.handle();
 		#[cfg(feature = "global-shortcut")]
 		let global_shortcut_manager = runtime.global_shortcut_manager();
+		#[cfg(feature = "clipboard")]
 		let clipboard_manager = runtime.clipboard_manager();
 
 		let mut app = App {
@@ -1171,6 +1176,7 @@ impl<R: Runtime> Builder<R> {
 			manager: manager.clone(),
 			#[cfg(feature = "global-shortcut")]
 			global_shortcut_manager: global_shortcut_manager.clone(),
+			#[cfg(feature = "clipboard")]
 			clipboard_manager: clipboard_manager.clone(),
 			#[cfg(feature = "system-tray")]
 			tray_handle: None,
@@ -1179,6 +1185,7 @@ impl<R: Runtime> Builder<R> {
 				manager,
 				#[cfg(feature = "global-shortcut")]
 				global_shortcut_manager,
+				#[cfg(feature = "clipboard")]
 				clipboard_manager,
 				#[cfg(feature = "system-tray")]
 				tray_handle: None,

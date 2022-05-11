@@ -46,6 +46,8 @@
 //! - **reqwest-client**: Uses `reqwest` as HTTP client on the `http` APIs. Improves performance, but increases the
 //!   bundle size.
 //! - **process-command-api**: Enables the [`api::process::Command`] APIs.
+//! - **global-shortcut**: Enables the global shortcut APIs.
+//! - **clipboard**: Enables the clipboard APIs.
 //! - **process-relaunch-dangerous-allow-symlink-macos**: Allows the [`api::process::current_binary`] function to allow
 //!   symlinks on macOS. **This is dangerous**, see the Security section in the function's documentation.
 //! - **dialog**: Enables the [`api::dialog`] module.
@@ -279,7 +281,7 @@ pub use {
 			dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize, Pixel, Position, Size},
 			CursorIcon, FileDropEvent
 		},
-		ClipboardManager, RunIteration, TrayIcon, UserAttentionType
+		RunIteration, TrayIcon, UserAttentionType
 	},
 	self::state::{State, StateManager},
 	self::utils::{

@@ -39,8 +39,8 @@ use millennium_runtime::{
 		dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize, Position, Size},
 		CursorIcon, DetachedWindow, FileDropEvent, JsEventListenerKey, PendingWindow, WindowEvent
 	},
-	ClipboardManager, Dispatch, Error, EventLoopProxy, ExitRequestedEventAction, Result, RunEvent, RunIteration, Runtime, RuntimeHandle, UserAttentionType,
-	UserEvent, WindowIcon
+	Dispatch, Error, EventLoopProxy, ExitRequestedEventAction, Result, RunEvent, RunIteration, Runtime, RuntimeHandle, UserAttentionType, UserEvent,
+	WindowIcon
 };
 #[cfg(target_os = "macos")]
 use millennium_runtime::{menu::NativeImage, ActivationPolicy};
@@ -67,7 +67,6 @@ pub use millennium_webview::application::window::{Window, WindowBuilder as Mille
 use millennium_webview::webview::WebviewExtWindows;
 use millennium_webview::{
 	application::{
-		clipboard::Clipboard,
 		dpi::{
 			LogicalPosition as MillenniumLogicalPosition, LogicalSize as MillenniumLogicalSize, PhysicalPosition as MillenniumPhysicalPosition,
 			PhysicalSize as MillenniumPhysicalSize, Position as MillenniumPosition, Size as MillenniumSize
@@ -108,6 +107,11 @@ mod global_shortcut;
 #[cfg(feature = "global-shortcut")]
 use global_shortcut::*;
 
+#[cfg(feature = "clipboard")]
+mod clipboard;
+#[cfg(feature = "clipboard")]
+use clipboard::*;
+
 type WebContextStore = Arc<Mutex<HashMap<Option<PathBuf>, WebContext>>>;
 // window
 type WindowEventHandler = Box<dyn Fn(&WindowEvent) + Send>;
@@ -134,8 +138,8 @@ impl WebviewIdStore {
 #[macro_export]
 macro_rules! getter {
 	($self: ident, $rx: expr, $message: expr) => {{
-		crate::send_user_message(&$self.context, $message)?;
-		$rx.recv().map_err(|_| Error::FailedToReceiveMessage)
+		$crate::send_user_message(&$self.context, $message)?;
+		$rx.recv().map_err(|_| $crate::Error::FailedToReceiveMessage)
 	}};
 }
 
@@ -156,6 +160,7 @@ fn send_user_message<T: UserEvent>(context: &Context<T>, message: Message<T>) ->
 				window_event_listeners: &context.window_event_listeners,
 				#[cfg(feature = "global-shortcut")]
 				global_shortcut_manager: context.main_thread.global_shortcut_manager.clone(),
+				#[cfg(feature = "clipboard")]
 				clipboard_manager: context.main_thread.clipboard_manager.clone(),
 				menu_event_listeners: &context.menu_event_listeners,
 				windows: context.main_thread.windows.clone(),
@@ -223,6 +228,7 @@ struct DispatcherMainThreadContext<T: UserEvent> {
 	web_context: WebContextStore,
 	#[cfg(feature = "global-shortcut")]
 	global_shortcut_manager: Arc<Mutex<MillenniumShortcutManager>>,
+	#[cfg(feature = "clipboard")]
 	clipboard_manager: Arc<Mutex<Clipboard>>,
 	windows: Arc<Mutex<HashMap<WebviewId, WindowWrapper>>>,
 	#[cfg(feature = "system-tray")]
@@ -438,29 +444,6 @@ impl From<NativeImage> for NativeImageWrapper {
 			NativeImage::UserGuest => MillenniumNativeImage::UserGuest
 		};
 		Self(millennium_image)
-	}
-}
-
-#[derive(Debug, Clone)]
-pub struct ClipboardManagerWrapper<T: UserEvent> {
-	context: Context<T>
-}
-
-// SAFETY: this is safe since the `Context` usage is guarded on
-// `send_user_message`.
-#[allow(clippy::non_send_fields_in_send_ty)]
-unsafe impl<T: UserEvent> Sync for ClipboardManagerWrapper<T> {}
-
-impl<T: UserEvent> ClipboardManager for ClipboardManagerWrapper<T> {
-	fn read_text(&self) -> Result<Option<String>> {
-		let (tx, rx) = channel();
-		getter!(self, rx, Message::Clipboard(ClipboardMessage::ReadText(tx)))
-	}
-
-	fn write_text<V: Into<String>>(&mut self, text: V) -> Result<()> {
-		let (tx, rx) = channel();
-		getter!(self, rx, Message::Clipboard(ClipboardMessage::WriteText(text.into(), tx)))?;
-		Ok(())
 	}
 }
 
@@ -1013,12 +996,6 @@ pub enum TrayMessage {
 	Close
 }
 
-#[derive(Debug, Clone)]
-pub enum ClipboardMessage {
-	WriteText(String, Sender<()>),
-	ReadText(Sender<Option<String>>)
-}
-
 pub type CreateWebviewClosure<T> = Box<dyn FnOnce(&EventLoopWindowTarget<Message<T>>, &WebContextStore) -> Result<WindowWrapper> + Send>;
 pub enum Message<T: 'static> {
 	Task(Box<dyn FnOnce() + Send>),
@@ -1030,6 +1007,7 @@ pub enum Message<T: 'static> {
 	CreateWindow(WebviewId, Box<dyn FnOnce() -> (String, MillenniumWindowBuilder) + Send>, Sender<Result<Weak<Window>>>),
 	#[cfg(feature = "global-shortcut")]
 	GlobalShortcut(GlobalShortcutMessage),
+	#[cfg(feature = "clipboard")]
 	Clipboard(ClipboardMessage),
 	UserEvent(T)
 }
@@ -1043,6 +1021,7 @@ impl<T: UserEvent> Clone for Message<T> {
 			Self::Tray(m) => Self::Tray(m.clone()),
 			#[cfg(feature = "global-shortcut")]
 			Self::GlobalShortcut(m) => Self::GlobalShortcut(m.clone()),
+			#[cfg(feature = "clipboard")]
 			Self::Clipboard(m) => Self::Clipboard(m.clone()),
 			Self::UserEvent(t) => Self::UserEvent(t.clone()),
 			_ => unimplemented!()
@@ -1399,7 +1378,9 @@ pub struct MillenniumWebview<T: UserEvent> {
 	global_shortcut_manager: Arc<Mutex<MillenniumShortcutManager>>,
 	#[cfg(feature = "global-shortcut")]
 	global_shortcut_manager_handle: GlobalShortcutManagerHandle<T>,
+	#[cfg(feature = "clipboard")]
 	clipboard_manager: Arc<Mutex<Clipboard>>,
+	#[cfg(feature = "clipboard")]
 	clipboard_manager_handle: ClipboardManagerWrapper<T>,
 	event_loop: EventLoop<Message<T>>,
 	windows: Arc<Mutex<HashMap<WebviewId, WindowWrapper>>>,
@@ -1415,8 +1396,6 @@ impl<T: UserEvent> fmt::Debug for MillenniumWebview<T> {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		let mut d = f.debug_struct("MillenniumWebview");
 		d.field("main_thread_id", &self.main_thread_id)
-			.field("clipboard_manager", &self.clipboard_manager)
-			.field("clipboard_manager_handle", &self.clipboard_manager_handle)
 			.field("event_loop", &self.event_loop)
 			.field("windows", &self.windows)
 			.field("web_context", &self.web_context);
@@ -1425,6 +1404,9 @@ impl<T: UserEvent> fmt::Debug for MillenniumWebview<T> {
 		#[cfg(feature = "global-shortcut")]
 		d.field("global_shortcut_manager", &self.global_shortcut_manager)
 			.field("global_shortcut_manager_handle", &self.global_shortcut_manager_handle);
+		#[cfg(feature = "clipboard")]
+		d.field("clipboard_manager", &self.clipboard_manager)
+			.field("clipboard_manager_handle", &self.clipboard_manager_handle);
 		d.finish()
 	}
 }
@@ -1488,11 +1470,11 @@ impl<T: UserEvent> RuntimeHandle<T> for MillenniumHandle<T> {
 
 impl<T: UserEvent> MillenniumWebview<T> {
 	fn init(event_loop: EventLoop<Message<T>>) -> Result<Self> {
-		let proxy = event_loop.create_proxy();
 		let main_thread_id = current_thread().id();
 		let web_context = WebContextStore::default();
 		#[cfg(feature = "global-shortcut")]
 		let global_shortcut_manager = Arc::new(Mutex::new(MillenniumShortcutManager::new(&event_loop)));
+		#[cfg(feature = "clipboard")]
 		let clipboard_manager = Arc::new(Mutex::new(Clipboard::new()));
 		let windows = Arc::new(Mutex::new(HashMap::default()));
 		let webview_id_map = WebviewIdStore::default();
@@ -1505,7 +1487,7 @@ impl<T: UserEvent> MillenniumWebview<T> {
 		let event_loop_context = Context {
 			webview_id_map: webview_id_map.clone(),
 			main_thread_id,
-			proxy,
+			proxy: event_loop.create_proxy(),
 			window_event_listeners: window_event_listeners.clone(),
 			menu_event_listeners: menu_event_listeners.clone(),
 			main_thread: DispatcherMainThreadContext {
@@ -1513,6 +1495,7 @@ impl<T: UserEvent> MillenniumWebview<T> {
 				web_context: web_context.clone(),
 				#[cfg(feature = "global-shortcut")]
 				global_shortcut_manager: global_shortcut_manager.clone(),
+				#[cfg(feature = "clipboard")]
 				clipboard_manager: clipboard_manager.clone(),
 				windows: windows.clone(),
 				#[cfg(feature = "system-tray")]
@@ -1523,6 +1506,7 @@ impl<T: UserEvent> MillenniumWebview<T> {
 		#[cfg(feature = "global-shortcut")]
 		let global_shortcut_listeners = GlobalShortcutListeners::default();
 
+		#[cfg(feature = "clipboard")]
 		#[allow(clippy::redundant_clone)]
 		let clipboard_manager_handle = ClipboardManagerWrapper { context: event_loop_context.clone() };
 
@@ -1536,7 +1520,9 @@ impl<T: UserEvent> MillenniumWebview<T> {
 				shortcuts: Default::default(),
 				listeners: global_shortcut_listeners
 			},
+			#[cfg(feature = "clipboard")]
 			clipboard_manager,
+			#[cfg(feature = "clipboard")]
 			clipboard_manager_handle,
 			event_loop,
 			windows,
@@ -1555,6 +1541,7 @@ impl<T: UserEvent> Runtime<T> for MillenniumWebview<T> {
 	type Handle = MillenniumHandle<T>;
 	#[cfg(feature = "global-shortcut")]
 	type GlobalShortcutManager = GlobalShortcutManagerHandle<T>;
+	#[cfg(feature = "clipboard")]
 	type ClipboardManager = ClipboardManagerWrapper<T>;
 	#[cfg(feature = "system-tray")]
 	type TrayHandler = SystemTrayHandle<T>;
@@ -1592,6 +1579,7 @@ impl<T: UserEvent> Runtime<T> for MillenniumWebview<T> {
 					web_context: self.web_context.clone(),
 					#[cfg(feature = "global-shortcut")]
 					global_shortcut_manager: self.global_shortcut_manager.clone(),
+					#[cfg(feature = "clipboard")]
 					clipboard_manager: self.clipboard_manager.clone(),
 					windows: self.windows.clone(),
 					#[cfg(feature = "system-tray")]
@@ -1606,6 +1594,7 @@ impl<T: UserEvent> Runtime<T> for MillenniumWebview<T> {
 		self.global_shortcut_manager_handle.clone()
 	}
 
+	#[cfg(feature = "clipboard")]
 	fn clipboard_manager(&self) -> Self::ClipboardManager {
 		self.clipboard_manager_handle.clone()
 	}
@@ -1628,6 +1617,7 @@ impl<T: UserEvent> Runtime<T> for MillenniumWebview<T> {
 				web_context: self.web_context.clone(),
 				#[cfg(feature = "global-shortcut")]
 				global_shortcut_manager: self.global_shortcut_manager.clone(),
+				#[cfg(feature = "clipboard")]
 				clipboard_manager: self.clipboard_manager.clone(),
 				windows: self.windows.clone(),
 				#[cfg(feature = "system-tray")]
@@ -1704,6 +1694,7 @@ impl<T: UserEvent> Runtime<T> for MillenniumWebview<T> {
 		let global_shortcut_manager = self.global_shortcut_manager.clone();
 		#[cfg(feature = "global-shortcut")]
 		let global_shortcut_manager_handle = self.global_shortcut_manager_handle.clone();
+		#[cfg(feature = "clipboard")]
 		let clipboard_manager = self.clipboard_manager.clone();
 		let mut iteration = RunIteration::default();
 
@@ -1726,6 +1717,7 @@ impl<T: UserEvent> Runtime<T> for MillenniumWebview<T> {
 					global_shortcut_manager: global_shortcut_manager.clone(),
 					#[cfg(feature = "global-shortcut")]
 					global_shortcut_manager_handle: &global_shortcut_manager_handle,
+					#[cfg(feature = "clipboard")]
 					clipboard_manager: clipboard_manager.clone(),
 					menu_event_listeners: &menu_event_listeners,
 					#[cfg(feature = "system-tray")]
@@ -1750,6 +1742,7 @@ impl<T: UserEvent> Runtime<T> for MillenniumWebview<T> {
 		let global_shortcut_manager = self.global_shortcut_manager.clone();
 		#[cfg(feature = "global-shortcut")]
 		let global_shortcut_manager_handle = self.global_shortcut_manager_handle.clone();
+		#[cfg(feature = "clipboard")]
 		let clipboard_manager = self.clipboard_manager.clone();
 
 		self.event_loop.run(move |event, event_loop, control_flow| {
@@ -1766,6 +1759,7 @@ impl<T: UserEvent> Runtime<T> for MillenniumWebview<T> {
 					global_shortcut_manager: global_shortcut_manager.clone(),
 					#[cfg(feature = "global-shortcut")]
 					global_shortcut_manager_handle: &global_shortcut_manager_handle,
+					#[cfg(feature = "clipboard")]
 					clipboard_manager: clipboard_manager.clone(),
 					menu_event_listeners: &menu_event_listeners,
 					#[cfg(feature = "system-tray")]
@@ -1786,6 +1780,7 @@ pub struct EventLoopIterationContext<'a, T: UserEvent> {
 	global_shortcut_manager: Arc<Mutex<MillenniumShortcutManager>>,
 	#[cfg(feature = "global-shortcut")]
 	global_shortcut_manager_handle: &'a GlobalShortcutManagerHandle<T>,
+	#[cfg(feature = "clipboard")]
 	clipboard_manager: Arc<Mutex<Clipboard>>,
 	menu_event_listeners: &'a MenuEventListeners,
 	#[cfg(feature = "system-tray")]
@@ -1797,6 +1792,7 @@ struct UserMessageContext<'a> {
 	window_event_listeners: &'a WindowEventListeners,
 	#[cfg(feature = "global-shortcut")]
 	global_shortcut_manager: Arc<Mutex<MillenniumShortcutManager>>,
+	#[cfg(feature = "clipboard")]
 	clipboard_manager: Arc<Mutex<Clipboard>>,
 	menu_event_listeners: &'a MenuEventListeners,
 	windows: Arc<Mutex<HashMap<WebviewId, WindowWrapper>>>,
@@ -1816,6 +1812,7 @@ fn handle_user_message<T: UserEvent>(
 		menu_event_listeners,
 		#[cfg(feature = "global-shortcut")]
 		global_shortcut_manager,
+		#[cfg(feature = "clipboard")]
 		clipboard_manager,
 		windows,
 		#[cfg(feature = "system-tray")]
@@ -2086,16 +2083,9 @@ fn handle_user_message<T: UserEvent>(
 			}
 		},
 		#[cfg(feature = "global-shortcut")]
-		Message::GlobalShortcut(message) => {
-			handle_global_shortcut_message(message, &global_shortcut_manager)
-		},
-		Message::Clipboard(message) => match message {
-			ClipboardMessage::WriteText(text, tx) => {
-				clipboard_manager.lock().unwrap().write_text(text);
-				tx.send(()).unwrap();
-			}
-			ClipboardMessage::ReadText(tx) => tx.send(clipboard_manager.lock().unwrap().read_text()).unwrap()
-		},
+		Message::GlobalShortcut(message) => handle_global_shortcut_message(message, &global_shortcut_manager),
+		#[cfg(feature = "clipboard")]
+		Message::Clipboard(message) => handle_clipboard_message(message, &clipboard_manager),
 		Message::UserEvent(_) => ()
 	}
 
@@ -2121,6 +2111,7 @@ fn handle_event_loop<T: UserEvent>(
 		global_shortcut_manager,
 		#[cfg(feature = "global-shortcut")]
 		global_shortcut_manager_handle,
+		#[cfg(feature = "clipboard")]
 		clipboard_manager,
 		menu_event_listeners,
 		#[cfg(feature = "system-tray")]
@@ -2295,6 +2286,7 @@ fn handle_event_loop<T: UserEvent>(
 						window_event_listeners,
 						#[cfg(feature = "global-shortcut")]
 						global_shortcut_manager,
+						#[cfg(feature = "clipboard")]
 						clipboard_manager,
 						menu_event_listeners,
 						windows,
