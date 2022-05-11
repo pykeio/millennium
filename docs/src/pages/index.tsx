@@ -59,7 +59,7 @@ function Homepage() {
 							data={[
 								{ framework: 'NW.js', binary: 223.82 },
 								{ framework: 'Electron', binary: 185.95 },
-								{ framework: 'Millennium', binary: 2.09 },
+								{ framework: 'Millennium', binary: 1.69 },
 							]}
 							keys={[ 'binary' ]}
 							valueFormat={v => `${v} MB`}
