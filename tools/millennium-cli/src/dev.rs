@@ -331,7 +331,7 @@ fn kill_before_dev_process() {
 fn start_app(options: &Options, runner: &str, manifest: &Manifest, features: &[String], manually_killed_app: Arc<AtomicBool>) -> Result<Arc<SharedChild>> {
 	let mut command = Command::new(runner);
 	command
-		.env("CARGO_TERM_PROGRESS_WIDTH", term_size::dimensions_stderr().map(|(w, _)| w).unwrap_or(80).to_string())
+		.env("CARGO_TERM_PROGRESS_WIDTH", terminal_size::terminal_size().map(|(w, _)| w.0).unwrap_or(80).to_string())
 		.env("CARGO_TERM_PROGRESS_WHEN", "always");
 	command.arg("run").arg("--color").arg("always");
 

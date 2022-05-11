@@ -62,7 +62,6 @@ ignore = "0.4"
 ctrlc = "3.2"
 inquire = "0.2"
 phf = { version = "0.10", features = ["macros"] }
-term_size = "0.3"
 
 [target."cfg(windows)".dependencies]
 encode_unicode = "0.3"
