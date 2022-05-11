@@ -76,7 +76,10 @@ pub enum Error {
 	MissingResponseField(&'static str),
 	/// The updater responded with an invalid signature type.
 	#[error("The updater response field `{0}` has an invalid type; expected {1}, but found {2}.")]
-	InvalidResponseType(&'static str, &'static str, serde_json::Value)
+	InvalidResponseType(&'static str, &'static str, serde_json::Value),
+	/// HTTP error.
+	#[error(transparent)]
+	Http(#[from] http::Error)
 }
 
 pub type Result<T = ()> = std::result::Result<T, Error>;

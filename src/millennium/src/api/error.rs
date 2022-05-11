@@ -101,7 +101,10 @@ pub enum Error {
 	Shell(String),
 	/// Unknown program name.
 	#[error("unknown program name: {0}")]
-	UnknownProgramName(String)
+	UnknownProgramName(String),
+	/// HTTP error.
+	#[error(transparent)]
+	Http(#[from] http::Error)
 }
 
 #[cfg(feature = "cli")]

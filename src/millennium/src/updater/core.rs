@@ -20,7 +20,6 @@ use std::ffi::OsStr;
 #[cfg(feature = "updater")]
 use std::io::Seek;
 use std::{
-	collections::HashMap,
 	env, fmt,
 	io::{Cursor, Read},
 	path::{Path, PathBuf},
@@ -35,7 +34,10 @@ use std::{
 
 use base64::decode;
 use futures::StreamExt;
-use http::StatusCode;
+use http::{
+	header::{HeaderName, HeaderValue},
+	HeaderMap, StatusCode
+};
 use millennium_utils::{platform::current_exe, Env};
 use minisign_verify::{PublicKey, Signature};
 
@@ -214,7 +216,8 @@ pub struct UpdateBuilder<R: Runtime> {
 	/// The current executable path. Default is automatically extracted.
 	pub executable_path: Option<PathBuf>,
 	should_install: Option<Box<dyn FnOnce(&str, &str) -> bool + Send>>,
-	timeout: Option<Duration>
+	timeout: Option<Duration>,
+	headers: HeaderMap
 }
 
 impl<R: Runtime> fmt::Debug for UpdateBuilder<R> {
@@ -226,6 +229,7 @@ impl<R: Runtime> fmt::Debug for UpdateBuilder<R> {
 			.field("target", &self.target)
 			.field("executable_path", &self.executable_path)
 			.field("timeout", &self.timeout)
+			.field("headers", &self.headers)
 			.finish()
 	}
 }
@@ -240,7 +244,8 @@ impl<R: Runtime> UpdateBuilder<R> {
 			executable_path: None,
 			current_version: env!("CARGO_PKG_VERSION").into(),
 			should_install: None,
-			timeout: None
+			timeout: None,
+			headers: Default::default()
 		}
 	}
 
@@ -292,6 +297,20 @@ impl<R: Runtime> UpdateBuilder<R> {
 		self
 	}
 
+	/// Add a `Header` to the request.
+	pub fn header<K, V>(mut self, key: K, value: V) -> Result<Self>
+	where
+		HeaderName: TryFrom<K>,
+		<HeaderName as TryFrom<K>>::Error: Into<http::Error>,
+		HeaderValue: TryFrom<V>,
+		<HeaderValue as TryFrom<V>>::Error: Into<http::Error>
+	{
+		let key: std::result::Result<HeaderName, http::Error> = key.try_into().map_err(Into::into);
+		let value: std::result::Result<HeaderValue, http::Error> = value.try_into().map_err(Into::into);
+		self.headers.insert(key?, value?);
+		Ok(self)
+	}
+
 	pub async fn build(mut self) -> Result<Update<R>> {
 		let mut remote_release: Option<RemoteRelease> = None;
 
@@ -324,6 +343,9 @@ impl<R: Runtime> UpdateBuilder<R> {
 			}
 		}
 
+		let mut headers = self.headers;
+		headers.insert("Accept", HeaderValue::from_str("application/json").unwrap());
+
 		// Allow fallback if more than 1 urls is provided
 		let mut last_error: Option<Error> = None;
 		for url in &self.urls {
@@ -339,11 +361,7 @@ impl<R: Runtime> UpdateBuilder<R> {
 				.replace("{{target}}", &target)
 				.replace("{{arch}}", arch);
 
-			// we want JSON only
-			let mut headers = HashMap::new();
-			headers.insert("Accept".into(), "application/json".into());
-
-			let mut request = HttpRequestBuilder::new("GET", &fixed_link)?.headers(headers);
+			let mut request = HttpRequestBuilder::new("GET", &fixed_link)?.headers(headers.clone());
 			if let Some(timeout) = self.timeout {
 				request = request.timeout(timeout);
 			}
@@ -393,6 +411,8 @@ impl<R: Runtime> UpdateBuilder<R> {
 			version::is_greater(&self.current_version, &final_release.version).unwrap_or(false)
 		};
 
+		headers.remove("Accept");
+
 		// create our new updater
 		Ok(Update {
 			app: self.app,
@@ -407,7 +427,8 @@ impl<R: Runtime> UpdateBuilder<R> {
 			signature: final_release.signature,
 			#[cfg(target_os = "windows")]
 			with_elevated_task: final_release.with_elevated_task,
-			timeout: self.timeout
+			timeout: self.timeout,
+			headers
 		})
 	}
 }
@@ -444,7 +465,9 @@ pub struct Update<R: Runtime> {
 	/// Default to false
 	with_elevated_task: bool,
 	/// Request timeout
-	timeout: Option<Duration>
+	timeout: Option<Duration>,
+	/// Request headers
+	headers: HeaderMap
 }
 
 impl<R: Runtime> Clone for Update<R> {
@@ -462,7 +485,8 @@ impl<R: Runtime> Clone for Update<R> {
 			signature: self.signature.clone(),
 			#[cfg(target_os = "windows")]
 			with_elevated_task: self.with_elevated_task,
-			timeout: self.timeout
+			timeout: self.timeout,
+			headers: self.headers.clone()
 		}
 	}
 }
@@ -483,9 +507,9 @@ impl<R: Runtime> Update<R> {
 		}
 
 		// set our headers
-		let mut headers = HashMap::new();
-		headers.insert("Accept".into(), "application/octet-stream".into());
-		headers.insert("User-Agent".into(), "millennium/updater".into());
+		let mut headers = self.headers.clone();
+		headers.insert("Accept", HeaderValue::from_str("application/octet-stream").unwrap());
+		headers.insert("User-Agent", HeaderValue::from_str("millennium/updater").unwrap());
 
 		let client = ClientBuilder::new().build()?;
 		// Create our request
