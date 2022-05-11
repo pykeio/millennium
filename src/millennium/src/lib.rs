@@ -279,7 +279,7 @@ pub use {
 			dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize, Pixel, Position, Size},
 			CursorIcon, FileDropEvent
 		},
-		ClipboardManager, GlobalShortcutManager, RunIteration, TrayIcon, UserAttentionType
+		ClipboardManager, RunIteration, TrayIcon, UserAttentionType
 	},
 	self::state::{State, StateManager},
 	self::utils::{

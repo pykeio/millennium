@@ -30,7 +30,7 @@ use millennium_runtime::{
 		dpi::{PhysicalPosition, PhysicalSize, Position, Size},
 		CursorIcon, DetachedWindow, MenuEvent, PendingWindow, WindowEvent
 	},
-	ClipboardManager, Dispatch, EventLoopProxy, GlobalShortcutManager, Result, RunEvent, Runtime, RuntimeHandle, UserAttentionType, UserEvent, WindowIcon
+	ClipboardManager, Dispatch, EventLoopProxy, Result, RunEvent, Runtime, RuntimeHandle, UserAttentionType, UserEvent, WindowIcon
 };
 #[cfg(feature = "system-tray")]
 use millennium_runtime::{
@@ -95,12 +95,14 @@ pub struct MockDispatcher {
 	context: RuntimeContext
 }
 
+#[cfg(feature = "global-shortcut")]
 #[derive(Debug, Clone)]
 pub struct MockGlobalShortcutManager {
 	context: RuntimeContext
 }
 
-impl GlobalShortcutManager for MockGlobalShortcutManager {
+#[cfg(feature = "global-shortcut")]
+impl millennium_runtime::GlobalShortcutManager for MockGlobalShortcutManager {
 	fn is_registered(&self, accelerator: &str) -> Result<bool> {
 		Ok(self.context.shortcuts.lock().unwrap().contains_key(accelerator))
 	}
@@ -522,6 +524,7 @@ impl<T: UserEvent> EventLoopProxy<T> for EventProxy {
 #[derive(Debug)]
 pub struct MockRuntime {
 	pub context: RuntimeContext,
+	#[cfg(feature = "global-shortcut")]
 	global_shortcut_manager: MockGlobalShortcutManager,
 	clipboard_manager: MockClipboardManager,
 	#[cfg(feature = "system-tray")]
@@ -535,6 +538,7 @@ impl MockRuntime {
 			clipboard: Default::default()
 		};
 		Self {
+			#[cfg(feature = "global-shortcut")]
 			global_shortcut_manager: MockGlobalShortcutManager { context: context.clone() },
 			clipboard_manager: MockClipboardManager { context: context.clone() },
 			#[cfg(feature = "system-tray")]
@@ -547,6 +551,7 @@ impl MockRuntime {
 impl<T: UserEvent> Runtime<T> for MockRuntime {
 	type Dispatcher = MockDispatcher;
 	type Handle = MockRuntimeHandle;
+	#[cfg(feature = "global-shortcut")]
 	type GlobalShortcutManager = MockGlobalShortcutManager;
 	type ClipboardManager = MockClipboardManager;
 	#[cfg(feature = "system-tray")]
@@ -570,6 +575,7 @@ impl<T: UserEvent> Runtime<T> for MockRuntime {
 		MockRuntimeHandle { context: self.context.clone() }
 	}
 
+	#[cfg(feature = "global-shortcut")]
 	fn global_shortcut_manager(&self) -> Self::GlobalShortcutManager {
 		self.global_shortcut_manager.clone()
 	}
