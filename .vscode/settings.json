@@ -1,8 +1,6 @@
 {
 	"rust-analyzer.checkOnSave.command": "clippy",
 	"rust-analyzer.cargo.allFeatures": true,
-	"rust-analyzer.cache.warmup": true,
-	"rust-analyzer.diagnostics.enableExperimental": true,
 	"rust-analyzer.rustfmt.extraArgs": [ "+nightly" ],
 	"[rust]": {
 		"editor.formatOnSave": true,
@@ -15,5 +13,7 @@
 	"[mdx]": {
 		"editor.wordWrap": "on",
 		"editor.insertSpaces": true
-	}
+	},
+	"rust-analyzer.primeCaches.enable": true,
+	"rust-analyzer.diagnostics.experimental.enable": true
 }
