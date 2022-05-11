@@ -694,27 +694,7 @@ fn generate_resource_data(settings: &Settings) -> crate::Result<ResourceMap> {
 	let mut resources = ResourceMap::new();
 	let cwd = std::env::current_dir()?;
 
-	let mut dlls = vec![];
-	for dll in glob::glob(settings.project_out_directory().join("*.dll").to_string_lossy().to_string().as_str())? {
-		let path = dll?;
-		let resource_path = path.to_string_lossy().to_string();
-		dlls.push(ResourceFile {
-			id: format!("I{}", Uuid::new_v4().as_simple()),
-			guid: Uuid::new_v4().to_string(),
-			path: resource_path
-		});
-	}
-	if !dlls.is_empty() {
-		resources.insert(
-			"".to_string(),
-			ResourceDirectory {
-				path: "".to_string(),
-				name: "".to_string(),
-				directories: vec![],
-				files: dlls
-			}
-		);
-	}
+	let mut added_resources = Vec::new();
 
 	for src in settings.resource_files() {
 		let src = src?;
@@ -725,6 +705,8 @@ fn generate_resource_data(settings: &Settings) -> crate::Result<ResourceMap> {
 			.into_string()
 			.expect("failed to read resource path");
 
+		added_resources.push(resource_path.clone());
+
 		let resource_entry = ResourceFile {
 			id: format!("I{}", Uuid::new_v4().as_simple()),
 			guid: Uuid::new_v4().to_string(),
@@ -734,13 +716,13 @@ fn generate_resource_data(settings: &Settings) -> crate::Result<ResourceMap> {
 		// split the resource path directories
 		let components_count = src.components().count();
 		let directories = src
-      .components()
-      .filter(|component| {
-        let comp = component.as_os_str();
-        comp != "." && comp != ".."
-      })
-      .take(components_count - 1) // the last component is the file
-      .collect::<Vec<_>>();
+			.components()
+			.filter(|component| {
+				let comp = component.as_os_str();
+				comp != "." && comp != ".."
+			})
+			.take(components_count - 1) // the last component is the file
+			.collect::<Vec<_>>();
 
 		// transform the directory structure to a chained vec structure
 		let first_directory = directories
@@ -788,6 +770,34 @@ fn generate_resource_data(settings: &Settings) -> crate::Result<ResourceMap> {
 			}
 		}
 		directory_entry.add_file(resource_entry);
+	}
+
+	let mut dlls = Vec::new();
+
+	let out_dir = settings.project_out_directory();
+	for dll in glob::glob(out_dir.join("*.dll").to_string_lossy().to_string().as_str())? {
+		let path = dll?;
+		let resource_path = path.to_string_lossy().into_owned();
+		let relative_path = path.strip_prefix(&out_dir).unwrap().to_string_lossy().into_owned();
+		if !added_resources.iter().any(|r| r.ends_with(&relative_path)) {
+			dlls.push(ResourceFile {
+				id: format!("I{}", Uuid::new_v4().as_simple()),
+				guid: Uuid::new_v4().to_string(),
+				path: resource_path
+			});
+		}
+	}
+
+	if !dlls.is_empty() {
+		resources.insert(
+			"".to_string(),
+			ResourceDirectory {
+				path: "".to_string(),
+				name: "".to_string(),
+				directories: vec![],
+				files: dlls
+			}
+		);
 	}
 
 	Ok(resources)
