@@ -852,27 +852,6 @@ where
 pub mod test;
 
 #[cfg(test)]
-mod tests {
-	#[test]
-	fn features_are_documented() {
-		use std::{env::var, fs::read_to_string, path::PathBuf};
-
-		use cargo_toml::Manifest;
-		// this env var is always set by Cargo
-		let manifest_dir = PathBuf::from(var("CARGO_MANIFEST_DIR").unwrap());
-		let manifest = Manifest::from_path(manifest_dir.join("Cargo.toml")).expect("failed to parse Cargo manifest");
-
-		let lib_code = read_to_string(manifest_dir.join("src/lib.rs")).expect("failed to read lib.rs");
-
-		for (f, _) in manifest.features {
-			if !(f.starts_with("__") || f == "default" || lib_code.contains(&format!("*{}**", f))) {
-				panic!("Feature {} is not documented", f);
-			}
-		}
-	}
-}
-
-#[cfg(test)]
 mod test_utils {
 	use proptest::prelude::*;
 
