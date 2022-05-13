@@ -90,6 +90,19 @@ pub fn command(options: Options) -> Result<()> {
 fn command_internal(options: Options) -> Result<()> {
 	let logger = Logger::new("millennium:dev");
 
+	#[cfg(not(debug_assertions))]
+	match check_for_updates() {
+		Ok((msg, needs_update)) => {
+			if needs_update {
+				logger.log(msg.unwrap());
+				std::thread::sleep(std::time::Duration::from_secs(3));
+			}
+		}
+		Err(e) => {
+			logger.log(e.to_string());
+		}
+	};
+
 	let millennium_path = millennium_dir();
 	set_current_dir(&millennium_path).with_context(|| "failed to change current working directory")?;
 	let merge_config = if let Some(config) = &options.config {
@@ -221,6 +234,20 @@ fn command_internal(options: Options) -> Result<()> {
 	} else {
 		Ok(())
 	}
+}
+
+#[cfg(not(debug_assertions))]
+fn check_for_updates() -> Result<(Option<String>, bool)> {
+	let current_version = crate::info::cli_current_version()?;
+	let current = semver::Version::parse(&current_version)?;
+
+	let upstream_version = crate::info::cli_upstream_version()?;
+	let upstream = semver::Version::parse(&upstream_version)?;
+	if upstream.gt(&current) {
+		let message = format!("🚀 A new version of Millennium CLI is avaliable! [{}]", upstream.to_string());
+		return Ok((Some(message), true));
+	}
+	Ok((None, false))
 }
 
 fn lookup<F: FnMut(FileType, PathBuf)>(dir: &Path, mut f: F) {
