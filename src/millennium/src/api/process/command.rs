@@ -275,7 +275,7 @@ impl Command {
 		spawn_pipe_reader(tx.clone(), guard.clone(), stderr_reader, CommandEvent::Stderr);
 
 		spawn(move || {
-			let _ = match child_.wait() {
+			match child_.wait() {
 				Ok(status) => {
 					let _l = guard.write().unwrap();
 					commands().lock().unwrap().remove(&child_.id());
