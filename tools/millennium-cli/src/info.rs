@@ -107,7 +107,10 @@ pub(crate) fn cli_current_version() -> Result<String> {
 
 #[cfg(not(debug_assertions))]
 pub(crate) fn cli_upstream_version() -> Result<String> {
-	let upstream_metadata = match ureq::get("https://raw.githubusercontent.com/pykeio/millennium/main/tools/millennium-cli/metadata.json").call() {
+	let upstream_metadata = match ureq::get("https://raw.githubusercontent.com/pykeio/millennium/main/tools/millennium-cli/metadata.json")
+		.timeout(std::time::Duration::from_secs(3))
+		.call()
+	{
 		Ok(r) => r,
 		Err(ureq::Error::Status(code, _response)) => {
 			let message = format!("Unable to find updates at the moment. Code: {}", code);
