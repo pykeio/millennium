@@ -4,7 +4,7 @@
 	"rust-analyzer.rustfmt.extraArgs": [ "+nightly" ],
 	"[rust]": {
 		"editor.formatOnSave": true,
-		"editor.defaultFormatter": "matklad.rust-analyzer",
+		"editor.defaultFormatter": "rust-lang.rust-analyzer",
 		"editor.semanticHighlighting.enabled": true
 	},
 	"rust-analyzer.diagnostics.disabled": [
@@ -14,6 +14,6 @@
 		"editor.wordWrap": "on",
 		"editor.insertSpaces": true
 	},
-	"rust-analyzer.primeCaches.enable": true,
-	"rust-analyzer.diagnostics.experimental.enable": true
+	"rust-analyzer.diagnostics.experimental.enable": true,
+	"rust-analyzer.cachePriming.enable": true
 }
