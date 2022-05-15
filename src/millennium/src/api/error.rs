@@ -75,7 +75,7 @@ pub enum Error {
 	#[error("failed to walkdir: {0}")]
 	Ignore(#[from] ignore::Error),
 	/// ZIP error.
-	#[cfg(feature = "fs-extract-api")]
+	#[cfg(any(feature = "fs-extract-api", feature = "__fs-extract-api-docs"))]
 	#[error(transparent)]
 	Zip(#[from] zip::result::ZipError),
 	/// Extract error.
