@@ -438,8 +438,7 @@ struct VersionBlock {
 	name: String,
 	version: String,
 	target_version: String,
-	indentation: usize,
-	skip_update_check: bool
+	indentation: usize
 }
 
 impl VersionBlock {
@@ -448,14 +447,8 @@ impl VersionBlock {
 			name: name.into(),
 			version: version.into(),
 			target_version: "".into(),
-			indentation: 2,
-			skip_update_check: false
+			indentation: 2
 		}
-	}
-
-	fn skip_update_check(mut self) -> Self {
-		self.skip_update_check = true;
-		self
 	}
 
 	fn target_version(mut self, version: impl Into<String>) -> Self {
@@ -469,7 +462,7 @@ impl VersionBlock {
 		print!("{}", self.name.bold());
 		print!(": ");
 		print!("{}", if self.version.is_empty() { "Not installed!".red().to_string() } else { self.version.clone() });
-		if !self.target_version.is_empty() && !self.skip_update_check {
+		if !(self.version.is_empty() || self.target_version.is_empty()) {
 			let version = semver::Version::parse(self.version.as_str()).unwrap();
 			let target_version = semver::Version::parse(self.target_version.as_str()).unwrap();
 			if version < target_version {
@@ -547,7 +540,6 @@ pub fn command(_options: Options) -> Result<()> {
 			.collect::<String>()
 	)
 	.target_version(metadata.js_cli.node.replace(">= ", ""))
-	.skip_update_check()
 	.display();
 
 	VersionBlock::new("npm", get_version("npm", &[]).unwrap_or_default().unwrap_or_default()).display();
