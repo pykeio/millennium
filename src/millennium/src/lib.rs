@@ -296,6 +296,9 @@ pub use {
 #[cfg(feature = "clipboard")]
 #[cfg_attr(doc_cfg, doc(cfg(feature = "clipboard")))]
 pub use self::runtime::ClipboardManager;
+#[cfg(feature = "global-shortcut")]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "global-shortcut")))]
+pub use self::runtime::GlobalShortcutManager;
 
 /// Updater events.
 #[cfg(updater)]

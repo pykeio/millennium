@@ -121,7 +121,7 @@ tokio = { version = "1.16", features = [ "full" ] }
 cargo_toml = "0.11"
 
 [features]
-default = [ "millennium_webview", "compression", "objc-exception", "ayatana-tray" ]
+default = [ "millennium_webview", "compression", "objc-exception" ]
 compression = [ "millennium-macros/compression", "millennium-utils/compression" ]
 millennium_webview = [ "millennium-runtime-webview" ]
 objc-exception = [ "millennium-runtime-webview/objc-exception" ]
