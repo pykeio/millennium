@@ -1,19 +1,19 @@
-lockfileVersion: 5.3
+lockfileVersion: 5.4
 
 specifiers:
-  '@napi-rs/cli': ^2.7.0
+  '@napi-rs/cli': ^2.9.0
   cross-spawn: ^7.0.3
   fs-extra: ^10.1.0
 
 devDependencies:
-  '@napi-rs/cli': 2.7.0
+  '@napi-rs/cli': 2.9.0
   cross-spawn: 7.0.3
   fs-extra: 10.1.0
 
 packages:
 
-  /@napi-rs/cli/2.7.0:
-    resolution: {integrity: sha512-bQb+r9/xW8LFRbpEN7A/4fX8LnEWbI0JzyOzXGDpO+cI8dXRxX7OPySOpzT2nBgP1brA2Ydkw/t9lyxLN9TlxQ==}
+  /@napi-rs/cli/2.9.0:
+    resolution: {integrity: sha512-qZ49ORZJ8rsHlvnnLsJCg9Ik+KfhiIgSea1HDMf6A9KBVxwWCijNhSO8zFvvBr7m1m44cx9WWhnQDnwPqSDeLA==}
     engines: {node: '>= 10'}
     hasBin: true
     dev: true
