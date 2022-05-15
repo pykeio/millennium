@@ -20,7 +20,7 @@ use std::{
 	fs::FileType,
 	io::{BufReader, Write},
 	path::{Path, PathBuf},
-	process::{exit, Command},
+	process::{exit, Command, Stdio},
 	sync::{
 		atomic::{AtomicBool, Ordering},
 		mpsc::channel,
@@ -122,6 +122,7 @@ fn command_internal(options: Options) -> Result<()> {
 				command.arg("-c").arg(before_dev).current_dir(app_dir()).envs(command_env(true)).pipe()?; // development build always includes debug information
 				command
 			};
+			command.stdin(Stdio::piped());
 
 			let child = SharedChild::spawn(&mut command).unwrap_or_else(|_| panic!("failed to run `{}`", before_dev));
 			let child = Arc::new(child);
@@ -397,7 +398,7 @@ fn start_app(options: &Options, runner: &str, manifest: &Manifest, features: &[S
 	}
 
 	command.stdout(os_pipe::dup_stdout().unwrap());
-	command.stderr(std::process::Stdio::piped());
+	command.stderr(Stdio::piped());
 
 	let child = SharedChild::spawn(&mut command).with_context(|| format!("failed to run {}", runner))?;
 	let child_arc = Arc::new(child);
