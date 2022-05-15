@@ -172,6 +172,7 @@ pub fn try_build(attributes: Attributes) -> Result<()> {
 	// Skip this if we're building from C++ bindings, because .millenniumrc may not be in the root directory.
 	#[cfg(not(feature = "cxx"))]
 	{
+		println!("cargo:rerun-if-env-changed=MILLENNIUM_CONFIG");
 		println!("cargo:rerun-if-changed=.millenniumrc");
 		println!("cargo:rerun-if-changed=.millenniumrc.json");
 		#[cfg(feature = "config-json5")]
