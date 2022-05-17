@@ -65,6 +65,12 @@ pub struct WebViewAttributes {
 	pub transparent: bool,
 	/// Whether load the provided URL to [`WebView`].
 	pub url: Option<Url>,
+	/// Whether page zooming via hotkeys is enabled.
+	///
+	/// ## Platform-specific
+	///
+	/// **macOS / Linux / Android / iOS**: Unsupported.
+	pub zoom_hotkeys_enabled: bool,
 	/// Whether load the provided html string to [`WebView`].
 	/// This will be ignored if the `url` is provided.
 	///
@@ -179,7 +185,8 @@ impl Default for WebViewAttributes {
 			file_drop_handler: None,
 			navigation_handler: None,
 			clipboard: false,
-			devtools: false
+			devtools: false,
+			zoom_hotkeys_enabled: false
 		}
 	}
 }
@@ -291,6 +298,16 @@ impl<'a> WebViewBuilder<'a> {
 		F: Fn(&Window, FileDropEvent) -> bool + 'static
 	{
 		self.webview.file_drop_handler = Some(Box::new(handler));
+		self
+	}
+
+	/// Whether page zooming via hotkeys or gestures is enabled.
+	///
+	/// ## Platform-specific
+	///
+	/// **macOS / Linux / Android / iOS**: Unsupported.
+	pub fn with_zoom_hotkeys(mut self, zoom: bool) -> Self {
+		self.webview.zoom_hotkeys_enabled = zoom;
 		self
 	}
 
