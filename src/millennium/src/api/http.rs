@@ -32,6 +32,24 @@ use serde_json::Value;
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use url::Url;
 
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum SerdeDuration {
+	Seconds(u64),
+	Duration(Duration)
+}
+
+fn deserialize_duration<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Option<Duration>, D::Error> {
+	if let Some(duration) = Option::<SerdeDuration>::deserialize(deserializer)? {
+		Ok(Some(match duration {
+			SerdeDuration::Seconds(s) => Duration::from_secs(s),
+			SerdeDuration::Duration(d) => d
+		}))
+	} else {
+		Ok(None)
+	}
+}
+
 /// The builder of [`Client`].
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -39,6 +57,7 @@ pub struct ClientBuilder {
 	/// Max number of redirections to follow.
 	pub max_redirections: Option<usize>,
 	/// Connect timeout in seconds for the request.
+	#[serde(deserialize_with = "deserialize_duration")]
 	pub connect_timeout: Option<Duration>
 }
 
@@ -423,6 +442,7 @@ pub struct HttpRequestBuilder {
 	/// The request body
 	pub body: Option<Body>,
 	/// Timeout for the whole request
+	#[serde(deserialize_with = "deserialize_duration")]
 	pub timeout: Option<Duration>,
 	/// The response type (defaults to Json)
 	pub response_type: Option<ResponseType>
