@@ -60,8 +60,8 @@ export interface Duration {
 }
 
 interface ClientOptions {
-	maxRedirections: number;
-	connectTimeout: number | Duration;
+	maxRedirections?: number;
+	connectTimeout?: number | Duration;
 }
 
 export enum ResponseType {
