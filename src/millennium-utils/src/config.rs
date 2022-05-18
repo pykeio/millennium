@@ -825,6 +825,34 @@ impl Display for Csp {
 	}
 }
 
+/// The possible values for the `dangerous_disable_asset_csp_modification` config option.
+#[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
+#[serde(untagged)]
+#[cfg_attr(feature = "schema", derive(JsonSchema))]
+pub enum DisabledCspModificationKind {
+	/// If `true`, disables all CSP modification.
+	/// `false` is the default value and it configures Millennium to control the CSP.
+	Flag(bool),
+	/// Disables the given list of CSP directives modifications.
+	List(Vec<String>)
+}
+
+impl DisabledCspModificationKind {
+	/// Determines whether the given CSP directive can be modified or not.
+	pub fn can_modify(&self, directive: &str) -> bool {
+		match self {
+			Self::Flag(f) => !f,
+			Self::List(l) => !l.contains(&directive.into())
+		}
+	}
+}
+
+impl Default for DisabledCspModificationKind {
+	fn default() -> Self {
+		Self::Flag(false)
+	}
+}
+
 /// Security configuration.
 #[skip_serializing_none]
 #[derive(Debug, Default, PartialEq, Clone, Deserialize, Serialize)]
@@ -854,13 +882,17 @@ pub struct SecurityConfig {
 	/// Disables the Millennium-injected CSP sources.
 	///
 	/// At compile time, Millennium parses all the frontend assets and changes the Content-Security-Policy
-	/// to only allow loading of your own scripts and styles by injecting nonce and hash sources.
-	/// This stricts your CSP, which may introduce issues when using along with other flexing sources.
+	/// to only allow loading of your own scripts and styles by injecting nonces and hash sources.
+	/// This restricts your CSP, which may introduce issues when using other sources.
 	///
-	/// **WARNING:** Only disable this if you know what you are doing and have properly configured the CSP.
+	/// This configuration option allows both a boolean and a list of strings as a value. A boolean instructs Millennium
+	/// to disable injection for all CSP directives, and a list of strings indicates the CSP directives that Millennium
+	/// is not allowed to inject.
+	///
+	/// **WARNING**: Only disable this if you know what you are doing and have properly configured the CSP.
 	/// Your application might be vulnerable to XSS attacks without Millennium's protection.
 	#[serde(default)]
-	pub dangerous_disable_asset_csp_modification: bool
+	pub dangerous_disable_asset_csp_modification: DisabledCspModificationKind
 }
 
 /// Defines an allowlist type.
@@ -2659,13 +2691,29 @@ mod build {
 		}
 	}
 
+	impl ToTokens for DisabledCspModificationKind {
+		fn to_tokens(&self, tokens: &mut TokenStream) {
+			let prefix = quote! { ::millennium::utils::config::DisabledCspModificationKind };
+
+			tokens.append_all(match self {
+				Self::Flag(flag) => {
+					quote! { #prefix::Flag(#flag) }
+				}
+				Self::List(directives) => {
+					let directives = vec_lit(directives, str_lit);
+					quote! { #prefix::List(#directives) }
+				}
+			});
+		}
+	}
+
 	impl ToTokens for SecurityConfig {
 		fn to_tokens(&self, tokens: &mut TokenStream) {
 			let csp = opt_lit(self.csp.as_ref());
 			let dev_csp = opt_lit(self.dev_csp.as_ref());
 			let freeze_prototype = self.freeze_prototype;
 			let allow_notifications = self.allow_notifications;
-			let dangerous_disable_asset_csp_modification = self.dangerous_disable_asset_csp_modification;
+			let dangerous_disable_asset_csp_modification = &self.dangerous_disable_asset_csp_modification;
 
 			literal_struct!(tokens, SecurityConfig, csp, dev_csp, freeze_prototype, allow_notifications, dangerous_disable_asset_csp_modification);
 		}
@@ -2901,7 +2949,7 @@ mod test {
 				dev_csp: None,
 				freeze_prototype: false,
 				allow_notifications: false,
-				dangerous_disable_asset_csp_modification: false
+				dangerous_disable_asset_csp_modification: DisabledCspModificationKind::Flag(false)
 			},
 			allowlist: AllowlistConfig::default(),
 			system_tray: None,
