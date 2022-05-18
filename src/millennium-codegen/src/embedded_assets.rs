@@ -162,7 +162,11 @@ impl CspHashes {
 	/// Note: this only checks the file extension, much like how a browser will
 	/// assume a .js file is a JavaScript file unless HTTP headers tell it
 	/// otherwise.
-	pub fn add_if_applicable(&mut self, entry: &DirEntry, dangerous_disable_asset_csp_modification: &DisabledCspModificationKind) -> Result<(), EmbeddedAssetsError> {
+	pub fn add_if_applicable(
+		&mut self,
+		entry: &DirEntry,
+		dangerous_disable_asset_csp_modification: &DisabledCspModificationKind
+	) -> Result<(), EmbeddedAssetsError> {
 		let path = entry.path();
 
 		// we only hash JavaScript files for now, may expand to other CSP hashable types
