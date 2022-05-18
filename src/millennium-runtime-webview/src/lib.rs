@@ -133,6 +133,10 @@ impl WebviewIdStore {
 	fn get(&self, w: &WindowId) -> WebviewId {
 		*self.0.lock().unwrap().get(w).unwrap()
 	}
+
+	fn try_get(&self, w: &WindowId) -> Option<WebviewId> {
+		self.0.lock().unwrap().get(w).copied()
+	}
 }
 
 #[macro_export]
@@ -2170,7 +2174,12 @@ fn handle_event_loop<T: UserEvent>(
 			}
 			let event = MenuEvent { menu_item_id: menu_id.0 };
 			let window_menu_event_listeners = {
-				let window_id = webview_id_map.get(&window_id);
+				// on macOS, the window id might be the inspector window if it is detached
+				let window_id = if let Some(window_id) = webview_id_map.try_get(&window_id) {
+					window_id
+				} else {
+					*webview_id_map.0.lock().unwrap().values().next().unwrap()
+				};
 				let listeners = menu_event_listeners.lock().unwrap();
 				listeners.get(&window_id).cloned().unwrap_or_default()
 			};
