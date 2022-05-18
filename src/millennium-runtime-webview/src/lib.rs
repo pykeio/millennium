@@ -1254,7 +1254,11 @@ impl<T: UserEvent> Dispatch<T> for MillenniumDispatcher<T> {
 	}
 
 	fn set_size(&self, size: Size) -> Result<()> {
-		send_user_message(&self.context, Message::Window(self.window_id, WindowMessage::SetSize(size)))
+		// NOTE: set_size cannot use `send_user_message` due to a freeze on Windows
+		self.context
+			.proxy
+			.send_event(Message::Window(self.window_id, WindowMessage::SetSize(size)))
+			.map_err(|_| Error::FailedToSendMessage)
 	}
 
 	fn set_min_size(&self, size: Option<Size>) -> Result<()> {
