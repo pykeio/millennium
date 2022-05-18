@@ -19,15 +19,17 @@
 /// <reference path="./types.d.ts" />
 
 window.addEventListener('DOMContentLoaded', () => {
-	const style = document.createElement('style');
-	// @ts-ignore
-	style.textContent = __TEMPLATE_style__
-	document.head.append(style);
+	if (window.location.origin.startsWith(__TEMPLATE_origin__)) {
+		const style = document.createElement('style');
+		// @ts-ignore
+		style.textContent = __TEMPLATE_style__
+		document.head.append(style);
 
-	const iframe = document.createElement('iframe');
-	iframe.id = '__millennium_isolation__';
-	iframe.sandbox.add('allow-scripts');
-	// @ts-ignore
-	iframe.src = __TEMPLATE_isolation_src__
-	document.body.append(iframe);
+		const iframe = document.createElement('iframe');
+		iframe.id = '__millennium_isolation__';
+		iframe.sandbox.add('allow-scripts');
+		// @ts-ignore
+		iframe.src = __TEMPLATE_isolation_src__
+		document.body.append(iframe);
+	}
 });

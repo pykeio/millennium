@@ -51,6 +51,7 @@ pub(crate) struct IpcJavascript<'a> {
 #[derive(Template)]
 #[default_template("../scripts/isolation.js")]
 pub(crate) struct IsolationJavascript<'a> {
+	pub(crate) origin: &'a str,
 	pub(crate) isolation_src: &'a str,
 	pub(crate) style: &'a str
 }
