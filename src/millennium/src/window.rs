@@ -625,7 +625,7 @@ impl Window<crate::MillenniumWebview> {
 	/// 				unsafe {
 	/// 					let () = msg_send![webview.inner(), setPageZoom: 4.];
 	/// 					let () = msg_send![webview.controller(), removeAllUserScripts];
-	/// 					let bg_color: cocoa::base::id = msg_send![class!(NSColor), colorWithDeviceRed:0.5, green:0.2, blue:0.4 alpha:1.];
+	/// 					let bg_color: cocoa::base::id = msg_send![class!(NSColor), colorWithDeviceRed:0.5 green:0.2 blue:0.4 alpha:1.];
 	/// 					let () = msg_send![webview.ns_window(), setBackgroundColor: bg_color];
 	/// 				}
 	/// 			});
