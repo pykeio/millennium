@@ -56,15 +56,16 @@ async function exists(path) {
 }
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-if (await exists(resolve(__dirname, '../millennium')) && await exists(resolve(__dirname, '../../Cargo.toml')))
-	await build({
-		bundle: true,
-		minify: true,
-		format: 'iife',
-		platform: 'browser',
-		entryPoints: [ 'src/index.ts' ],
-		globalName: 'Millennium',
-		footer: { js: ';Object.defineProperty(window,"Millennium",{value:Millennium,writable:false,configurable:false,enumerable:true});function _DF(e){const d=Object.getOwnPropertyNames(e);for(const g of d)if(typeof e[g]=="object")_DF(e[g]);Object.freeze(e)}_DF(window.Millennium);' },
-		target,
-		outfile: resolve(__dirname, '../millennium/scripts/bundle.js')
-	});
+if (!(await exists(resolve(__dirname, '../millennium')) && await exists(resolve(__dirname, '../../Cargo.toml')))) return;
+
+await build({
+	bundle: true,
+	minify: true,
+	format: 'iife',
+	platform: 'browser',
+	entryPoints: [ 'src/index.ts' ],
+	globalName: 'Millennium',
+	footer: { js: ';Object.defineProperty(window,"Millennium",{value:Millennium,writable:false,configurable:false,enumerable:true});function _DF(e){const d=Object.getOwnPropertyNames(e);for(const g of d)if(typeof e[g]=="object")_DF(e[g]);Object.freeze(e)}_DF(window.Millennium);' },
+	target,
+	outfile: resolve(__dirname, '../millennium/scripts/bundle.js')
+});
