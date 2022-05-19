@@ -538,6 +538,107 @@ impl<'de, R: Runtime> CommandArg<'de, R> for Window<R> {
 	}
 }
 
+/// The platform webview handle.
+#[cfg(feature = "millennium_webview")]
+#[cfg_attr(doc_Cfg, doc(cfg(feature = "millennium_webview")))]
+pub struct PlatformWebview(millennium_runtime_webview::Webview);
+
+#[cfg(feature = "millennium_webview")]
+impl PlatformWebview {
+	/// Returns a [`webkit2gtk::WebView`] handle.
+	#[cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))]
+	#[cfg_attr(
+		doc_cfg,
+		doc(cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd")))
+	)]
+	pub fn inner(&self) -> std::rc::Rc<webkit2gtk::WebView> {
+		self.0.clone()
+	}
+
+	/// Returns the WebView2 controller.
+	#[cfg(windows)]
+	#[cfg_attr(doc_cfg, doc(cfg(windows)))]
+	pub fn controller(&self) -> webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Controller {
+		self.0.controller.clone()
+	}
+
+	/// Returns the [WKWebView] handle.
+	///
+	/// [WKWebView]: https://developer.apple.com/documentation/webkit/wkwebview
+	#[cfg(target_os = "macos")]
+	#[cfg_attr(doc_cfg, doc(cfg(target_os = "macos")))]
+	pub fn inner(&self) -> cocoa::base::id {
+		self.0.webview.clone()
+	}
+
+	/// Returns the [WKUserContentController] handle.
+	///
+	/// [WKUserContentController]: https://developer.apple.com/documentation/webkit/wkusercontentcontroller
+	#[cfg(target_os = "macos")]
+	#[cfg_attr(doc_cfg, doc(cfg(target_os = "macos")))]
+	pub fn controller(&self) -> cocoa::base::id {
+		self.0.manager.clone()
+	}
+
+	/// Returns the [NSWindow] associated with this webview.
+	///
+	/// [NSWindow]: https://developer.apple.com/documentation/appkit/nswindow
+	#[cfg(target_os = "macos")]
+	#[cfg_attr(doc_cfg, doc(cfg(target_os = "macos")))]
+	pub fn ns_window(&self) -> cocoa::base::id {
+		self.0.ns_window.clone()
+	}
+}
+
+#[cfg(feature = "millennium_webview")]
+impl Window<crate::MillenniumWebview> {
+	/// Executes the closure accessing the platform's webiew handle.
+	///
+	/// The closure is executed in the main thread.
+	///
+	/// # Examples
+	///
+	/// ```rust,no_run
+	/// #[cfg(target_os = "macos")]
+	/// #[macro_use]
+	/// extern crate objc;
+	///
+	/// use millennium::Manager;
+	///
+	/// fn main() {
+	/// 	millennium::Builder::default()
+	/// 		.setup(|app| {
+	/// 				let main_window = app.get_window("main").unwrap();
+	/// 			main_window.with_webview(|webview| {
+	/// 					#[cfg(target_os = "linux")]
+	/// 				{
+	/// 					use webkit2gtk::traits::WebViewExt;
+	/// 					webview.inner().set_zoom_level(4.);
+	/// 				}
+	///
+	/// 				#[cfg(windows)]
+	/// 				unsafe {
+	/// 					webview.controller().SetZoomFactor(4.).unwrap();
+	/// 				}
+	///
+	/// 				#[cfg(target_os = "macos")]
+	/// 				unsafe {
+	/// 					let () = msg_send![webview.inner(), setPageZoom: 4.];
+	/// 					let () = msg_send![webview.controller(), removeAllUserScripts];
+	/// 					let bg_color: cocoa::base::id = msg_send![class!(NSColor), colorWithDeviceRed:0.5, green:0.2, blue:0.4 alpha:1.];
+	/// 					let () = msg_send![webview.ns_window(), setBackgroundColor: bg_color];
+	/// 				}
+	/// 			});
+	/// 			Ok(())
+	/// 		});
+	/// }
+	/// ```
+	#[cfg_attr(doc_cfg, doc(cfg(feature = "millennium_webview")))]
+	pub fn with_webview<F: FnOnce(PlatformWebview) + Send + 'static>(&self, f: F) -> crate::Result<()> {
+		self.window.dispatcher.with_webview(|w| f(PlatformWebview(w))).map_err(Into::into)
+	}
+}
+
 impl<R: Runtime> Window<R> {
 	/// Create a new window that is attached to the manager.
 	pub(crate) fn new(manager: WindowManager<R>, window: DetachedWindow<EventLoopMessage, R>, app_handle: AppHandle<R>) -> Self {
@@ -913,15 +1014,6 @@ impl<R: Runtime> Window<R> {
 		self.window.dispatcher.hwnd().map_err(Into::into)
 	}
 
-	/// Returns the current system theme.
-	///
-	/// ## Platform-specific
-	///
-	/// - **macOS / Linux**: Not implemented, always returns [`Theme::Light`].
-	pub fn theme(&self) -> crate::Result<Theme> {
-		self.window.dispatcher.theme().map_err(Into::into)
-	}
-
 	/// Returns the `ApplicatonWindow` from gtk crate that is used by this
 	/// window.
 	///
@@ -929,6 +1021,15 @@ impl<R: Runtime> Window<R> {
 	#[cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))]
 	pub fn gtk_window(&self) -> crate::Result<gtk::ApplicationWindow> {
 		self.window.dispatcher.gtk_window().map_err(Into::into)
+	}
+
+	/// Returns the current system theme.
+	///
+	/// ## Platform-specific
+	///
+	/// - **macOS / Linux**: Not implemented, always returns [`Theme::Light`].
+	pub fn theme(&self) -> crate::Result<Theme> {
+		self.window.dispatcher.theme().map_err(Into::into)
 	}
 
 	// Setters

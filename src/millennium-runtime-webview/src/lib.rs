@@ -97,6 +97,9 @@ use windows::Win32::{Foundation::HWND, System::WinRT::EventRegistrationToken};
 
 type WebviewId = u64;
 
+mod webview;
+pub use webview::Webview;
+
 #[cfg(feature = "system-tray")]
 mod system_tray;
 #[cfg(feature = "system-tray")]
@@ -927,8 +930,8 @@ pub struct GtkWindow(gtk::ApplicationWindow);
 #[allow(clippy::non_send_fields_in_send_ty)]
 unsafe impl Send for GtkWindow {}
 
-#[derive(Debug, Clone)]
 pub enum WindowMessage {
+	WithWebview(Box<dyn FnOnce(Webview) + Send>),
 	#[cfg(any(debug_assertions, feature = "devtools"))]
 	OpenDevTools,
 	#[cfg(any(debug_assertions, feature = "devtools"))]
@@ -1034,7 +1037,6 @@ pub enum Message<T: 'static> {
 impl<T: UserEvent> Clone for Message<T> {
 	fn clone(&self) -> Self {
 		match self {
-			Self::Window(i, m) => Self::Window(*i, m.clone()),
 			Self::Webview(i, m) => Self::Webview(*i, m.clone()),
 			#[cfg(feature = "system-tray")]
 			Self::Tray(m) => Self::Tray(m.clone()),
@@ -1058,6 +1060,12 @@ pub struct MillenniumDispatcher<T: UserEvent> {
 // `send_user_message`.
 #[allow(clippy::non_send_fields_in_send_ty)]
 unsafe impl<T: UserEvent> Sync for MillenniumDispatcher<T> {}
+
+impl<T: UserEvent> MillenniumDispatcher<T> {
+	pub fn with_webview<F: FnOnce(Webview) + Send + 'static>(&self, f: F) -> Result<()> {
+		send_user_message(&self.context, Message::Window(self.window_id, WindowMessage::WithWebview(Box::new(f))))
+	}
+}
 
 impl<T: UserEvent> Dispatch<T> for MillenniumDispatcher<T> {
 	type Runtime = MillenniumWebview<T>;
@@ -1853,6 +1861,28 @@ fn handle_user_message<T: UserEvent>(
 			{
 				let window = window_handle.window();
 				match window_message {
+					WindowMessage::WithWebview(f) => {
+						if let WindowHandle::Webview(w) = window_handle {
+							#[cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))]
+							{
+								use millennium_webview::webview::WebviewExtUnix;
+								f(w.webview());
+							}
+							#[cfg(target_os = "macos")]
+							{
+								use millennium_webview::webview::WebviewExtMacOS;
+								f(Webview {
+									webview: w.webview(),
+									manager: w.manager(),
+									ns_window: w.ns_window()
+								});
+							}
+							#[cfg(windows)]
+							{
+								f(Webview { controller: w.controller() });
+							}
+						}
+					}
 					#[cfg(any(debug_assertions, feature = "devtools"))]
 					WindowMessage::OpenDevTools => {
 						if let WindowHandle::Webview(w) = &window_handle {
