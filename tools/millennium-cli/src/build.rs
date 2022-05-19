@@ -81,7 +81,7 @@ pub fn command(options: Options) -> Result<()> {
 	let config_guard = config.lock().unwrap();
 	let config_ = config_guard.as_ref().unwrap();
 
-	if config_.millennium.build.identifier == "com.millennium.dev" {
+	if config_.millennium.bundle.identifier == "com.millennium.dev" {
 		logger.error("You must change the bundle identifier in `.millenniumrc > millennium > bundle > identifier`. The default value `com.millennium.dev` is not allowed as it must be unique across applications.");
 		std::process::exit(1);
 	}
