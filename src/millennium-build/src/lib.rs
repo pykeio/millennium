@@ -251,7 +251,8 @@ pub fn try_build(attributes: Attributes) -> Result<()> {
 	#[cfg(all(windows, not(feature = "cxx")))]
 	{
 		use anyhow::Context;
-		use winres::WindowsResource;
+		use semver::Version;
+		use winres::{VersionInfo, WindowsResource};
 
 		let icon_path_string = attributes.windows_attributes.window_icon_path.to_string_lossy().into_owned();
 
@@ -265,6 +266,11 @@ pub fn try_build(attributes: Attributes) -> Result<()> {
 				}
 			}
 			if let Some(version) = &config.package.version {
+				if let Ok(v) = Version::parse(version) {
+					let version = v.major << 48 | v.minor << 32 | v.patch << 16;
+					res.set_version_info(VersionInfo::FILEVERSION, version);
+					res.set_version_info(VersionInfo::PRODUCTVERSION, version);
+				}
 				res.set("FileVersion", version);
 				res.set("ProductVersion", version);
 			}
