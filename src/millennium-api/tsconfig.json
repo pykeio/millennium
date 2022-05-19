@@ -1,7 +1,7 @@
 {
 	"compilerOptions": {
 		"lib": [ "DOM", "ES2021", "ES2015.Reflect" ],
-		"target": "es2015",
+		"target": "ESNext",
 		"strict": true,
 		"allowJs": true,
 		"esModuleInterop": true,
