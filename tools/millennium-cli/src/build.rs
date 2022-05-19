@@ -177,7 +177,7 @@ pub fn command(options: Options) -> Result<()> {
 	} else {
 		millennium_utils::platform::target_triple()?
 	};
-	let binary_extension: String = if target.contains("windows") { ".exe" } else { "" }.into();
+	let binary_extension: String = if target.contains("windows") { "exe" } else { "" }.into();
 	let bin_path = out_dir.join(&bin_name).with_extension(&binary_extension);
 
 	let no_default_features = args.contains(&"--no-default-features".into());
