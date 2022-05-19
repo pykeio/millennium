@@ -4,6 +4,13 @@
   "description": "The config type mapped to `.millenniumrc`.",
   "type": "object",
   "properties": {
+    "$schema": {
+      "description": "The JSON schema for the Millennium config.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "build": {
       "description": "The build configuration.",
       "default": {

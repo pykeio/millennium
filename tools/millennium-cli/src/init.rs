@@ -33,6 +33,7 @@ use crate::{
 };
 
 const TEMPLATE_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/templates");
+const MILLENNIUMRC_TEMPLATE: &str = include_str!("../templates/.millenniumrc");
 
 #[derive(Debug, Parser)]
 #[clap(about = "Initializes a Millennium project from a pre-made template")]
@@ -157,6 +158,11 @@ pub fn command(mut options: Options) -> Result<()> {
 		data.insert("dev_path", to_json(options.dev_path.unwrap_or_else(|| "http://localhost:7216".to_string())));
 		data.insert("app_name", to_json(options.app_name.unwrap_or_else(|| "Millennium App".to_string())));
 		data.insert("window_title", to_json(options.window_title.unwrap_or_else(|| "Millennium App".to_string())));
+
+		let config = &handlebars
+			.render_template(MILLENNIUMRC_TEMPLATE, &data)
+			.expect("Failed to render .millenniumrc template");
+		data.insert("millennium_config", to_json(config));
 
 		let template_id = options.template.unwrap_or(Template::Basic).id();
 		let template_id = template_id.as_str();

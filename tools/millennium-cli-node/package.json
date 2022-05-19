@@ -49,8 +49,8 @@
   },
   "scripts": {
     "artifacts": "napi artifacts",
-    "build": "napi build --platform --release",
-    "build:debug": "napi build --platform",
+    "build": "napi build --platform",
+    "build:release": "napi build --platform --release",
     "prepublishOnly": "napi prepublish -t npm",
     "version": "napi version",
     "millennium": "node ./millennium.js"

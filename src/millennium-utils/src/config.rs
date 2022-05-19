@@ -2180,6 +2180,9 @@ impl PackageConfig {
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Config {
+	/// The JSON schema for the Millennium config.
+	#[serde(rename = "$schema")]
+	pub schema: Option<String>,
 	/// Package settings.
 	#[serde(default)]
 	pub package: PackageConfig,
@@ -2886,12 +2889,13 @@ mod build {
 
 	impl ToTokens for Config {
 		fn to_tokens(&self, tokens: &mut TokenStream) {
+			let schema = quote!(None);
 			let package = &self.package;
 			let millennium = &self.millennium;
 			let build = &self.build;
 			let plugins = &self.plugins;
 
-			literal_struct!(tokens, Config, package, millennium, build, plugins);
+			literal_struct!(tokens, Config, schema, package, millennium, build, plugins);
 		}
 	}
 }
