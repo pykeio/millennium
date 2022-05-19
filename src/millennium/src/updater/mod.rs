@@ -860,8 +860,6 @@ fn send_status_update<R: Runtime>(handle: &AppHandle<R>, message: UpdaterEvent) 
 // Prompt a dialog asking if the user want to install the new version
 // Maybe we should add an option to customize it in future versions.
 async fn prompt_for_install<R: Runtime>(update: &self::core::Update<R>, app_name: &str, body: &str, pubkey: String) -> Result<()> {
-	// remove single & double quote
-	let escaped_body = body.replace(&['\"', '\''][..], "");
 	let windows = update.app.windows();
 	let parent_window = windows.values().next();
 
@@ -877,7 +875,7 @@ Would you like to install it now?
 
 Release Notes:
 {}"#,
-			app_name, update.version, update.current_version, escaped_body,
+			app_name, update.version, update.current_version, body,
 		)
 	);
 
