@@ -340,11 +340,7 @@ pub struct BundleBinary {
 impl BundleBinary {
 	/// Creates a new bundle binary.
 	pub fn new(name: String, main: bool) -> Self {
-		Self {
-			name: if cfg!(windows) { format!("{}.exe", name) } else { name },
-			src_path: None,
-			main
-		}
+		Self { name, src_path: None, main }
 	}
 
 	/// Sets the src path of the binary.

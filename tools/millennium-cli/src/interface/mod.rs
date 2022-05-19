@@ -25,7 +25,7 @@ use crate::helpers::{config::Config, manifest::Manifest};
 #[allow(clippy::too_many_arguments)]
 pub fn get_bundler_settings(
 	app_settings: rust::AppSettings,
-	target: Option<String>,
+	target: String,
 	features: &[String],
 	manifest: &Manifest,
 	config: &Config,
@@ -36,8 +36,9 @@ pub fn get_bundler_settings(
 	let mut settings_builder = SettingsBuilder::new()
 		.package_settings(app_settings.get_package_settings())
 		.bundle_settings(app_settings.get_bundle_settings(config, manifest, features)?)
-		.binaries(app_settings.get_binaries(config)?)
-		.project_out_directory(out_dir);
+		.binaries(app_settings.get_binaries(config, &target)?)
+		.project_out_directory(out_dir)
+		.target(target);
 
 	if verbose {
 		settings_builder = settings_builder.verbose();
@@ -45,10 +46,6 @@ pub fn get_bundler_settings(
 
 	if let Some(types) = package_types {
 		settings_builder = settings_builder.package_types(types);
-	}
-
-	if let Some(target) = target {
-		settings_builder = settings_builder.target(target);
 	}
 
 	settings_builder.build().map_err(Into::into)
