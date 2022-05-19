@@ -1,4 +1,5 @@
 {
+	"$schema": "https://millennium.pyke.io/v1",
 	"build": {
 		"distDir": ["./index.html"],
 		"devPath": ["./index.html"]
