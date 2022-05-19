@@ -189,7 +189,7 @@ impl Menu {
 			MenuItem::ShowAll => Some((None, make_menu_item("Show All", Some(selector("unhideAllApplications:")), None, menu_type))),
 			MenuItem::EnterFullScreen => Some((
 				None,
-				make_menu_item("Enter Full Screen", Some(selector("toggleFullScreen:")), Some(Accelerator::new(RawMods::CtrlMeta, KeyCode::KeyF)), menu_type)
+				make_menu_item("Toggle Full Screen", Some(selector("toggleFullScreen:")), Some(Accelerator::new(RawMods::CtrlMeta, KeyCode::KeyF)), menu_type)
 			)),
 			MenuItem::Minimize => {
 				Some((None, make_menu_item("Minimize", Some(selector("performMiniaturize:")), Some(Accelerator::new(RawMods::Meta, KeyCode::KeyM)), menu_type)))
