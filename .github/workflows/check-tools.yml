@@ -1,0 +1,72 @@
+name: Check tools
+on:
+  push:
+    paths:
+      - '.github/workflows/check-tools.yml'
+      - 'tools/**/*.rs'
+      - 'rustfmt.toml'
+  pull_request:
+    paths:
+      - '.github/workflows/check-tools.yml'
+      - 'tools/**/*.rs'
+      - 'rustfmt.toml'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+defaults:
+  run:
+    working-directory: tools/millennium-cli-node/
+env:
+  RUST_BACKTRACE: 1
+  CARGO_INCREMENTAL: 0 # This is set to 0 by rust-cache.
+  CARGO_PROFILE_DEV_DEBUG: 0 # This would add unnecessary bloat to the target folder, decreasing cache efficiency.
+jobs:
+  check_fmt:
+    name: Check fmt (Rust)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: rustfmt
+      - name: Run fmt check
+        run: |
+          cargo fmt --all -- --check
+  check_clippy:
+    name: Run clippy (Rust)
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: clippy
+      - name: Get current date
+        run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+      - name: Cache Cargo state
+        uses: actions/cache@v2
+        env:
+          cache-name: cargo-state-tools
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin
+          key: ${{ matrix.platform }}-stable-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          restore-keys: |
+            ${{ matrix.platform }}-stable-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ matrix.platform }}-stable-${{ env.cache-name }}-
+            ${{ matrix.platform }}-stable-
+            ${{ matrix.platform }}-
+      - name: Run clippy
+        run: |
+          cargo clippy --all --all-targets

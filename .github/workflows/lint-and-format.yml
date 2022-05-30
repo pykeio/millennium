@@ -67,7 +67,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             ~/.cargo/bin
-          key: ${{ matrix.platform }}-stable-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          key: ubuntu-stable-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
           restore-keys: |
             ubuntu-stable-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
             ubuntu-stable-${{ env.cache-name }}-
