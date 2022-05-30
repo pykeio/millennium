@@ -456,6 +456,18 @@ impl<R: Runtime> ManagerBase<R> for App<R> {
 	}
 }
 
+#[cfg(feature = "millennium_webview")]
+impl App<crate::MillenniumWebview> {
+	/// Adds a [`millennium_runtime_webview::Plugin`].
+	///
+	/// # Stability
+	///
+	/// This API is unstable.
+	pub fn webview_plugin<P: millennium_runtime_webview::Plugin<EventLoopmessage> + 'static>(&mut self, plugin: P) {
+		self.runtime.as_mut().unwrap().plugin(plugin);
+	}
+}
+
 macro_rules! shared_app_impl {
 	($app: ty) => {
 		impl<R: Runtime> $app {
