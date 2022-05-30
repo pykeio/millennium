@@ -19,10 +19,12 @@ use std::{
 	fs::{create_dir_all, read_to_string, remove_dir_all, rename, write, File},
 	io::{Cursor, Read, Write},
 	path::{Path, PathBuf},
-	process::{Command, Stdio}
+	process::Command
 };
 
+use anyhow::Context;
 use handlebars::{to_json, Handlebars};
+use log::info;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use sha2::Digest;
@@ -31,7 +33,7 @@ use zip::ZipArchive;
 
 use super::super::sign::{sign, SignParams};
 use crate::bundle::{
-	common,
+	common::CommandExt,
 	path_utils::{copy_file, FileOpts},
 	settings::Settings
 };
@@ -179,13 +181,13 @@ fn copy_icon(settings: &Settings, filename: &str, path: &Path) -> crate::Result<
 
 /// Function used to download Wix and VC_REDIST. Checks SHA256 to verify the download.
 fn download_and_verify(url: &str, hash: &str) -> crate::Result<Vec<u8>> {
-	common::print_info(format!("Downloading {}", url).as_str())?;
+	info!(action = "Downloading"; "{}", url);
 
 	let response = attohttpc::get(url).send()?;
 
 	let data: Vec<u8> = response.bytes()?;
 
-	common::print_info("validating hash")?;
+	info!("Validating hash");
 
 	let mut hasher = sha2::Sha256::new();
 	hasher.update(&data);
@@ -250,11 +252,11 @@ fn generate_guid(key: &[u8]) -> Uuid {
 
 // Specifically goes and gets Wix and verifies the download via Sha256
 pub fn get_and_extract_wix(path: &Path) -> crate::Result<()> {
-	common::print_info("Verifying wix package")?;
+	info!("Verifying WiX package");
 
 	let data = download_and_verify(WIX_URL, WIX_SHA256)?;
 
-	common::print_info("extracting WIX")?;
+	info!("Extracting WiX");
 
 	extract_zip(&data, path)
 }
@@ -282,22 +284,20 @@ fn run_candle(settings: &Settings, wix_toolset_path: &Path, cwd: &Path, wxs_file
 	];
 
 	let candle_exe = wix_toolset_path.join("candle.exe");
-	common::print_info(format!("running candle for {:?}", wxs_file_path).as_str())?;
 
-	let mut cmd = Command::new(&candle_exe);
-	cmd.args(&args).stdout(Stdio::piped()).current_dir(cwd);
+	info!(action = "Running"; "candle for {:?}", wxs_file_path);
 
-	common::print_info("running candle.exe")?;
-	common::execute_with_verbosity(&mut cmd, settings).map_err(|_| {
-		crate::Error::ShellScriptError(format!(
-			"error running candle.exe{}",
-			if settings.is_verbose() { "" } else { ", try running with --verbose to see command output" }
-		))
-	})
+	Command::new(&candle_exe)
+		.args(&args)
+		.current_dir(cwd)
+		.output_ok()
+		.context("error running candle")?;
+
+	Ok(())
 }
 
 /// Runs the Light.exe file. Light takes the generated code from Candle and produces an MSI Installer.
-fn run_light(wix_toolset_path: &Path, build_path: &Path, arguments: Vec<String>, output_path: &Path, settings: &Settings) -> crate::Result<()> {
+fn run_light(wix_toolset_path: &Path, build_path: &Path, arguments: Vec<String>, output_path: &Path) -> crate::Result<()> {
 	let light_exe = wix_toolset_path.join("light.exe");
 
 	let mut args: Vec<String> = vec![
@@ -313,15 +313,13 @@ fn run_light(wix_toolset_path: &Path, build_path: &Path, arguments: Vec<String>,
 		args.push(p);
 	}
 
-	let mut cmd = Command::new(&light_exe);
-	cmd.args(&args).current_dir(build_path);
+	Command::new(&light_exe)
+		.args(&args)
+		.current_dir(build_path)
+		.output_ok()
+		.context("error running light")?;
 
-	common::execute_with_verbosity(&mut cmd, settings).map_err(|_| {
-		crate::Error::ShellScriptError(format!(
-			"error running light.exe{}",
-			if settings.is_verbose() { "" } else { ", try running with --verbose to see command output" }
-		))
-	})
+	Ok(())
 }
 
 // fn get_icon_data() -> crate::Result<()> {
@@ -337,7 +335,7 @@ pub fn build_wix_app_installer(settings: &Settings, wix_toolset_path: &Path) -> 
 	};
 
 	// target only supports x64.
-	common::print_info(format!("Target: {}", arch).as_str())?;
+	info!("Target: {}", arch);
 
 	let main_binary = settings
 		.binaries()
@@ -347,7 +345,7 @@ pub fn build_wix_app_installer(settings: &Settings, wix_toolset_path: &Path) -> 
 	let app_exe_source = settings.binary_path(main_binary);
 	let try_sign = |file_path: &PathBuf| -> crate::Result<()> {
 		if let Some(certificate_thumbprint) = &settings.windows().certificate_thumbprint {
-			common::print_info(&format!("signing {}", file_path.display()))?;
+			info!(action = "Signing"; "{}", file_path.display());
 			sign(
 				&file_path,
 				&SignParams {
@@ -613,9 +611,9 @@ pub fn build_wix_app_installer(settings: &Settings, wix_toolset_path: &Path) -> 
 		let msi_path = app_installer_output_path(settings, &language)?;
 		create_dir_all(msi_path.parent().unwrap())?;
 
-		common::print_info(format!("running light to produce {}", msi_path.display()).as_str())?;
+		info!(action = "Running"; "light for {}", msi_path.display());
 
-		run_light(wix_toolset_path, &output_path, arguments, &msi_output_path, settings)?;
+		run_light(wix_toolset_path, &output_path, arguments, &msi_output_path)?;
 		rename(&msi_output_path, &msi_path)?;
 		try_sign(&msi_path)?;
 		output_paths.push(msi_path);

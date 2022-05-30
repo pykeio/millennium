@@ -21,10 +21,11 @@ use clap::Parser;
 use handlebars::{to_json, Handlebars};
 use heck::{ToKebabCase, ToSnakeCase};
 use include_dir::{include_dir, Dir};
+use log::warn;
 
 use crate::Result;
 use crate::{
-	helpers::{resolve_millennium_path, template, Logger},
+	helpers::{resolve_millennium_path, template},
 	VersionMetadata
 };
 
@@ -66,11 +67,10 @@ impl Options {
 
 pub fn command(mut options: Options) -> Result<()> {
 	options.load();
-	let logger = Logger::new("millennium:init:plugin");
 	let template_target_path = PathBuf::from(options.directory).join(&format!("millennium-plugin-{}", options.plugin_name.to_kebab_case()));
 	let metadata = serde_json::from_str::<VersionMetadata>(include_str!("../../metadata.json"))?;
 	if template_target_path.exists() {
-		logger.warn(format!("Plugin dir ({:?}) not empty.", template_target_path));
+		warn!("Plugin dir ({:?}) not empty.", template_target_path);
 	} else {
 		let (millennium_dep, millennium_example_dep, millennium_build_dep) = if let Some(millennium_path) = options.millennium_path {
 			(

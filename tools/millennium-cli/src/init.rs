@@ -24,11 +24,12 @@ use colored::Colorize;
 use handlebars::{to_json, Handlebars};
 use include_dir::{include_dir, Dir};
 use inquire::{Select, Text};
+use log::warn;
 
 use crate::helpers::template::Template;
 use crate::Result;
 use crate::{
-	helpers::{resolve_millennium_path, template, Logger},
+	helpers::{resolve_millennium_path, template},
 	VersionMetadata
 };
 
@@ -129,13 +130,12 @@ impl Options {
 
 pub fn command(mut options: Options) -> Result<()> {
 	options = options.load()?;
-	let logger = Logger::new("millennium:init");
 
 	let template_target_path = PathBuf::from(&options.directory);
 	let metadata = serde_json::from_str::<VersionMetadata>(include_str!("../metadata.json"))?;
 
 	if template_target_path.exists() && !template_target_path.read_dir().map(|mut i| i.next().is_none()).unwrap_or(false) && !options.force {
-		logger.warn(format!("Target directory ({:?}) is not empty. Run `init --force` to overwrite.", template_target_path));
+		warn!("Target directory ({:?}) is not empty. Run `init --force` to overwrite.", template_target_path);
 	} else {
 		let (millennium_dep, millennium_build_dep) = if let Some(millennium_path) = options.millennium_path {
 			(

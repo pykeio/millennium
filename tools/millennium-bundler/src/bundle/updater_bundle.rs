@@ -20,6 +20,7 @@ use std::{fs, io::Write};
 use std::{fs::File, io::prelude::*};
 
 use anyhow::Context;
+use log::{error, info};
 #[cfg(target_os = "windows")]
 use zip::write::FileOptions;
 
@@ -39,7 +40,7 @@ pub fn bundle_project(settings: &Settings, bundles: &[Bundle]) -> crate::Result<
 		let bundle_result = bundle_update(settings, bundles)?;
 		Ok(bundle_result)
 	} else {
-		common::print_info("Current platform do not support updates")?;
+		error!("The current platform does not support updates.");
 		Ok(vec![])
 	}
 }
@@ -73,9 +74,10 @@ fn bundle_update(settings: &Settings, bundles: &[Bundle]) -> crate::Result<Vec<P
 
 	// Create our gzip file (need to send parent)
 	// as we walk the source directory (source isnt added)
-	create_tar(&source_path, &osx_archived_path).with_context(|| "Failed to tar.gz update directory")?;
+	create_tar(source_path, &osx_archived_path).with_context(|| "Failed to tar.gz update directory")?;
 
-	common::print_bundling(format!("{:?}", &osx_archived_path).as_str())?;
+	info!(action = "Bundling"; "{} ({})", osx_archived, osx_archived_path.display());
+
 	Ok(vec![osx_archived_path])
 }
 
@@ -111,7 +113,8 @@ fn bundle_update(settings: &Settings, bundles: &[Bundle]) -> crate::Result<Vec<P
 	// Create our gzip file
 	create_tar(source_path, &appimage_archived_path).with_context(|| "Failed to tar.gz update directory")?;
 
-	common::print_bundling(format!("{:?}", &appimage_archived_path).as_str())?;
+	info!(action = "Bundling"; "{} ({})", appimage_archived, appimage_archived_path.display());
+
 	Ok(vec![appimage_archived_path])
 }
 
@@ -140,7 +143,7 @@ fn bundle_update(settings: &Settings, bundles: &[Bundle]) -> crate::Result<Vec<P
 		let msi_archived = format!("{}.zip", source_path.display());
 		let msi_archived_path = PathBuf::from(&msi_archived);
 
-		common::print_bundling(format!("{:?}", &msi_archived_path).as_str())?;
+		info!(action = "Bundling"; "{} ({})", msi_archived, msi_archived_path.display());
 
 		// Create our gzip file
 		create_zip(&source_path, &msi_archived_path).with_context(|| "Failed to zip update MSI")?;

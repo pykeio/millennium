@@ -19,6 +19,8 @@ use std::ffi::OsStr;
 use std::path::Path;
 use std::process::exit;
 
+use anyhow::Context;
+
 fn main() -> millennium_cli::Result<()> {
 	let mut args = args_os().peekable();
 	let bin_name = match args.next().as_deref().map(Path::new).and_then(Path::file_stem).and_then(OsStr::to_str) {
@@ -38,5 +40,5 @@ fn main() -> millennium_cli::Result<()> {
 		}
 	};
 
-	millennium_cli::run(args, bin_name)
+	millennium_cli::run(args, bin_name).context("Try running with --verbose to see command output")
 }

@@ -16,7 +16,6 @@
 
 pub mod app_paths;
 pub mod config;
-mod logger;
 pub mod manifest;
 pub mod template;
 pub mod updater_signature;
@@ -25,8 +24,6 @@ use std::{
 	collections::HashMap,
 	path::{Path, PathBuf}
 };
-
-pub use logger::Logger;
 
 pub fn command_env(debug: bool) -> HashMap<String, String> {
 	let mut map = HashMap::new();

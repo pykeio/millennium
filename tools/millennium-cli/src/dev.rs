@@ -31,6 +31,7 @@ use std::{
 
 use anyhow::Context;
 use clap::Parser;
+use log::{error, info, warn};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use once_cell::sync::OnceCell;
 use shared_child::SharedChild;
@@ -40,8 +41,7 @@ use crate::{
 		app_paths::{app_dir, millennium_dir},
 		command_env,
 		config::{get as get_config, reload as reload_config, AppUrl, ConfigHandle, WindowUrl},
-		manifest::{rewrite_manifest, Manifest},
-		Logger
+		manifest::{rewrite_manifest, Manifest}
 	},
 	CommandExt, Result
 };
@@ -90,8 +90,6 @@ pub fn command(options: Options) -> Result<()> {
 }
 
 fn command_internal(options: Options) -> Result<()> {
-	let logger = Logger::new("millennium:dev");
-
 	let millennium_path = millennium_dir();
 	set_current_dir(&millennium_path).with_context(|| "failed to change current working directory")?;
 	let merge_config = if let Some(config) = &options.config {
@@ -103,7 +101,7 @@ fn command_internal(options: Options) -> Result<()> {
 
 	if let Some(before_dev) = &config.lock().unwrap().as_ref().unwrap().build.before_dev_command {
 		if !before_dev.is_empty() {
-			logger.log(format!("Running `{}`", before_dev));
+			info!(action = "Running"; "beforeDevCommand `{}`", before_dev);
 			#[cfg(target_os = "windows")]
 			let mut command = {
 				let mut command = Command::new("cmd");
@@ -127,11 +125,10 @@ fn command_internal(options: Options) -> Result<()> {
 			let child = SharedChild::spawn(&mut command).unwrap_or_else(|_| panic!("failed to run `{}`", before_dev));
 			let child = Arc::new(child);
 			let child_ = child.clone();
-			let logger_ = logger.clone();
 			std::thread::spawn(move || {
 				let status = child_.wait().expect("failed to wait on \"beforeDevCommand\"");
 				if !(status.success() || KILL_BEFORE_DEV_FLAG.get().unwrap().load(Ordering::Relaxed)) {
-					logger_.error("The \"beforeDevCommand\" terminated with a non-zero status code.");
+					error!("The \"beforeDevCommand\" terminated with a non-zero status code.");
 					exit(status.code().unwrap_or(1));
 				}
 			});
@@ -202,15 +199,15 @@ fn command_internal(options: Options) -> Result<()> {
 					break;
 				}
 				if i % 3 == 0 {
-					logger.warn(format!("Waiting for your frontend dev server to start on {}...", dev_server_url));
+					warn!("Waiting for your frontend dev server to start on {}...", dev_server_url);
 				}
 				i += 1;
 				if i == max_attempts {
-					logger.error(format!(
+					error!(
 						"Could not connect to `{}` after {}s. Please make sure that is the URL to your dev server.",
 						dev_server_url,
 						i * sleep_interval.as_secs()
-					));
+					);
 					exit(1);
 				}
 				std::thread::sleep(sleep_interval);

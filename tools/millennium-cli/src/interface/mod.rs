@@ -30,7 +30,6 @@ pub fn get_bundler_settings(
 	manifest: &Manifest,
 	config: &Config,
 	out_dir: &Path,
-	verbose: bool,
 	package_types: Option<Vec<PackageType>>
 ) -> crate::Result<Settings> {
 	let mut settings_builder = SettingsBuilder::new()
@@ -39,10 +38,6 @@ pub fn get_bundler_settings(
 		.binaries(app_settings.get_binaries(config, &target)?)
 		.project_out_directory(out_dir)
 		.target(target);
-
-	if verbose {
-		settings_builder = settings_builder.verbose();
-	}
 
 	if let Some(types) = package_types {
 		settings_builder = settings_builder.package_types(types);

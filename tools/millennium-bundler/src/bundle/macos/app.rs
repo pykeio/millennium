@@ -41,13 +41,14 @@ use std::{
 };
 
 use anyhow::Context;
+use log::{info, warn};
 
 use super::{
 	super::common,
 	icon::create_icns_file,
 	sign::{notarize, notarize_auth_args, sign}
 };
-use crate::Settings;
+use crate::{bundle::common::CommandExt, Settings};
 
 /// Bundles the project.
 /// Returns a vector of PathBuf that shows where the .app was created.
@@ -55,8 +56,11 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
 	// we should use the bundle name (App name) as a MacOS standard.
 	// version or platform shouldn't be included in the App name.
 	let app_product_name = format!("{}.app", settings.product_name());
-	common::print_bundling(&app_product_name)?;
+
 	let app_bundle_path = settings.project_out_directory().join("bundle/macos").join(&app_product_name);
+
+	info!(action = "Bundling"; "{} ({})", app_product_name, app_bundle_path.display());
+
 	if app_bundle_path.exists() {
 		fs::remove_dir_all(&app_bundle_path).with_context(|| format!("Failed to remove old {}", app_product_name))?;
 	}
@@ -80,14 +84,14 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
 
 	if let Some(identity) = &settings.macos().signing_identity {
 		// sign application
-		sign(app_bundle_path.clone(), identity, &settings, true)?;
+		sign(app_bundle_path.clone(), identity, settings, true)?;
 		// notarization is required for distribution
 		match notarize_auth_args() {
 			Ok(args) => {
 				notarize(app_bundle_path.clone(), args, settings)?;
 			}
 			Err(e) => {
-				common::print_info(format!("skipping app notarization, {}", e.to_string()).as_str())?;
+				warn!("skipping app notarization, {}", e.to_string());
 			}
 		}
 	}
@@ -107,8 +111,8 @@ fn copy_binaries_to_bundle(bundle_directory: &Path, settings: &Settings) -> crat
 
 // Creates the Info.plist file.
 fn create_info_plist(bundle_dir: &Path, bundle_icon_file: Option<PathBuf>, settings: &Settings) -> crate::Result<()> {
-	let format = time::format_description::parse("[year][month][day].[hour][minute][second]").map_err(|e| time::error::Error::from(e))?;
-	let build_number = time::OffsetDateTime::now_utc().format(&format).map_err(|e| time::error::Error::from(e))?;
+	let format = time::format_description::parse("[year][month][day].[hour][minute][second]").map_err(time::error::Error::from)?;
+	let build_number = time::OffsetDateTime::now_utc().format(&format).map_err(time::error::Error::from)?;
 
 	let bundle_plist_path = bundle_dir.join("Info.plist");
 	let file = &mut common::create_file(&bundle_plist_path)?;
@@ -192,15 +196,10 @@ fn create_info_plist(bundle_dir: &Path, bundle_icon_file: Option<PathBuf>, setti
 	file.flush()?;
 
 	if let Some(user_plist_path) = &settings.macos().info_plist_path {
-		let mut cmd = Command::new("/usr/libexec/PlistBuddy");
-		cmd.args(&["-c".into(), format!("Merge {}", user_plist_path.display()), bundle_plist_path.display().to_string()]);
-
-		common::execute_with_verbosity(&mut cmd, settings).map_err(|_| {
-			crate::Error::ShellScriptError(format!(
-				"error running /usr/libexec/PlistBuddy{}",
-				if settings.is_verbose() { "" } else { ", try running with --verbose to see command output" }
-			))
-		})?;
+		Command::new("/usr/libexec/PlistBuddy")
+			.args(&["-c".into(), format!("Merge {}", user_plist_path.display()), bundle_plist_path.display().to_string()])
+			.output_ok()
+			.context("error running PlistBuddy")?;
 	}
 
 	Ok(())

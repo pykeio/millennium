@@ -28,5 +28,6 @@ pub fn run(args: Vec<String>, bin_name: Option<String>, callback: JsFunction) ->
 		Ok(_) => function.call(Ok(true), ThreadsafeFunctionCallMode::Blocking),
 		Err(e) => function.call(Err(Error::new(Status::GenericFailure, format!("{:#}", e))), ThreadsafeFunctionCallMode::Blocking)
 	});
+
 	Ok(())
 }
