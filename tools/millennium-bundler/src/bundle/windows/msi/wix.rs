@@ -25,6 +25,7 @@ use std::{
 use anyhow::Context;
 use handlebars::{to_json, Handlebars};
 use log::info;
+use millennium_utils::resources::resource_relpath;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use sha2::Digest;
@@ -712,13 +713,10 @@ fn generate_resource_data(settings: &Settings) -> crate::Result<ResourceMap> {
 		};
 
 		// split the resource path directories
-		let components_count = src.components().count();
-		let directories = src
+		let target_path = resource_relpath(&src);
+		let components_count = target_path.components().count();
+		let directories = target_path
 			.components()
-			.filter(|component| {
-				let comp = component.as_os_str();
-				comp != "." && comp != ".."
-			})
 			.take(components_count - 1) // the last component is the file
 			.collect::<Vec<_>>();
 
