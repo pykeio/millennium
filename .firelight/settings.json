@@ -1,0 +1,16 @@
+{
+	"[rust]": {
+		"editor.formatOnSave": true,
+		"editor.defaultFormatter": "rust-lang.rust-analyzer",
+		"editor.semanticHighlighting.enabled": true
+	},
+	"[mdx]": {
+		"editor.wordWrap": "on",
+		"editor.insertSpaces": true
+	},
+
+	"rust.checkOnSave.command": "clippy",
+	"rust.rustfmt.nightly": true,
+	"rust.cargo.allFeatures": true,
+	"rust.cachePriming.enable": true
+}
