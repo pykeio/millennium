@@ -26,8 +26,8 @@
                  SummaryCodepage="!(loc.MillenniumCodepage)"/>
 
         <!-- https://docs.microsoft.com/en-us/windows/win32/msi/reinstallmode -->
-        <!-- force all files to be reinstalled; rewrite all registry entries; reinstall all shortcuts -->
-        <Property Id="REINSTALLMODE" Value="amus" />
+        <!-- reinstall only files that are missing or are a different version; rewrite all registry entries; reinstall all shortcuts -->
+        <Property Id="REINSTALLMODE" Value="dmus" />
 
 		{{#if allow_downgrades}}
 			<MajorUpgrade AllowDowngrade="yes" Schedule="afterInstallInitialize" />
