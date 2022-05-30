@@ -55,7 +55,7 @@ thiserror = "1.0"
 once_cell = "1.10"
 millennium-runtime = { version = "1.0.0-beta.2", path = "../millennium-runtime" }
 millennium-macros = { version = "1.0.0-beta.2", path = "../millennium-macros" }
-millennium-utils = { version = "1.0.0-beta.2", path = "../millennium-utils" }
+millennium-utils = { version = "1.0.0-beta.2", features = [ "resources" ], path = "../millennium-utils" }
 millennium-runtime-webview = { version = "1.0.0-beta.2", path = "../millennium-runtime-webview", optional = true }
 rand = "0.8"
 semver = "1.0"
