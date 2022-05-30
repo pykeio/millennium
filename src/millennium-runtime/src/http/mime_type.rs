@@ -66,6 +66,7 @@ impl MimeType {
 			Some("js") => Self::Js,
 			Some("json") => Self::Json,
 			Some("jsonld") => Self::Jsonld,
+			Some("mjs") => Self::Js,
 			Some("rtf") => Self::Rtf,
 			Some("svg") => Self::Svg,
 			Some("mp4") => Self::Mp4,
@@ -120,6 +121,9 @@ mod tests {
 
 		let jsonld: String = MimeType::parse_from_uri("https:/example.com/hello.jsonld").to_string();
 		assert_eq!(jsonld, String::from("application/ld+json"));
+
+		let mjs: String = MimeType::parse_from_uri("https://example.com/bundled.mjs").to_string();
+		assert_eq!(mjs, String::from("text/javascript"));
 
 		let rtf: String = MimeType::parse_from_uri("https://example.com/document.rtf").to_string();
 		assert_eq!(rtf, String::from("application/rtf"));
