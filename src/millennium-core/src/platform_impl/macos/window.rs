@@ -27,8 +27,8 @@ use std::{
 
 use cocoa::{
 	appkit::{
-		self, CGFloat, NSApp, NSApplication, NSApplicationPresentationOptions, NSColor, NSRequestUserAttentionType, NSScreen, NSView, NSWindow, NSWindowButton,
-		NSWindowOrderingMode, NSWindowStyleMask
+		self, CGFloat, NSApp, NSApplication, NSApplicationPresentationOptions, NSColor, NSEvent, NSRequestUserAttentionType, NSScreen, NSView, NSWindow,
+		NSWindowButton, NSWindowOrderingMode, NSWindowStyleMask
 	},
 	base::{id, nil},
 	foundation::{NSAutoreleasePool, NSDictionary, NSPoint, NSRect, NSSize, NSUInteger}
@@ -264,8 +264,30 @@ lazy_static! {
 		let mut decl = ClassDecl::new("MillenniumWindow", window_superclass).unwrap();
 		decl.add_method(sel!(canBecomeMainWindow), util::yes as extern "C" fn(&Object, Sel) -> BOOL);
 		decl.add_method(sel!(canBecomeKeyWindow), util::yes as extern "C" fn(&Object, Sel) -> BOOL);
+		decl.add_method(sel!(sendEvent:), send_event as extern "C" fn(&Object, Sel, id));
 		WindowClass(decl.register())
 	};
+}
+
+extern "C" fn send_event(this: &Object, _sel: Sel, event: id) {
+	unsafe {
+		let event_type = event.eventType();
+		match event_type {
+			appkit::NSLeftMouseDown => {
+				// When WKWebView is set on NSWindow, `WindowBuilder::with_movable_by_window_background` does not work.
+				// Because of this, we need to invoke `[NSWindow performWindowDragWithEvent]` in the NSLeftMouseDown
+				// event manually.
+				let is_movable_window: BOOL = msg_send![this, isMovableByWindowBackground];
+				if is_movable_window == YES {
+					let _: () = msg_send![this, performWindowDragWithEvent: event];
+				}
+			}
+			_ => ()
+		}
+
+		let superclass = util::superclass(this);
+		let _: () = msg_send![super(this, superclass), sendEvent: event];
+	}
 }
 
 #[derive(Default)]
