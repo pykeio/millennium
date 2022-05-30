@@ -1050,6 +1050,7 @@ impl Default for CursorIcon {
 
 /// Fullscreen modes.
 #[non_exhaustive]
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq)]
 pub enum Fullscreen {
 	Exclusive(VideoMode),

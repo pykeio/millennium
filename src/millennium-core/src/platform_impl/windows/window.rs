@@ -29,17 +29,20 @@ use crossbeam_channel as channel;
 use mem::MaybeUninit;
 use parking_lot::Mutex;
 use raw_window_handle::{RawWindowHandle, Win32Handle};
-use windows::Win32::{
-	Foundation::{self as win32f, HINSTANCE, HWND, LPARAM, LRESULT, POINT, PWSTR, RECT, WPARAM},
-	Graphics::{
-		Dwm::{DwmEnableBlurBehindWindow, DWM_BB_BLURREGION, DWM_BB_ENABLE, DWM_BLURBEHIND},
-		Gdi::*
-	},
-	System::{Com::*, LibraryLoader::*, Ole::*},
-	UI::{
-		Input::{Ime::*, KeyboardAndMouse::*, Touch::*},
-		Shell::*,
-		WindowsAndMessaging::{self as win32wm, *}
+use windows::{
+	core::PCWSTR,
+	Win32::{
+		Foundation::{self as win32f, HINSTANCE, HWND, LPARAM, LRESULT, POINT, RECT, WPARAM},
+		Graphics::{
+			Dwm::{DwmEnableBlurBehindWindow, DWM_BB_BLURREGION, DWM_BB_ENABLE, DWM_BLURBEHIND},
+			Gdi::*
+		},
+		System::{Com::*, LibraryLoader::*, Ole::*},
+		UI::{
+			Input::{Ime::*, KeyboardAndMouse::*, Touch::*},
+			Shell::*,
+			WindowsAndMessaging::{self as win32wm, *}
+		}
 	}
 };
 
@@ -298,7 +301,7 @@ impl Window {
 	pub fn set_cursor_icon(&self, cursor: CursorIcon) {
 		self.window_state.lock().mouse.cursor = cursor;
 		self.thread_executor.execute_in_thread(move || unsafe {
-			let cursor = LoadCursorW(HINSTANCE::default(), cursor.to_windows_cursor());
+			let cursor = LoadCursorW(HINSTANCE::default(), cursor.to_windows_cursor()).unwrap_or_default();
 			SetCursor(cursor);
 		});
 	}
@@ -456,7 +459,7 @@ impl Window {
 					let native_video_mode = video_mode.video_mode.native_video_mode;
 
 					let res = unsafe {
-						ChangeDisplaySettingsExW(PWSTR(display_name.as_mut_ptr()), &native_video_mode, HWND::default(), CDS_FULLSCREEN, std::ptr::null_mut())
+						ChangeDisplaySettingsExW(PCWSTR(display_name.as_ptr()), &native_video_mode, HWND::default(), CDS_FULLSCREEN, std::ptr::null_mut())
 					};
 
 					debug_assert!(res != DISP_CHANGE_BADFLAGS);
@@ -467,7 +470,7 @@ impl Window {
 				}
 				(&Some(Fullscreen::Exclusive(_)), &None) | (&Some(Fullscreen::Exclusive(_)), &Some(Fullscreen::Borderless(_))) => {
 					let res =
-						unsafe { ChangeDisplaySettingsExW(PWSTR::default(), std::ptr::null_mut(), HWND::default(), CDS_FULLSCREEN, std::ptr::null_mut()) };
+						unsafe { ChangeDisplaySettingsExW(PCWSTR::default(), std::ptr::null_mut(), HWND::default(), CDS_FULLSCREEN, std::ptr::null_mut()) };
 
 					debug_assert!(res != DISP_CHANGE_BADFLAGS);
 					debug_assert!(res != DISP_CHANGE_BADMODE);
@@ -669,11 +672,11 @@ impl Window {
 		// `ToUnicode` consumes the dead-key by default, so we are constructing a fake
 		// (but valid) key input which we can call `ToUnicode` with.
 		unsafe {
-			let vk = u32::from(VK_SPACE);
+			let vk = u32::from(VK_SPACE.0);
 			let scancode = MapVirtualKeyW(vk, MAPVK_VK_TO_VSC);
 			let kbd_state = [0; 256];
-			let mut char_buff = [MaybeUninit::uninit(); 8];
-			ToUnicode(vk, scancode, kbd_state.as_ptr(), PWSTR(char_buff[0].as_mut_ptr()), char_buff.len() as i32, 0);
+			let mut char_buff: [MaybeUninit<u16>; 8] = [MaybeUninit::uninit(); 8];
+			ToUnicode(vk, scancode, &kbd_state, mem::transmute(char_buff.as_mut()), 0);
 		}
 	}
 
@@ -732,7 +735,7 @@ unsafe fn init<T: 'static>(
 	event_loop: &EventLoopWindowTarget<T>
 ) -> Result<Window, RootOsError> {
 	// registering the window class
-	let mut class_name = register_window_class(&attributes.window_icon, &pl_attribs.taskbar_icon);
+	let class_name = register_window_class(&attributes.window_icon, &pl_attribs.taskbar_icon);
 
 	let mut window_flags = WindowFlags::empty();
 	window_flags.set(WindowFlags::DECORATIONS, attributes.decorations);
@@ -768,7 +771,7 @@ unsafe fn init<T: 'static>(
 		let (style, ex_style) = window_flags.to_window_styles();
 		let handle = CreateWindowExW(
 			ex_style,
-			PWSTR(class_name.as_mut_ptr()),
+			PCWSTR(class_name.as_ptr()),
 			attributes.title.as_str(),
 			style,
 			CW_USEDEFAULT,
@@ -777,11 +780,11 @@ unsafe fn init<T: 'static>(
 			CW_USEDEFAULT,
 			parent.unwrap_or_default(),
 			pl_attribs.menu.unwrap_or_default(),
-			GetModuleHandleW(PWSTR::default()),
+			GetModuleHandleW(PCWSTR::default()).unwrap_or_default(),
 			Box::into_raw(Box::new(window_flags)) as _
 		);
 
-		if handle.is_invalid() {
+		if !IsWindow(handle).as_bool() {
 			return Err(os_error!(OsError::IoError(io::Error::last_os_error())));
 		}
 
@@ -876,7 +879,7 @@ unsafe fn init<T: 'static>(
 }
 
 unsafe fn register_window_class(window_icon: &Option<Icon>, taskbar_icon: &Option<Icon>) -> Vec<u16> {
-	let mut class_name = util::encode_wide("Window Class");
+	let class_name = util::encode_wide("Window Class");
 
 	let h_icon = taskbar_icon.as_ref().map(|icon| icon.inner.as_raw_handle()).unwrap_or_default();
 	let h_icon_small = window_icon.as_ref().map(|icon| icon.inner.as_raw_handle()).unwrap_or_default();
@@ -887,12 +890,12 @@ unsafe fn register_window_class(window_icon: &Option<Icon>, taskbar_icon: &Optio
 		lpfnWndProc: Some(window_proc),
 		cbClsExtra: 0,
 		cbWndExtra: 0,
-		hInstance: GetModuleHandleW(PWSTR::default()),
+		hInstance: GetModuleHandleW(PCWSTR::default()).unwrap_or_default(),
 		hIcon: h_icon,
 		hCursor: HCURSOR::default(), // must be null in order for cursor state to work properly
 		hbrBackground: HBRUSH::default(),
-		lpszMenuName: PWSTR::default(),
-		lpszClassName: PWSTR(class_name.as_mut_ptr()),
+		lpszMenuName: PCWSTR::default(),
+		lpszClassName: PCWSTR(class_name.as_ptr()),
 		hIconSm: h_icon_small
 	};
 
@@ -916,7 +919,12 @@ unsafe extern "system" fn window_proc(window: HWND, msg: u32, wparam: WPARAM, lp
 				let win_flags = WindowFlags::from_bits_unchecked(userdata as _);
 				if win_flags.contains(WindowFlags::HIDDEN_TITLEBAR) && win_flags.contains(WindowFlags::DECORATIONS) {
 					let mut border_thickness = RECT::default();
-					AdjustWindowRectEx(&mut border_thickness, GetWindowLongPtrW(window, GWL_STYLE) as u32 & !WS_CAPTION, false, 0);
+					AdjustWindowRectEx(
+						&mut border_thickness,
+						WINDOW_STYLE(GetWindowLongPtrW(window, GWL_STYLE) as u32) & !WS_CAPTION,
+						false,
+						Default::default()
+					);
 
 					let params = &mut *(lparam.0 as *mut NCCALCSIZE_PARAMS);
 					// FIXME: this gets rid of a 6px margin at the top of the window, but it
@@ -1016,7 +1024,7 @@ unsafe fn force_window_active(handle: HWND) {
 	// This is a little hack which can "steal" the foreground window permission
 	// We only call this function in the window creation, so it should be fine.
 	// See : https://stackoverflow.com/questions/10740346/setforegroundwindow-only-working-while-visual-studio-is-open
-	let alt_sc = MapVirtualKeyW(u32::from(VK_MENU), MAPVK_VK_TO_VSC);
+	let alt_sc = MapVirtualKeyW(u32::from(VK_MENU.0), MAPVK_VK_TO_VSC);
 
 	let mut inputs: [INPUT; 2] = mem::zeroed();
 	inputs[0].r#type = INPUT_KEYBOARD;
@@ -1030,12 +1038,13 @@ unsafe fn force_window_active(handle: HWND) {
 	inputs[1].Anonymous.ki.dwFlags = KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP;
 
 	// Simulate a key press and release
-	SendInput(inputs.len() as _, inputs.as_mut_ptr(), mem::size_of::<INPUT>() as _);
+	SendInput(&inputs, mem::size_of::<INPUT>() as _);
 
 	SetForegroundWindow(handle);
 }
 
-pub fn hit_test(hwnd: HWND, cx: i32, cy: i32) -> LRESULT {
+pub fn hit_test(hwnd: *mut libc::c_void, cx: i32, cy: i32) -> LRESULT {
+	let hwnd = HWND(hwnd as _);
 	let mut window_rect = RECT::default();
 	unsafe {
 		if GetWindowRect(hwnd, <*mut _>::cast(&mut window_rect)).as_bool() {

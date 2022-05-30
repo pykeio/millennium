@@ -19,9 +19,12 @@ use std::{
 	io, mem, ptr
 };
 
-use windows::Win32::{
-	Foundation::{BOOL, HWND, LPARAM, POINT, PWSTR, RECT},
-	Graphics::Gdi::*
+use windows::{
+	core::PCWSTR,
+	Win32::{
+		Foundation::{BOOL, HWND, LPARAM, POINT, RECT},
+		Graphics::Gdi::*
+	}
 };
 
 use super::util;
@@ -142,8 +145,8 @@ impl MonitorHandle {
 
 	#[inline]
 	pub fn name(&self) -> Option<String> {
-		let mut monitor_info = get_monitor_info(self.hmonitor()).unwrap();
-		Some(util::wchar_ptr_to_string(PWSTR(monitor_info.szDevice.as_mut_ptr())))
+		let monitor_info = get_monitor_info(self.hmonitor()).unwrap();
+		Some(util::wchar_ptr_to_string(PCWSTR(monitor_info.szDevice.as_ptr())))
 	}
 
 	#[inline]
@@ -189,11 +192,11 @@ impl MonitorHandle {
 
 		loop {
 			unsafe {
-				let mut monitor_info = get_monitor_info(self.hmonitor()).unwrap();
-				let device_name = PWSTR(monitor_info.szDevice.as_mut_ptr());
+				let monitor_info = get_monitor_info(self.hmonitor()).unwrap();
+				let device_name = PCWSTR(monitor_info.szDevice.as_ptr());
 				let mut mode: DEVMODEW = mem::zeroed();
 				mode.dmSize = mem::size_of_val(&mode) as u16;
-				if !EnumDisplaySettingsExW(device_name, i as ENUM_DISPLAY_SETTINGS_MODE, &mut mode, 0).as_bool() {
+				if !EnumDisplaySettingsExW(device_name, ENUM_DISPLAY_SETTINGS_MODE(i), &mut mode, 0).as_bool() {
 					break;
 				}
 				i += 1;

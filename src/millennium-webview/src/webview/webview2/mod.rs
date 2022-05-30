@@ -16,15 +16,15 @@
 
 mod file_drop;
 
-use std::{collections::HashSet, fmt::Write, rc::Rc, sync::mpsc};
+use std::{collections::HashSet, fmt::Write, mem::MaybeUninit, rc::Rc, sync::mpsc};
 
 use file_drop::FileDropController;
 use once_cell::unsync::OnceCell;
 use webview2_com::{Microsoft::Web::WebView2::Win32::*, *};
 use windows::{
-	core::Interface,
+	core::{Interface, PCWSTR, PWSTR},
 	Win32::{
-		Foundation::{BOOL, E_FAIL, E_POINTER, FARPROC, HWND, POINT, PWSTR, RECT},
+		Foundation::{BOOL, E_FAIL, E_POINTER, FARPROC, HWND, POINT, RECT},
 		System::{
 			Com::{IStream, StructuredStorage::CreateStreamOnHGlobal},
 			LibraryLoader::{GetProcAddress, LoadLibraryA},
@@ -97,21 +97,18 @@ impl InnerWebView {
 				let options: ICoreWebView2EnvironmentOptions = CoreWebView2EnvironmentOptions::default().into();
 
 				// remove "mini menu"
-				let additional_arguments = pwstr_from_str("--disable-features=msWebOOUI,msPdfOOUI");
-				let _ = options.SetAdditionalBrowserArguments(additional_arguments);
+				let _ = options.SetAdditionalBrowserArguments("--disable-features=msWebOOUI,msPdfOOUI");
 
-				// if data_directory is None, we set it to a null PWSTR
-				let data_directory: PWSTR = data_directory.map(|s| pwstr_from_str(&s)).unwrap_or_default();
-
-				let result = CreateCoreWebView2EnvironmentWithOptions(PWSTR::default(), data_directory, options, environmentcreatedhandler)
-					.map_err(webview2_com::Error::WindowsError);
-				let _ = take_pwstr(data_directory);
-
-				result
+				if let Some(data_directory) = data_directory {
+					CreateCoreWebView2EnvironmentWithOptions(PCWSTR::default(), data_directory, options, environmentcreatedhandler)
+				} else {
+					CreateCoreWebView2EnvironmentWithOptions(PCWSTR::default(), PCWSTR::default(), options, environmentcreatedhandler)
+				}
+				.map_err(webview2_com::Error::WindowsError)
 			}),
 			Box::new(move |error_code, environment| {
 				error_code?;
-				tx.send(environment.ok_or_else(|| windows::core::Error::fast_error(E_POINTER)))
+				tx.send(environment.ok_or_else(|| windows::core::Error::from(E_POINTER)))
 					.expect("send over mpsc channel");
 				Ok(())
 			})
@@ -130,7 +127,7 @@ impl InnerWebView {
 			Box::new(move |handler| unsafe { env.CreateCoreWebView2Controller(hwnd, handler).map_err(webview2_com::Error::WindowsError) }),
 			Box::new(move |error_code, controller| {
 				error_code?;
-				tx.send(controller.ok_or_else(|| windows::core::Error::fast_error(E_POINTER)))
+				tx.send(controller.ok_or_else(|| windows::core::Error::from(E_POINTER)))
 					.expect("send over mpsc channel");
 				Ok(())
 			})
@@ -172,7 +169,7 @@ impl InnerWebView {
 			let handler: ICoreWebView2WindowCloseRequestedEventHandler =
 				WindowCloseRequestedEventHandler::create(Box::new(move |_, _| if DestroyWindow(hwnd).as_bool() { Ok(()) } else { Err(E_FAIL.into()) }));
 			webview
-				.WindowCloseRequested(handler, &mut token)
+				.add_WindowCloseRequested(handler, &mut token)
 				.map_err(webview2_com::Error::WindowsError)?;
 
 			let settings = webview.Settings().map_err(webview2_com::Error::WindowsError)?;
@@ -218,7 +215,7 @@ impl InnerWebView {
 		// Message handler
 		let ipc_handler = attributes.ipc_handler.take();
 		unsafe {
-			webview.WebMessageReceived(
+			webview.add_WebMessageReceived(
 				WebMessageReceivedEventHandler::create(Box::new(move |_, args| {
 					if let Some(args) = args {
 						let mut js = PWSTR::default();
@@ -230,7 +227,7 @@ impl InnerWebView {
 
 								let mut point = POINT::default();
 								GetCursorPos(&mut point);
-								let result = hit_test(HWND(window.hwnd() as _), point.x, point.y);
+								let result = hit_test(window.hwnd(), point.x, point.y);
 								let cursor = match result.0 as u32 {
 									win32wm::HTLEFT => CursorIcon::WResize,
 									win32wm::HTTOP => CursorIcon::NResize,
@@ -276,7 +273,7 @@ impl InnerWebView {
 		if let Some(nav_callback) = attributes.navigation_handler {
 			unsafe {
 				webview
-					.NavigationStarting(
+					.add_NavigationStarting(
 						NavigationStartingEventHandler::create(Box::new(move |_, args| {
 							if let Some(args) = args {
 								let mut uri = PWSTR::default();
@@ -308,7 +305,7 @@ impl InnerWebView {
 			let env = env.clone();
 			unsafe {
 				webview
-					.WebResourceRequested(
+					.add_WebResourceRequested(
 						WebResourceRequestedEventHandler::create(Box::new(move |_, args| {
 							if let Some(args) = args {
 								let webview_request = args.Request()?;
@@ -345,7 +342,7 @@ impl InnerWebView {
 									loop {
 										let mut cb_read = 0;
 										let content: IStream = content.cast()?;
-										content.Read(buffer.as_mut_ptr() as *mut _, buffer.len() as u32, &mut cb_read)?;
+										content.Read(buffer.as_mut_ptr() as *mut _, buffer.len() as u32, &mut cb_read).ok()?;
 
 										if cb_read == 0 {
 											break;
@@ -389,7 +386,11 @@ impl InnerWebView {
 											if !content.is_empty() {
 												let stream = CreateStreamOnHGlobal(0, true)?;
 												stream.SetSize(content.len() as u64)?;
-												if stream.Write(content.as_ptr() as *const _, content.len() as u32)? as usize == content.len() {
+												let mut cb_write = MaybeUninit::uninit();
+												if stream
+													.Write(content.as_ptr() as *const _, content.len() as u32, cb_write.as_mut_ptr())
+													.is_ok() && cb_write.assume_init() as usize == content.len()
+												{
 													body_sent = Some(stream);
 												}
 											}
@@ -419,7 +420,7 @@ impl InnerWebView {
 		if attributes.clipboard {
 			unsafe {
 				webview
-					.PermissionRequested(
+					.add_PermissionRequested(
 						PermissionRequestedEventHandler::create(Box::new(|_, args| {
 							if let Some(args) = args {
 								let mut kind = COREWEBVIEW2_PERMISSION_KIND_UNKNOWN_PERMISSION;
@@ -544,7 +545,7 @@ impl InnerWebView {
 
 pub fn platform_webview_version() -> Result<String> {
 	let mut versioninfo = PWSTR::default();
-	unsafe { GetAvailableCoreWebView2BrowserVersionString(PWSTR::default(), &mut versioninfo) }.map_err(webview2_com::Error::WindowsError)?;
+	unsafe { GetAvailableCoreWebView2BrowserVersionString(PCWSTR::default(), &mut versioninfo) }.map_err(webview2_com::Error::WindowsError)?;
 	Ok(take_pwstr(versioninfo))
 }
 
@@ -562,11 +563,12 @@ fn get_function_impl(library: &str, function: &str) -> Option<FARPROC> {
 	assert_eq!(library.chars().last(), Some('\0'));
 	assert_eq!(function.chars().last(), Some('\0'));
 
-	let module = unsafe { LoadLibraryA(library) };
-	if module.0 == 0 {
-		return None;
+	let module = unsafe { LoadLibraryA(library) }.unwrap_or_default();
+	if module.is_invalid() {
+		None
+	} else {
+		Some(unsafe { GetProcAddress(module, function) })
 	}
-	Some(unsafe { GetProcAddress(module, function) })
 }
 
 macro_rules! get_function {

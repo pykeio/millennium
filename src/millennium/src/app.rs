@@ -463,7 +463,7 @@ impl App<crate::MillenniumWebview> {
 	/// # Stability
 	///
 	/// This API is unstable.
-	pub fn webview_plugin<P: millennium_runtime_webview::Plugin<EventLoopmessage> + 'static>(&mut self, plugin: P) {
+	pub fn webview_plugin<P: millennium_runtime_webview::Plugin<EventLoopMessage> + 'static>(&mut self, plugin: P) {
 		self.runtime.as_mut().unwrap().plugin(plugin);
 	}
 }

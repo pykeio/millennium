@@ -18,10 +18,13 @@ use std::ffi::c_void;
 
 /// This is a simple implementation of support for Windows Dark Mode,
 /// which is inspired by the solution in https://github.com/ysc3839/win32-darkmode
-use windows::Win32::{
-	Foundation::{BOOL, HWND, PSTR, PWSTR},
-	System::LibraryLoader::*,
-	UI::{Accessibility::*, Controls::*, WindowsAndMessaging::*}
+use windows::{
+	core::{PCSTR, PCWSTR},
+	Win32::{
+		Foundation::{BOOL, HWND},
+		System::LibraryLoader::*,
+		UI::{Accessibility::*, Controls::*, WindowsAndMessaging::*}
+	}
 };
 
 use crate::{platform_impl::platform::util, window::Theme};
@@ -57,7 +60,6 @@ lazy_static! {
 				};
 
 				let status = (rtl_get_version)(&mut vi as _);
-
 				if status >= 0 && vi.dwMajorVersion == 10 && vi.dwMinorVersion == 0 {
 					Some(vi.dwBuildNumber)
 				} else {
@@ -92,16 +94,15 @@ pub fn try_theme(hwnd: HWND, preferred_theme: Option<Theme>) -> Theme {
 		};
 
 		let theme = if is_dark_mode { Theme::Dark } else { Theme::Light };
-		let theme_name = PWSTR(
+		let theme_name = PCWSTR(
 			match theme {
 				Theme::Dark => DARK_THEME_NAME.clone(),
 				Theme::Light => LIGHT_THEME_NAME.clone()
 			}
-			.as_mut_ptr()
+			.as_ptr()
 		);
 
-		let status = unsafe { SetWindowTheme(hwnd, theme_name, PWSTR::default()) };
-
+		let status = unsafe { SetWindowTheme(hwnd, theme_name, PCWSTR::default()) };
 		if status.is_ok() && set_dark_mode_for_window(hwnd, is_dark_mode) {
 			return theme;
 		}
@@ -144,7 +145,6 @@ fn set_dark_mode_for_window(hwnd: HWND, is_dark_mode: bool) -> bool {
 			};
 
 			let status = set_window_composition_attribute(hwnd, &mut data as *mut _);
-
 			status.as_bool()
 		}
 	} else {
@@ -163,14 +163,12 @@ fn should_apps_use_dark_mode() -> bool {
 			unsafe {
 				const UXTHEME_SHOULDAPPSUSEDARKMODE_ORDINAL: u16 = 132;
 
-				let module = LoadLibraryA("uxtheme.dll");
-
+				let module = LoadLibraryA("uxtheme.dll").unwrap_or_default();
 				if module.is_invalid() {
 					return None;
 				}
 
-				let handle = GetProcAddress(module, PSTR(UXTHEME_SHOULDAPPSUSEDARKMODE_ORDINAL as usize as *mut _));
-
+				let handle = GetProcAddress(module, PCSTR(UXTHEME_SHOULDAPPSUSEDARKMODE_ORDINAL as usize as *mut _));
 				handle.map(|handle| std::mem::transmute(handle))
 			}
 		};
@@ -186,11 +184,10 @@ const HCF_HIGHCONTRASTON: u32 = 1;
 fn is_high_contrast() -> bool {
 	let mut hc = HIGHCONTRASTA {
 		cbSize: 0,
-		dwFlags: 0,
-		lpszDefaultScheme: PSTR::default()
+		dwFlags: Default::default(),
+		lpszDefaultScheme: Default::default()
 	};
 
-	let ok = unsafe { SystemParametersInfoA(SPI_GETHIGHCONTRAST, std::mem::size_of_val(&hc) as _, &mut hc as *mut _ as _, 0) };
-
-	ok.as_bool() && (HCF_HIGHCONTRASTON & hc.dwFlags) != 0
+	let ok = unsafe { SystemParametersInfoA(SPI_GETHIGHCONTRAST, std::mem::size_of_val(&hc) as _, &mut hc as *mut _ as _, Default::default()) };
+	ok.as_bool() && (HCF_HIGHCONTRASTON & hc.dwFlags.0) != 0
 }
