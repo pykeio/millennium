@@ -49,7 +49,7 @@ pub fn setup_keychain(certificate_encoded: OsString, certificate_password: OsStr
 	let certificate_password = certificate_password
 		.to_str()
 		.expect("failed to convert APPLE_CERTIFICATE_PASSWORD to string")
-		.as_bytes();
+		.to_string();
 
 	// Because the certificate may contain whitespace, decoding may be broken: https://github.com/marshallpierce/rust-base64/issues/105
 	// We'll use the builtin base64 command from the OS
@@ -120,7 +120,7 @@ pub fn delete_keychain() {
 	let _ = Command::new("security").arg("delete-keychain").arg(KEYCHAIN_ID).output_ok();
 }
 
-pub fn sign(path_to_sign: PathBuf, identity: &str, settings: &settings, is_an_executable: bool) -> crate::Result<()> {
+pub fn sign(path_to_sign: PathBuf, identity: &str, settings: &Settings, is_an_executable: bool) -> crate::Result<()> {
 	info!(action = "Signing"; "{} with identity \"{}\"", path_to_sign.display(), identity);
 
 	let setup_keychain = if let (Some(certificate_encoded), Some(certificate_password)) =
