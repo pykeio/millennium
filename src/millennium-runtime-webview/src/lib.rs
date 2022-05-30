@@ -214,11 +214,13 @@ impl<T: UserEvent> Context<T> {
 
 		self.prepare_window(window_id);
 
-		let context_ = context.clone();
-		send_user_message(
-			&context_,
-			Message::CreateWebview(window_id, Box::new(move |event_loop, web_context| create_webview(window_id, event_loop, web_context, context, pending)))
-		)?;
+		// cannot use `send_user_message` here due to deadlock
+		self.proxy
+			.send_event(Message::CreateWebview(
+				window_id,
+				Box::new(move |event_loop, web_context| create_webview(window_id, event_loop, web_context, context, pending))
+			))
+			.map_err(|_| Error::FailedToSendMessage)?;
 
 		let dispatcher = MillenniumDispatcher { window_id, context: self.clone() };
 		Ok(DetachedWindow {
@@ -2556,6 +2558,8 @@ fn create_webview<T: UserEvent>(
 	};
 	let window = window_builder.inner.build(event_loop).unwrap();
 
+	webview_id_map.insert(window.id(), window_id);
+
 	if window_builder.center {
 		let _ = center_window(&window, window.inner_size());
 	}
@@ -2617,8 +2621,6 @@ fn create_webview<T: UserEvent>(
 		.build()
 		.map_err(|e| Error::CreateWebview(Box::new(e)))?;
 
-	webview_id_map.insert(webview.window().id(), window_id);
-
 	#[cfg(all(windows, not(feature = "__rust_analyzer_hack")))]
 	{
 		let controller = webview.controller();
@@ -2662,12 +2664,10 @@ fn create_ipc_handler<T: UserEvent>(
 	handler: WebviewIpcHandler<T, MillenniumWebview<T>>
 ) -> Box<dyn Fn(&Window, String) + 'static> {
 	Box::new(move |window, request| {
+		let window_id = context.webview_id_map.get(&window.id());
 		handler(
 			DetachedWindow {
-				dispatcher: MillenniumDispatcher {
-					window_id: *context.webview_id_map.0.lock().unwrap().get(&window.id()).unwrap(),
-					context: context.clone()
-				},
+				dispatcher: MillenniumDispatcher { window_id, context: context.clone() },
 				label: label.clone(),
 				menu_ids: menu_ids.clone(),
 				js_event_listeners: js_event_listeners.clone()
