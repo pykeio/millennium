@@ -30,7 +30,7 @@
         <Property Id="REINSTALLMODE" Value="dmus" />
 
 		{{#if allow_downgrades}}
-			<MajorUpgrade AllowDowngrade="yes" Schedule="afterInstallInitialize" />
+			<MajorUpgrade AllowDowngrade="yes" Schedule="afterInstallExecute" />
 		{{else}}
         	<MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeErrorMessage)" AllowSameVersionUpgrades="yes" />
 		{{/if}}
