@@ -35,30 +35,29 @@ jobs:
             architecture: x64
           - host: ubuntu-18.04
             target: x86_64-unknown-linux-gnu
-            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine-zig
-            build: |-
-              set -e &&
-              rustup target add x86_64-unknown-linux-gnu &&
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
+            build: |
               cd tools/millennium-cli-node
-              pnpm build -- --target x86_64-unknown-linux-gnu --zig --zig-abi-suffix 2.12 &&
-              llvm-strip -x *.node
+              pnpm build -- --target x86_64-unknown-linux-gnu
+              strip *.node
           - host: ubuntu-18.04
             target: x86_64-unknown-linux-musl
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
-            build: set -e && cd tools/millennium-cli-node && pnpm build && strip *.node
+            build: |
+              cd tools/millennium-cli-node
+              pnpm run build:release
+              strip *.node
           - host: macos-latest
             target: aarch64-apple-darwin
             build: |
               pnpm build -- --target=aarch64-apple-darwin
               strip -x *.node
           - host: ubuntu-18.04
-            architecture: x64
             target: aarch64-unknown-linux-gnu
-            setup: |
-              sudo apt-get update
-              sudo apt-get install g++-aarch64-linux-gnu gcc-aarch64-linux-gnu -y
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
             build: |
-              pnpm build -- --target=aarch64-unknown-linux-gnu
+              cd tools/millennium-cli-node
+              pnpm run build:release -- --target=aarch64-unknown-linux-gnu
               aarch64-linux-gnu-strip *.node
           - host: ubuntu-18.04
             architecture: x64
@@ -67,17 +66,16 @@ jobs:
               sudo apt-get update
               sudo apt-get install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf -y
             build: |
-              pnpm build -- --target=armv7-unknown-linux-gnueabihf
+              pnpm run build:release -- --target=armv7-unknown-linux-gnueabihf
               arm-linux-gnueabihf-strip *.node
           - host: ubuntu-18.04
             architecture: x64
             target: aarch64-unknown-linux-musl
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
-            build: |-
-              set -e &&
-              rustup target add aarch64-unknown-linux-musl &&
-              cd tools/millennium-cli-node &&
-              pnpm build -- --target aarch64-unknown-linux-musl &&
+            build: |
+              cd tools/millennium-cli-node
+              rustup target add aarch64-unknown-linux-musl
+              pnpm run build:release -- --target aarch64-unknown-linux-musl
               /aarch64-linux-musl-cross/bin/aarch64-linux-musl-strip *.node
     name: stable - ${{ matrix.settings.target }} - node@16
     runs-on: ${{ matrix.settings.host }}
@@ -120,7 +118,7 @@ jobs:
         if: ${{ matrix.settings.docker }}
         with:
           image: ${{ matrix.settings.docker }}
-          options: '-v ${{ env.HOME }}/.cargo/git:/root/.cargo/git -v ${{ env.HOME }}/.cargo/registry:/root/.cargo/registry -v ${{ github.workspace }}:/build -w /build'
+          options: --user 0:0 -v ${{ github.workspace }}/.cargo-cache/git/db:/root/.cargo/git/db -v ${{ github.workspace }}/.cargo/registry/cache:/root/.cargo/registry -v ${{ github.workspace }}/.cargo/registry/index:/root/.cargo/registry/index -v ${{ github.workspace }}:/build -w /build
           run: ${{ matrix.settings.build }}
 
       - name: Build
