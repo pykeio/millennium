@@ -350,6 +350,7 @@ pub fn build_wix_app_installer(settings: &Settings, wix_toolset_path: &Path) -> 
 			sign(
 				&file_path,
 				&SignParams {
+					product_name: settings.product_name().into(),
 					digest_algorithm: settings
 						.windows()
 						.digest_algorithm
