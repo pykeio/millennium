@@ -150,7 +150,10 @@
         "updater": {
           "active": false,
           "dialog": true,
-          "pubkey": ""
+          "pubkey": "",
+          "windows": {
+            "installMode": "passive"
+          }
         },
         "windows": []
       },
@@ -1381,7 +1384,10 @@
           "default": {
             "active": false,
             "dialog": true,
-            "pubkey": ""
+            "pubkey": "",
+            "windows": {
+              "installMode": "passive"
+            }
           },
           "allOf": [
             {
@@ -1798,6 +1804,17 @@
           "description": "Signature public key.",
           "default": "",
           "type": "string"
+        },
+        "windows": {
+          "description": "The Windows configuration for the updater.",
+          "default": {
+            "installMode": "passive"
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/UpdaterWindowsConfig"
+            }
+          ]
         }
       },
       "additionalProperties": false
@@ -1806,6 +1823,22 @@
       "description": "A URL to an updater server.\n\nThe URL must use the `https` scheme on production.",
       "type": "string",
       "format": "uri"
+    },
+    "UpdaterWindowsConfig": {
+      "description": "The updater configuration for Windows.",
+      "type": "object",
+      "properties": {
+        "installMode": {
+          "description": "The installation mode for the update on Windows. Defaults to `passive`.",
+          "default": "passive",
+          "allOf": [
+            {
+              "$ref": "#/definitions/WindowsUpdateInstallMode"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
     },
     "WindowAllowlistConfig": {
       "description": "Allowlist for the window APIs.",
@@ -2167,6 +2200,15 @@
         }
       },
       "additionalProperties": false
+    },
+    "WindowsUpdateInstallMode": {
+      "description": "Install modes for the update package on Windows.",
+      "type": "string",
+      "enum": [
+        "basicUi",
+        "quiet",
+        "passive"
+      ]
     },
     "WixConfig": {
       "description": "Configuration for the MSI bundle using WiX.",

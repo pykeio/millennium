@@ -36,7 +36,7 @@ use heck::ToKebabCase;
 use schemars::JsonSchema;
 use serde::{
 	de::{Deserializer, Error as DeError, Visitor},
-	Deserialize, Serialize
+	Deserialize, Serialize, Serializer
 };
 use serde_json::Value as JsonValue;
 use serde_with::skip_serializing_none;
@@ -1923,6 +1923,86 @@ impl<'de> Deserialize<'de> for UpdaterEndpoint {
 	}
 }
 
+/// Install modes for the update package on Windows.
+#[derive(Debug, PartialEq, Clone)]
+#[cfg_attr(feature = "schema", derive(JsonSchema))]
+#[cfg_attr(feature = "schema", schemars(rename_all = "camelCase"))]
+pub enum WindowsUpdateInstallMode {
+	/// Shows a basic UI during the installation process.
+	BasicUi,
+	/// Quiet mode installs the update silently without any user interaction.
+	/// The app requires admin privileges if the installer does.
+	Quiet,
+	/// Specifies unattended mode, which means the installation only shows a progress bar without any user interaction.
+	Passive
+}
+
+impl WindowsUpdateInstallMode {
+	/// Returns the `msiexec.exe` arguments.
+	pub fn msiexec_args(&self) -> &'static [&'static str] {
+		match self {
+			Self::BasicUi => &["/qb+"],
+			Self::Quiet => &["/quiet"],
+			Self::Passive => &["/passive"]
+		}
+	}
+}
+
+impl Display for WindowsUpdateInstallMode {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		write!(
+			f,
+			"{}",
+			match self {
+				Self::BasicUi => "basicUI",
+				Self::Quiet => "quiet",
+				Self::Passive => "passive"
+			}
+		)
+	}
+}
+
+impl Default for WindowsUpdateInstallMode {
+	fn default() -> Self {
+		Self::Passive
+	}
+}
+
+impl Serialize for WindowsUpdateInstallMode {
+	fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+	where
+		S: Serializer
+	{
+		serializer.serialize_str(self.to_string().as_ref())
+	}
+}
+
+impl<'de> Deserialize<'de> for WindowsUpdateInstallMode {
+	fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+	where
+		D: Deserializer<'de>
+	{
+		let s = String::deserialize(deserializer)?;
+		match s.to_lowercase().as_str() {
+			"basicui" => Ok(Self::BasicUi),
+			"quiet" => Ok(Self::Quiet),
+			"passive" => Ok(Self::Passive),
+			_ => Err(DeError::custom(format!("unknown update install mode '{}'", s)))
+		}
+	}
+}
+
+/// The updater configuration for Windows.
+#[skip_serializing_none]
+#[derive(Debug, Default, PartialEq, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(JsonSchema))]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct UpdaterWindowsConfig {
+	/// The installation mode for the update on Windows. Defaults to `passive`.
+	#[serde(default)]
+	pub install_mode: WindowsUpdateInstallMode
+}
+
 /// The Updater configuration object.
 #[skip_serializing_none]
 #[derive(Debug, PartialEq, Clone, Serialize)]
@@ -1951,7 +2031,10 @@ pub struct UpdaterConfig {
 	pub endpoints: Option<Vec<UpdaterEndpoint>>,
 	/// Signature public key.
 	#[serde(default)] // use default just so the schema doesn't flag it as required
-	pub pubkey: String
+	pub pubkey: String,
+	/// The Windows configuration for the updater.
+	#[serde(default)]
+	pub windows: UpdaterWindowsConfig
 }
 
 impl<'de> Deserialize<'de> for UpdaterConfig {
@@ -1966,7 +2049,9 @@ impl<'de> Deserialize<'de> for UpdaterConfig {
 			#[serde(default = "default_dialog")]
 			dialog: bool,
 			endpoints: Option<Vec<UpdaterEndpoint>>,
-			pubkey: Option<String>
+			pubkey: Option<String>,
+			#[serde(default)]
+			windows: UpdaterWindowsConfig
 		}
 
 		let config = InnerUpdaterConfig::deserialize(deserializer)?;
@@ -1979,7 +2064,8 @@ impl<'de> Deserialize<'de> for UpdaterConfig {
 			active: config.active,
 			dialog: config.dialog,
 			endpoints: config.endpoints,
-			pubkey: config.pubkey.unwrap_or_default()
+			pubkey: config.pubkey.unwrap_or_default(),
+			windows: config.windows
 		})
 	}
 }
@@ -1990,7 +2076,8 @@ impl Default for UpdaterConfig {
 			active: false,
 			dialog: default_dialog(),
 			endpoints: None,
-			pubkey: "".into()
+			pubkey: "".into(),
+			windows: Default::default()
 		}
 	}
 }
@@ -2639,6 +2726,25 @@ mod build {
 		}
 	}
 
+	impl ToTokens for WindowsUpdateInstallMode {
+		fn to_tokens(&self, tokens: &mut TokenStream) {
+			let prefix = quote! { ::millennium::utils::config::WindowsUpdateInstallMode };
+
+			tokens.append_all(match self {
+				Self::BasicUi => quote! { #prefix::BasicUi },
+				Self::Quiet => quote! { #prefix::Quiet },
+				Self::Passive => quote! { #prefix::Passive }
+			})
+		}
+	}
+
+	impl ToTokens for UpdaterWindowsConfig {
+		fn to_tokens(&self, tokens: &mut TokenStream) {
+			let install_mode = &self.install_mode;
+			literal_struct!(tokens, UpdaterWindowsConfig, install_mode);
+		}
+	}
+
 	impl ToTokens for UpdaterConfig {
 		fn to_tokens(&self, tokens: &mut TokenStream) {
 			let active = self.active;
@@ -2655,8 +2761,9 @@ mod build {
 					})
 					.as_ref()
 			);
+			let windows = &self.windows;
 
-			literal_struct!(tokens, UpdaterConfig, active, dialog, pubkey, endpoints);
+			literal_struct!(tokens, UpdaterConfig, active, dialog, pubkey, endpoints, windows);
 		}
 	}
 
@@ -2946,7 +3053,8 @@ mod test {
 				active: false,
 				dialog: true,
 				pubkey: "".into(),
-				endpoints: None
+				endpoints: None,
+				windows: Default::default()
 			},
 			security: SecurityConfig {
 				csp: None,

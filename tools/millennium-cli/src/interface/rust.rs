@@ -460,7 +460,8 @@ fn millennium_config_to_bundle_settings(
 			pubkey: updater_config.pubkey,
 			endpoints: updater_config
 				.endpoints
-				.map(|endpoints| endpoints.iter().map(|e| e.to_string()).collect())
+				.map(|endpoints| endpoints.iter().map(|e| e.to_string()).collect()),
+			msiexec_args: Some(updater_config.windows.install_mode.msiexec_args())
 		}),
 		..Default::default()
 	})
