@@ -601,6 +601,17 @@ impl<R: Runtime> App<R> {
 		self.runtime.as_mut().unwrap().set_activation_policy(activation_policy);
 	}
 
+	/// Gets the argument matches of the CLI definition configured in `.millenniumrc`.
+	///
+	/// # Examples
+	///
+	/// ```rust,no_run
+	/// millennium::Builder::default().setup(|app| {
+	/// 	let matches = app.get_cli_matches()?;
+	/// 	Ok(())
+	/// });
+	/// ```
+
 	/// Runs the application.
 	///
 	/// # Examples

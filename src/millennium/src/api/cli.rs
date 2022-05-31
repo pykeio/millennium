@@ -99,6 +99,9 @@ impl Matches {
 
 /// Gets the argument matches of the CLI definition.
 ///
+/// This is a low-level API. If the application has been built, use
+/// [`App::get_cli_matches`](`crate::App#method.get_cli_matches`) instead.
+///
 /// # Examples
 ///
 /// ```rust,no_run
