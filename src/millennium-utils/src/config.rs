@@ -55,7 +55,8 @@ pub use self::parse::parse;
 pub enum WindowUrl {
 	/// An external URL.
 	External(Url),
-	/// An app URL.
+	/// The **path portion** of an app URL. For instance, to load `millennium://localhost/users/john`, you can simply
+	/// provide `users/john`.
 	App(PathBuf)
 }
 
@@ -267,7 +268,8 @@ pub struct WindowsConfig {
 	/// Whether to use Time-Stamp Protocol (TSP, RFC 3161) for the timestamp
 	/// server. Your code signing provider may use a TSP timestamp server, like
 	/// SSL.com does.
-	pub tsp: Option<bool>,
+	#[serde(default)]
+	pub tsp: bool,
 	/// Path to the webview fixed runtime to use.
 	///
 	/// The fixed version can be downloaded [on the official website](https://developer.microsoft.com/en-us/microsoft-edge/webview2/#download-section).
@@ -291,7 +293,7 @@ impl Default for WindowsConfig {
 			digest_algorithm: None,
 			certificate_thumbprint: None,
 			timestamp_url: None,
-			tsp: None,
+			tsp: false,
 			webview_fixed_runtime_path: None,
 			allow_downgrades: default_allow_downgrades(),
 			wix: None
@@ -373,12 +375,12 @@ pub struct BundleConfig {
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CliArg {
-	/// The short version of the argument, without the preceding -.
+	/// The short version of the argument, without the preceding `-`.
 	///
-	/// NOTE: Any leading - characters will be stripped, and only the first non
-	/// - character will be used as the short version.
+	/// **NOTE**: Any leading `-` characters will be stripped, and only the first non
+	/// `-` character will be used as the short version.
 	pub short: Option<char>,
-	/// The unique argument name
+	/// The unique argument name.
 	pub name: String,
 	/// The argument description which will be shown on the help information.
 	/// Typically, this is a short (one line) description of the arg.
@@ -389,29 +391,32 @@ pub struct CliArg {
 	pub long_description: Option<String>,
 	/// Specifies that the argument takes a value at run time.
 	///
-	/// NOTE: values for arguments may be specified in any of the following
-	/// methods
-	/// - Using a space such as -o value or --option value
-	/// - Using an equals and no space such as -o=value or --option=value
-	/// - Use a short and no space such as -ovalue
-	pub takes_value: Option<bool>,
+	/// **NOTE**: Values for arguments may be specified in any of the following
+	/// methods:
+	/// - Using a space such as `-o value` or `--option value`
+	/// - Using an equals and no space such as `-o=value` or `--option=value`
+	/// - Use a short and no space such as `-ovalue`
+	#[serde(default)]
+	pub takes_value: bool,
 	/// Specifies that the argument may have an unknown number of multiple
 	/// values. Without any other settings, this argument may appear only once.
 	///
-	/// For example, --opt val1 val2 is allowed, but --opt val1 val2 --opt val3
+	/// For example, `--opt val1 val2` is allowed, but `--opt val1 val2 --opt val3`
 	/// is not.
 	///
-	/// NOTE: Setting this requires `takes_value` to be set to true.
-	pub multiple: Option<bool>,
+	/// **NOTE**: Setting this requires `takes_value` to be set to `true`.
+	#[serde(default)]
+	pub multiple: bool,
 	/// Specifies that the argument may appear more than once.
 	/// For flags, this results in the number of occurrences of the flag being
-	/// recorded. For example -ddd or -d -d -d would count as three occurrences.
+	/// recorded. For example `-ddd` or `-d -d -d` would count as three occurrences.
 	/// For options or arguments that take a value, this does not affect how
 	/// many values they can accept. (i.e. only one at a time is allowed)
 	///
-	/// For example, --opt val1 --opt val2 is allowed, but --opt val1 val2 is
+	/// For example, `--opt val1 --opt val2` is allowed, but `--opt val1 val2` is
 	/// not.
-	pub multiple_occurrences: Option<bool>,
+	#[serde(default)]
+	pub multiple_occurrences: bool,
 	/// Specifies how many values are required to satisfy this argument. For
 	/// example, if you had a `-f <file>` argument where you wanted exactly 3
 	/// 'files' you would set `number_of_values = 3`, and this argument wouldn't
@@ -422,7 +427,7 @@ pub struct CliArg {
 	/// <file> -f <file> <file> <file>` where as *not* setting it would only
 	/// allow one occurrence of this argument.
 	///
-	/// **NOTE:** implicitly sets `takes_value = true` and `multiple_values =
+	/// **NOTE**: implicitly sets `takes_value = true` and `multiple_values =
 	/// true`.
 	pub number_of_values: Option<usize>,
 	/// Specifies a list of possible values for this argument.
@@ -430,66 +435,63 @@ pub struct CliArg {
 	/// used, or fails with an error message.
 	pub possible_values: Option<Vec<String>>,
 	/// Specifies the minimum number of values for this argument.
-	/// For example, if you had a -f <file> argument where you wanted at least 2
+	/// For example, if you had a `-f <file>` argument where you wanted at least 2
 	/// 'files', you would set `minValues: 2`, and this argument would be
-	/// satisfied if the user provided, 2 or more values.
+	/// satisfied if the user provided 2 or more values.
 	pub min_values: Option<usize>,
-	/// Specifies the maximum number of values are for this argument.
-	/// For example, if you had a -f <file> argument where you wanted up to 3
-	/// 'files', you would set .max_values(3), and this argument would be
-	/// satisfied if the user provided, 1, 2, or 3 values.
+	/// Specifies the maximum number of values for this argument.
+	/// For example, if you had a `-f <file>` argument where you wanted up to 3
+	/// 'files', you would set `.max_values(3)`, and this argument would be
+	/// satisfied if the user provided 1, 2, or 3 values.
 	pub max_values: Option<usize>,
 	/// Sets whether or not the argument is required by default.
 	///
-	/// - Required by default means it is required, when no other conflicting rules have been evaluated
+	/// - Required by default means it is required, when no other conflicting rules have been evaluated.
 	/// - Conflicting rules take precedence over being required.
-	pub required: Option<bool>,
-	/// Sets an arg that override this arg's required setting
-	/// i.e. this arg will be required unless this other argument is present.
+	#[serde(default)]
+	pub required: bool,
+	/// Sets an arg that overrides this arg's required setting, i.e. this arg is required unless this other
+	/// argument is present.
 	pub required_unless_present: Option<String>,
-	/// Sets args that override this arg's required setting
-	/// i.e. this arg will be required unless all these other arguments are
-	/// present.
+	/// Sets a list of args that overrides this arg's required setting, i.e. this arg will be required unless all of
+	/// these other arguments are present.
 	pub required_unless_present_all: Option<Vec<String>>,
-	/// Sets args that override this arg's required setting
-	/// i.e. this arg will be required unless at least one of these other
-	/// arguments are present.
+	/// Sets a list of args that override this arg's required setting, i.e. this arg will be required unless at least
+	/// one of these other arguments are present.
 	pub required_unless_present_any: Option<Vec<String>>,
-	/// Sets a conflicting argument by name
-	/// i.e. when using this argument, the following argument can't be present
+	/// Sets a conflicting argument by name; When using this argument, the following argument can't be present
 	/// and vice versa.
 	pub conflicts_with: Option<String>,
-	/// The same as conflictsWith but allows specifying multiple two-way
+	/// Same functionality as `conflictsWith`, but allows specifying multiple two-way
 	/// conflicts per argument.
 	pub conflicts_with_all: Option<Vec<String>>,
-	/// Tets an argument by name that is required when this one is present
+	/// Test an argument by name that is required when this one is present
 	/// i.e. when using this argument, the following argument must be present.
 	pub requires: Option<String>,
-	/// Sts multiple arguments by names that are required when this one is
-	/// present i.e. when using this argument, the following arguments must be
+	/// Sets multiple arguments by name that are required when this one is
 	/// present.
 	pub requires_all: Option<Vec<String>>,
-	/// Allows a conditional requirement with the signature [arg, value]
-	/// the requirement will only become valid if `arg`'s value equals
+	/// Allows a conditional requirement with the signature `[arg, value]`.
+	/// The requirement will only become valid if `arg`'s value equals
 	/// `${value}`.
 	pub requires_if: Option<Vec<String>>,
 	/// Allows specifying that an argument is required conditionally with the
-	/// signature [arg, value] the requirement will only become valid if the
+	/// signature `[arg, value]`. The requirement will only become valid if the
 	/// `arg`'s value equals `${value}`.
 	pub required_if_eq: Option<Vec<String>>,
-	/// Requires that options use the --option=val syntax
-	/// i.e. an equals between the option and associated value.
+	/// Requires that options use the `--option=val` syntax.
 	pub require_equals: Option<bool>,
 	/// The positional argument index, starting at 1.
 	///
 	/// The index refers to position according to other positional argument.
 	/// It does not define position in the argument list as a whole. When
-	/// utilized with multiple=true, only the last positional argument may be
+	/// utilized with `multiple = true`, only the last positional argument may be
 	/// defined as multiple (i.e. the one with the highest index).
+	#[cfg_attr(feature = "schema", validate(range(min = 1)))]
 	pub index: Option<usize>
 }
 
-/// describes a CLI configuration
+/// Describes a CLI configuration
 #[skip_serializing_none]
 #[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
@@ -860,7 +862,7 @@ impl Default for DisabledCspModificationKind {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SecurityConfig {
 	/// The Content Security Policy that will be injected on all HTML files on
-	/// the built application. If [`dev_csp`](SecurityConfig.dev_csp) is not
+	/// the built application. If [`dev_csp`](#SecurityConfig.devCsp) is not
 	/// specified, this value is also injected on dev.
 	///
 	/// This is a really important part of the configuration since it helps you
@@ -2105,7 +2107,7 @@ fn default_dialog() -> bool {
 	true
 }
 
-/// The `dev_path` and `dist_dir` options.
+/// Defines the URL or assets to embed in the application.
 #[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
 #[serde(untagged, deny_unknown_fields)]
@@ -2135,11 +2137,26 @@ impl std::fmt::Display for AppUrl {
 pub struct BuildConfig {
 	/// The binary used to build and run the application.
 	pub runner: Option<String>,
-	/// The path or URL to use on development.
+	/// The path to the application assets or URL to load in development.
+	///
+	/// This is usually a URL to a dev server, which serves your application assets
+	/// with live reloading. Most modern JavaScript bundlers provides a way to start a dev server by default.
+	///
+	/// See [vite](https://vitejs.dev/guide/), [Webpack DevServer](https://webpack.js.org/configuration/dev-server/) and [sirv](https://github.com/lukeed/sirv)
+	/// for examples on how to set up a dev server.
 	#[serde(default = "default_dev_path")]
 	pub dev_path: AppUrl,
-	/// The path to the app's dist dir. This path must contain your index.html
-	/// file.
+	/// The path to the application assets or URL to load in production.
+	///
+	/// When a path relative to the configuration file is provided,
+	/// it is read recursively and all files are embedded in the application binary.
+	/// Millennium then looks for an `index.html` file, unless you provide a custom window URL.
+	///
+	/// You can also provide a list of paths to be embedded, which allows granular control over what files are added to
+	/// the binary. In this case, all files are added to the root and you must reference it that way in your HTML files.
+	///
+	/// When an URL is provided, the application won't have bundled assets
+	/// and the application will load that URL by default.
 	#[serde(default = "default_dist_dir")]
 	pub dist_dir: AppUrl,
 	/// A shell command to run before `millennium dev` kicks in.
@@ -2261,7 +2278,11 @@ impl PackageConfig {
 	}
 }
 
-/// The config type mapped to `.millenniumrc`.
+/// The `.millenniumrc` file is generated by the `millennium init` command. It controls how your app behaves, what
+/// windows it launches, and how the app is bundled.
+///
+/// In addition to the JSON defined in the `.millenniumrc`, you can add platform-dependent configuration files in
+/// `.linux.millenniumrc`, `.macos.millenniumrc`, and `.windows.millenniumrc`.
 #[skip_serializing_none]
 #[derive(Debug, Default, PartialEq, Clone, Deserialize, Serialize)]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
@@ -2561,14 +2582,14 @@ mod build {
 			let name = str_lit(&self.name);
 			let description = opt_str_lit(self.description.as_ref());
 			let long_description = opt_str_lit(self.long_description.as_ref());
-			let takes_value = opt_lit(self.takes_value.as_ref());
-			let multiple = opt_lit(self.multiple.as_ref());
-			let multiple_occurrences = opt_lit(self.multiple_occurrences.as_ref());
+			let takes_value = self.takes_value;
+			let multiple = self.multiple;
+			let multiple_occurrences = self.multiple_occurrences;
 			let number_of_values = opt_lit(self.number_of_values.as_ref());
 			let possible_values = opt_vec_str_lit(self.possible_values.as_ref());
 			let min_values = opt_lit(self.min_values.as_ref());
 			let max_values = opt_lit(self.max_values.as_ref());
-			let required = opt_lit(self.required.as_ref());
+			let required = self.required;
 			let required_unless_present = opt_str_lit(self.required_unless_present.as_ref());
 			let required_unless_present_all = opt_vec_str_lit(self.required_unless_present_all.as_ref());
 			let required_unless_present_any = opt_vec_str_lit(self.required_unless_present_any.as_ref());
