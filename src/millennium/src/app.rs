@@ -344,6 +344,7 @@ impl<R: Runtime> AppHandle<R> {
 	}
 }
 
+/// APIs specific to the millennium-webview-backed runtime.
 #[cfg(feature = "millennium_webview")]
 impl AppHandle<crate::MillenniumWebview> {
 	/// Create a new Millennium Core window using a callback. The event loop
@@ -489,6 +490,7 @@ impl<R: Runtime> ManagerBase<R> for App<R> {
 	}
 }
 
+/// APIs specific to the millennium-webview-backed runtime.
 #[cfg(feature = "millennium_webview")]
 impl App<crate::MillenniumWebview> {
 	/// Adds a [`millennium_runtime_webview::Plugin`].
