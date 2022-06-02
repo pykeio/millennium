@@ -141,6 +141,88 @@ macro_rules! file_dialog_builder {
 	};
 }
 
+macro_rules! message_dialog_builder {
+	() => {
+		/// A builder for message dialogs.
+		pub struct MessageDialogBuilder(rfd::MessageDialog);
+
+		impl MessageDialogBuilder {
+			/// Creates a new message dialog builder.
+			pub fn new(title: impl AsRef<str>, message: impl AsRef<str>) -> Self {
+				let title = title.as_ref().to_string();
+				let message = message.as_ref().to_string();
+				Self(rfd::MessageDialog::new().set_title(&title).set_description(&message))
+			}
+
+			/// Set parent windows explicitly (optional)
+			///
+			/// ## Platform-specific
+			///
+			/// - **Linux**: Unsupported.
+			pub fn parent<W: raw_window_handle::HasRawWindowHandle>(mut self, parent: &W) -> Self {
+				self.0 = self.0.set_parent(parent);
+				self
+			}
+
+			/// Set the set of buttons to display.
+			pub fn buttons(mut self, buttons: MessageDialogButtons) -> Self {
+				self.0 = self.0.set_buttons(buttons.into());
+				self
+			}
+
+			/// Set the type of dialog.
+			pub fn kind(mut self, kind: MessageDialogKind) -> Self {
+				self.0 = self.0.set_level(kind.into());
+				self
+			}
+		}
+	};
+}
+
+/// Options for action buttons on message dialogs.
+#[non_exhaustive]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum MessageDialogButtons {
+	/// A single "OK" button.
+	Ok,
+	/// "OK" and "Cancel" buttons.
+	OkCancel,
+	/// "Yes" and "No" buttons.
+	YesNo
+}
+
+impl From<MessageDialogButtons> for rfd::MessageButtons {
+	fn from(kind: MessageDialogButtons) -> Self {
+		match kind {
+			MessageDialogButtons::Ok => rfd::MessageButtons::Ok,
+			MessageDialogButtons::OkCancel => rfd::MessageButtons::OkCancel,
+			MessageDialogButtons::YesNo => rfd::MessageButtons::YesNo
+		}
+	}
+}
+
+/// Types of message dialogs.
+#[non_exhaustive]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum MessageDialogKind {
+	/// Informational dialog.
+	Info,
+	/// Warning dialog.
+	Warning,
+	/// Error dialog.
+	Error
+}
+
+impl From<MessageDialogKind> for rfd::MessageLevel {
+	fn from(kind: MessageDialogKind) -> Self {
+		match kind {
+			MessageDialogKind::Info => rfd::MessageLevel::Info,
+			MessageDialogKind::Warning => rfd::MessageLevel::Warning,
+			MessageDialogKind::Error => rfd::MessageLevel::Error
+		}
+	}
+}
+
 /// Blocking interfaces for the dialog APIs.
 ///
 /// The blocking APIs will block the current thread to execute instead of
@@ -153,9 +235,11 @@ pub mod blocking {
 	use std::path::{Path, PathBuf};
 	use std::sync::mpsc::sync_channel;
 
+	use super::{MessageDialogButtons, MessageDialogKind};
 	use crate::{Runtime, Window};
 
 	file_dialog_builder!();
+	message_dialog_builder!();
 
 	impl FileDialogBuilder {
 		/// Shows the dialog to select a single file.
@@ -251,6 +335,22 @@ pub mod blocking {
 		}
 	}
 
+	impl MessageDialogBuilder {
+		/// Shows a message dialog.
+		///
+		/// - In an "OK" dialog, it will return `true` when `OK` was pressed.
+		/// - In an "OK"/"Cancel" dialog, it will return `true` when `OK` was pressed.
+		/// - In an "Yes"/"No" dialog, it will return `true` when `Yes` was pressed.
+		pub fn show(self) -> bool {
+			let (tx, rx) = sync_channel(1);
+			let f = move |response| {
+				tx.send(response).unwrap();
+			};
+			run_dialog!(self.0.show(), f);
+			rx.recv().unwrap()
+		}
+	}
+
 	/// Displays a dialog with a message and an optional title with a "yes" and
 	/// a "no" button and wait for it to be closed.
 	///
@@ -317,7 +417,7 @@ pub mod blocking {
 		buttons: rfd::MessageButtons
 	) -> bool {
 		let (tx, rx) = sync_channel(1);
-		super::nonblocking::run_message_dialog(parent_window, title, message, buttons, move |response| {
+		super::nonblocking::run_message_dialog(parent_window, title, message, buttons, MessageDialogKind::Info, move |response| {
 			tx.send(response).unwrap();
 		});
 		rx.recv().unwrap()
@@ -327,9 +427,11 @@ pub mod blocking {
 mod nonblocking {
 	use std::path::{Path, PathBuf};
 
+	use super::{MessageDialogButtons, MessageDialogKind};
 	use crate::{Runtime, Window};
 
 	file_dialog_builder!();
+	message_dialog_builder!();
 
 	impl FileDialogBuilder {
 		/// Shows the dialog to select a single file.
@@ -437,6 +539,17 @@ mod nonblocking {
 		}
 	}
 
+	impl MessageDialogBuilder {
+		/// Shows a message dialog.
+		///
+		/// - In an "OK" dialog, it will return `true` when `OK` was pressed.
+		/// - In an "OK"/"Cancel" dialog, it will return `true` when `OK` was pressed.
+		/// - In an "Yes"/"No" dialog, it will return `true` when `Yes` was pressed.
+		pub fn show<F: FnOnce(bool) + Send + 'static>(self, f: F) {
+			run_dialog!(self.0.show(), f);
+		}
+	}
+
 	/// Displays a non-blocking dialog with a message and an optional title with
 	/// a "yes" and a "no" button.
 	///
@@ -456,7 +569,7 @@ mod nonblocking {
 	/// ```
 	#[allow(unused_variables)]
 	pub fn ask<R: Runtime, F: FnOnce(bool) + Send + 'static>(parent_window: Option<&Window<R>>, title: impl AsRef<str>, message: impl AsRef<str>, f: F) {
-		run_message_dialog(parent_window, title, message, rfd::MessageButtons::YesNo, f)
+		run_message_dialog(parent_window, title, message, rfd::MessageButtons::YesNo, MessageDialogKind::Info, f)
 	}
 
 	/// Displays a non-blocking dialog with a message and an optional title with
@@ -478,7 +591,7 @@ mod nonblocking {
 	/// ```
 	#[allow(unused_variables)]
 	pub fn confirm<R: Runtime, F: FnOnce(bool) + Send + 'static>(parent_window: Option<&Window<R>>, title: impl AsRef<str>, message: impl AsRef<str>, f: F) {
-		run_message_dialog(parent_window, title, message, rfd::MessageButtons::OkCancel, f)
+		run_message_dialog(parent_window, title, message, rfd::MessageButtons::OkCancel, MessageDialogKind::Info, f)
 	}
 
 	/// Displays a non-blocking message dialog.
@@ -497,7 +610,7 @@ mod nonblocking {
 	/// ```
 	#[allow(unused_variables)]
 	pub fn message<R: Runtime>(parent_window: Option<&Window<R>>, title: impl AsRef<str>, message: impl AsRef<str>) {
-		run_message_dialog(parent_window, title, message, rfd::MessageButtons::Ok, |_| {})
+		run_message_dialog(parent_window, title, message, rfd::MessageButtons::Ok, MessageDialogKind::Info, |_| {})
 	}
 
 	#[allow(unused_variables)]
@@ -506,6 +619,7 @@ mod nonblocking {
 		title: impl AsRef<str>,
 		message: impl AsRef<str>,
 		buttons: rfd::MessageButtons,
+		level: MessageDialogKind,
 		f: F
 	) {
 		let title = title.as_ref().to_string();
@@ -515,7 +629,7 @@ mod nonblocking {
 			.set_title(&title)
 			.set_description(&message)
 			.set_buttons(buttons)
-			.set_level(rfd::MessageLevel::Info);
+			.set_level(level.into());
 
 		#[cfg(any(windows, target_os = "macos"))]
 		{
