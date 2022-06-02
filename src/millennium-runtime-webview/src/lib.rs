@@ -2484,9 +2484,10 @@ fn on_window_close(window_id: WebviewId, mut windows: MutexGuard<'_, HashMap<Web
 fn center_window(window: &Window, window_size: MillenniumPhysicalSize<u32>) -> Result<()> {
 	if let Some(monitor) = window.current_monitor() {
 		let screen_size = monitor.size();
+		let monitor_pos = monitor.position();
 		let x = (screen_size.width as i32 - window_size.width as i32) / 2;
 		let y = (screen_size.height as i32 - window_size.height as i32) / 2;
-		window.set_outer_position(MillenniumPhysicalPosition::new(x, y));
+		window.set_outer_position(MillenniumPhysicalPosition::new(monitor_pos.x + x, monitor_pos.y + y));
 		Ok(())
 	} else {
 		Err(Error::FailedToGetMonitor)
