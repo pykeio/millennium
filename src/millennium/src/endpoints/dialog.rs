@@ -85,7 +85,7 @@ pub enum Cmd {
 	#[cmd(dialog_save, "dialog > save")]
 	SaveDialog { options: SaveDialogOptions },
 	#[cmd(dialog_message, "dialog > message")]
-	MessageDialog { message: String },
+	MessageDialog { title: Option<String>, message: String },
 	#[cmd(dialog_ask, "dialog > ask")]
 	AskDialog { title: Option<String>, message: String },
 	#[cmd(dialog_confirm, "dialog > confirm")]
@@ -167,8 +167,8 @@ impl Cmd {
 	}
 
 	#[module_command_handler(dialog_message)]
-	fn message_dialog<R: Runtime>(context: InvokeContext<R>, message: String) -> super::Result<()> {
-		crate::api::dialog::blocking::message(Some(&context.window), &context.window.app_handle.package_info().name, message);
+	fn message_dialog<R: Runtime>(context: InvokeContext<R>, title: Option<String>, message: String) -> super::Result<()> {
+		crate::api::dialog::blocking::message(Some(&context.window), title.unwrap_or_else(|| context.window.app_handle.package_info().name.clone()), message);
 		Ok(())
 	}
 
