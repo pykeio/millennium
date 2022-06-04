@@ -445,10 +445,11 @@ impl<R: Runtime> WindowManager<R> {
 			pending.register_uri_scheme_protocol("asset", move |request| {
 				let parsed_path = Url::parse(request.uri())?;
 				let filtered_path = &parsed_path[..Position::AfterPath];
+				// safe to unwrap: request.uri() always starts with this prefix
 				#[cfg(target_os = "windows")]
-				let path = filtered_path.trim_start_matches("asset://localhost/");
+				let path = filtered_path.strip_prefix("asset://localhost/").unwrap();
 				#[cfg(not(target_os = "windows"))]
-				let path = filtered_path.trim_start_matches("asset://");
+				let path = filtered_path.strip_prefix("asset://").unwrap();
 				let path = percent_encoding::percent_decode(path.as_bytes()).decode_utf8_lossy().to_string();
 
 				if let Err(e) = SafePathBuf::new(path.clone().into()) {
@@ -718,7 +719,9 @@ impl<R: Runtime> WindowManager<R> {
 				// ignore query string and fragment
 				.next()
 				.unwrap()
-				.trim_start_matches("millennium://localhost")
+				// safe to unwrap: request.uri() always starts with this prefix
+				.strip_prefix("millennium://localhost")
+				.unwrap()
 				.to_string();
 			let asset = manager.get_asset(path)?;
 			let mut builder = HttpResponseBuilder::new()
