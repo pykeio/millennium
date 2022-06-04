@@ -27,6 +27,7 @@ millennium-codegen = { version = "1.0.0-beta.2", path = "../millennium-codegen",
 millennium-utils = { version = "1.0.0-beta.2", path = "../millennium-utils", features = [ "build", "resources" ] }
 cargo_toml = "0.11"
 serde_json = "1"
+heck = "0.4"
 
 [target."cfg(windows)".dependencies]
 winres = "0.1"
