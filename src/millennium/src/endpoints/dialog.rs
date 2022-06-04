@@ -26,7 +26,6 @@ use crate::Runtime;
 #[cfg(any(dialog_open, dialog_save))]
 use crate::{api::dialog::blocking::FileDialogBuilder, Manager, Scopes};
 
-#[cfg(any(dialog_message, dialog_ask, dialog_confirm))]
 macro_rules! message_dialog {
 	($fn_name: ident, $allowlist: ident, $buttons: expr) => {
 		#[module_command_handler($allowlist)]
