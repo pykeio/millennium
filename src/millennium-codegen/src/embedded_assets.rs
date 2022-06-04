@@ -60,7 +60,10 @@ pub enum EmbeddedAssetsError {
 	Walkdir { path: PathBuf, error: walkdir::Error },
 
 	#[error("OUT_DIR env var is not set, do you have a build script?")]
-	OutDir
+	OutDir,
+
+	#[error("Semver error: {0}")]
+	Version(#[from] semver::Error)
 }
 
 /// Represent a directory of assets that are compressed and embedded.
@@ -255,7 +258,7 @@ impl EmbeddedAssets {
 				.try_fold(CompressState { csp_hashes, assets: HashMap::new() }, move |mut state, (prefix, entry)| {
 					let (key, asset) = Self::compress_file(&prefix, entry.path(), &map, &mut state.csp_hashes)?;
 					state.assets.insert(key, asset);
-					Ok(state)
+					Result::<_, EmbeddedAssetsError>::Ok(state)
 				})?;
 
 		Ok(Self { assets, csp_hashes })

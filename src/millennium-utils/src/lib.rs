@@ -20,6 +20,7 @@
 
 use std::fmt::Display;
 
+use semver::Version;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 pub mod assets;
@@ -40,7 +41,7 @@ pub struct PackageInfo {
 	/// App name
 	pub name: String,
 	/// App version
-	pub version: String,
+	pub version: Version,
 	/// The crate authors.
 	pub authors: &'static str,
 	/// The crate description.

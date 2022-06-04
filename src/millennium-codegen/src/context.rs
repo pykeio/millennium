@@ -14,8 +14,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::ffi::OsStr;
-use std::path::{Path, PathBuf};
+use std::{
+	ffi::OsStr,
+	path::{Path, PathBuf},
+	str::FromStr
+};
 
 use millennium_utils::assets::AssetKey;
 use millennium_utils::config::{AppUrl, Config, PatternKind, WindowUrl};
@@ -180,6 +183,7 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 		quote!(env!("CARGO_PKG_NAME").to_string())
 	};
 	let package_version = if let Some(version) = &config.package.version {
+		semver::Version::from_str(version)?;
 		quote!(#version.to_string())
 	} else {
 		quote!(env!("CARGO_PKG_VERSION").to_string())
@@ -187,7 +191,7 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 	let package_info = quote!(
 		#root::PackageInfo {
 			name: #package_name,
-			version: #package_version,
+			version: #package_version.parse().unwrap(),
 			authors: env!("CARGO_PKG_AUTHORS"),
 			description: env!("CARGO_PKG_DESCRIPTION")
 		}

@@ -80,7 +80,7 @@ pub fn mock_context<A: Assets>(assets: A) -> crate::Context<A> {
 		system_tray_icon: None,
 		package_info: crate::PackageInfo {
 			name: "test".into(),
-			version: "0.1.0".into(),
+			version: "0.1.0".parse().unwrap(),
 			authors: "Millennium",
 			description: "Millennium test"
 		},

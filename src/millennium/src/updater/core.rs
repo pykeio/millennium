@@ -52,10 +52,7 @@ use crate::api::file::Compression;
 #[cfg(feature = "updater")]
 use crate::api::file::{ArchiveFormat, Extract, Move};
 use crate::{
-	api::{
-		http::{ClientBuilder, HttpRequestBuilder},
-		version
-	},
+	api::http::{ClientBuilder, HttpRequestBuilder},
 	AppHandle, Manager, Runtime
 };
 
@@ -72,14 +69,14 @@ pub enum RemoteReleaseInner {
 #[derive(Debug, Serialize)]
 pub struct RemoteRelease {
 	/// Version to install
-	pub version: Version,
+	version: Version,
 	/// Release notes.
-	pub notes: Option<String>,
+	notes: Option<String>,
 	/// Release date.
-	pub pub_date: String,
+	pub_date: String,
 	/// Release data.
 	#[serde(flatten)]
-	pub data: RemoteReleaseInner
+	data: RemoteReleaseInner
 }
 
 impl<'de> Deserialize<'de> for RemoteRelease {
@@ -152,18 +149,22 @@ where
 }
 
 impl RemoteRelease {
+	/// The semver version of the release.
 	pub fn version(&self) -> &Version {
 		&self.version
 	}
 
-	pub fn notes(&self) -> &Option<String> {
-		&self.notes
+	/// Release notes.
+	pub fn notes(&self) -> Option<&String> {
+		self.notes.as_ref()
 	}
 
+	/// The date the release was published.
 	pub fn pub_date(&self) -> &String {
 		&self.pub_date
 	}
 
+	/// Get the download URL for this release for the given target.
 	pub fn download_url(&self, target: &str) -> Result<&Url> {
 		match self.data {
 			RemoteReleaseInner::Dynamic(ref platform) => Ok(&platform.url),
@@ -173,6 +174,7 @@ impl RemoteRelease {
 		}
 	}
 
+	/// The signature for the release for the given target.
 	pub fn signature(&self, target: &str) -> Result<&String> {
 		match self.data {
 			RemoteReleaseInner::Dynamic(ref platform) => Ok(&platform.signature),
@@ -198,7 +200,7 @@ pub struct UpdateBuilder<R: Runtime> {
 	/// Application handle.
 	pub app: AppHandle<R>,
 	/// Current version we are running to compare with announced version
-	pub current_version: String,
+	pub current_version: Version,
 	/// The URLs to checks updates. We suggest at least one fallback on a
 	/// different domain.
 	pub urls: Vec<String>,
@@ -207,7 +209,7 @@ pub struct UpdateBuilder<R: Runtime> {
 	pub target: Option<String>,
 	/// The current executable path. Default is automatically extracted.
 	pub executable_path: Option<PathBuf>,
-	should_install: Option<Box<dyn FnOnce(&str, &str) -> bool + Send>>,
+	should_install: Option<Box<dyn FnOnce(&Version, &RemoteRelease) -> bool + Send>>,
 	timeout: Option<Duration>,
 	headers: HeaderMap
 }
@@ -234,7 +236,7 @@ impl<R: Runtime> UpdateBuilder<R> {
 			urls: Vec::new(),
 			target: None,
 			executable_path: None,
-			current_version: env!("CARGO_PKG_VERSION").into(),
+			current_version: env!("CARGO_PKG_VERSION").parse().unwrap(),
 			should_install: None,
 			timeout: None,
 			headers: Default::default()
@@ -261,8 +263,8 @@ impl<R: Runtime> UpdateBuilder<R> {
 	/// Set the current app version, used to compare against the latest
 	/// available version. The `cargo_crate_version!` macro can be used to pull
 	/// the version from your `Cargo.toml`
-	pub fn current_version(mut self, ver: impl Into<String>) -> Self {
-		self.current_version = ver.into();
+	pub fn current_version(mut self, ver: Version) -> Self {
+		self.current_version = ver;
 		self
 	}
 
@@ -279,7 +281,7 @@ impl<R: Runtime> UpdateBuilder<R> {
 		self
 	}
 
-	pub fn should_install<F: FnOnce(&str, &str) -> bool + Send + 'static>(mut self, f: F) -> Self {
+	pub fn should_install<F: FnOnce(&Version, &RemoteRelease) -> bool + Send + 'static>(mut self, f: F) -> Self {
 		self.should_install.replace(Box::new(f));
 		self
 	}
@@ -354,7 +356,7 @@ impl<R: Runtime> UpdateBuilder<R> {
 			// The main objective is if the update URL is defined via the Cargo.toml
 			// the URL will be generated dynamicly
 			let fixed_link = url
-				.replace("{{current_version}}", &self.current_version)
+				.replace("{{current_version}}", &self.current_version.to_string())
 				.replace("{{target}}", &target)
 				.replace("{{arch}}", arch);
 
@@ -403,9 +405,9 @@ impl<R: Runtime> UpdateBuilder<R> {
 
 		// did the announced version is greated than our current one?
 		let should_update = if let Some(comparator) = self.should_install.take() {
-			comparator(&self.current_version, &final_release.version().to_string())
+			comparator(&self.current_version, &final_release)
 		} else {
-			version::is_greater(&self.current_version, &final_release.version().to_string()).unwrap_or(false)
+			final_release.version() > &self.current_version
 		};
 
 		headers.remove("Accept");
@@ -418,9 +420,9 @@ impl<R: Runtime> UpdateBuilder<R> {
 			should_update,
 			version: final_release.version().to_string(),
 			date: final_release.pub_date().to_string(),
-			current_version: self.current_version.to_owned(),
+			current_version: self.current_version,
 			download_url: final_release.download_url(&json_target)?.to_owned(),
-			body: final_release.notes().to_owned(),
+			body: final_release.notes().cloned(),
 			signature: final_release.signature(&json_target)?.to_owned(),
 			#[cfg(target_os = "windows")]
 			with_elevated_task: final_release.with_elevated_task(&json_target)?,
@@ -445,7 +447,7 @@ pub struct Update<R: Runtime> {
 	/// Version announced
 	pub version: String,
 	/// Running version
-	pub current_version: String,
+	pub current_version: Version,
 	/// Update publish date
 	pub date: String,
 	/// Target
