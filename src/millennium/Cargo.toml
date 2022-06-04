@@ -24,8 +24,8 @@ features = [
 	"custom-protocol",
 	"api-all",
 	"cli",
-	"__updater-docs",
-	"__fs-extract-api-docs",
+	"updater",
+	"fs-extract-api",
 	"system-tray",
 	"devtools",
 	"http-multipart",
@@ -136,12 +136,10 @@ gtk-tray = [ "millennium-runtime-webview/gtk-tray" ]
 isolation = [ "millennium-utils/isolation", "millennium-macros/isolation" ]
 custom-protocol = [ "millennium-macros/custom-protocol" ]
 updater = [ "minisign-verify", "base64", "http-api", "dialog-ask", "fs-extract-api" ]
-__updater-docs = [ "minisign-verify", "base64", "http-api", "dialog-ask" ]
 http-api = [ "attohttpc", "bytes" ]
 http-multipart = [ "attohttpc/multipart-form", "reqwest/multipart" ]
 shell-open-api = [ "open", "regex", "millennium-macros/shell-scope" ]
 fs-extract-api = [ "zip" ]
-__fs-extract-api-docs = []
 reqwest-client = [ "reqwest" ]
 process-command-api = [ "shared_child", "os_pipe" ]
 global-shortcut = [ "millennium-runtime/global-shortcut", "millennium-runtime-webview/global-shortcut" ]

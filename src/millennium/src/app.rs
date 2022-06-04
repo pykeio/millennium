@@ -517,7 +517,7 @@ macro_rules! shared_app_impl {
 			/// 	.setup(|app| {
 			/// 		let handle = app.handle();
 			/// 		millennium::async_runtime::spawn(async move {
-			#[cfg_attr(any(feature = "updater", feature = "__updater-docs"), doc = r#"			let response = handle.updater().check().await;"#)]
+			#[cfg_attr(feature = "updater", doc = r#"			let response = handle.updater().check().await;"#)]
 			/// 		});
 			/// 		Ok(())
 			/// 	});
