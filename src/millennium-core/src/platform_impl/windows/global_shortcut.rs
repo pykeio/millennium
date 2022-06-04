@@ -80,7 +80,7 @@ impl ShortcutManager {
 	}
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GlobalShortcut {
 	pub(crate) accelerator: Accelerator
 }

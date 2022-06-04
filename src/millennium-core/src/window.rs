@@ -1051,7 +1051,7 @@ impl Default for CursorIcon {
 /// Fullscreen modes.
 #[non_exhaustive]
 #[allow(clippy::large_enum_variant)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Fullscreen {
 	Exclusive(VideoMode),
 
@@ -1060,14 +1060,14 @@ pub enum Fullscreen {
 }
 
 #[non_exhaustive]
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Theme {
 	Light,
 	Dark
 }
 
 #[non_exhaustive]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UserAttentionType {
 	/// ## Platform-specific
 	/// - **macOS:** Bounces the dock icon until the application is in focus.

@@ -21,7 +21,7 @@
 
 /// <https://developer.apple.com/documentation/appkit/nsvisualeffectview/material>
 #[repr(u64)]
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NSVisualEffectMaterial {
 	#[deprecated(
 		since = "macOS 10.14",

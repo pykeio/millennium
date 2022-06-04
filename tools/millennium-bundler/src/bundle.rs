@@ -27,7 +27,7 @@ mod updater_bundle;
 #[cfg(target_os = "windows")]
 mod windows;
 
-use std::path::PathBuf;
+use std::{fmt::Write, path::PathBuf};
 
 use log::{info, warn};
 pub use settings::{WindowsSettings, WixLanguage, WixLanguageConfig, WixSettings};
@@ -92,7 +92,7 @@ pub fn bundle_project(settings: Settings) -> crate::Result<Vec<Bundle>> {
 			if bundle.package_type == crate::PackageType::Updater {
 				note = " (updater)";
 			}
-			printable_paths.push_str(&format!("\t\t{}{}\n", path.display(), note));
+			let _ = writeln!(printable_paths, "\t\t{}{}\n", path.display(), note);
 		}
 	}
 

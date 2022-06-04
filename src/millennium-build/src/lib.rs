@@ -227,7 +227,7 @@ pub fn try_build(attributes: Attributes) -> Result<()> {
 		copy_binaries(ResourcePaths::new(external_binaries(paths, &target_triple).as_slice(), true), &target_triple, target_dir)?;
 	}
 
-	#[allow(unused_mut)]
+	#[allow(unused_mut, clippy::redundant_clone)]
 	let mut resources = config.millennium.bundle.resources.clone().unwrap_or_default();
 	#[cfg(target_os = "linux")]
 	if let Some(tray) = config.millennium.system_tray {

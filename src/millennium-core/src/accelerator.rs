@@ -26,7 +26,7 @@ use std::{
 use crate::keyboard::{KeyCode, ModifiersState, NativeKeyCode};
 
 /// Base `Accelerator` functions.
-#[derive(Debug, Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Accelerator {
 	id: Option<AcceleratorId>,
 	pub(crate) mods: ModifiersState,
@@ -107,7 +107,7 @@ pub enum SysMods {
 /// This is intended to be clearer than [`ModifiersState`], when describing
 /// accelerators.
 #[non_exhaustive]
-#[derive(Debug, Clone, Copy, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RawMods {
 	None,
 	Alt,

@@ -253,7 +253,7 @@ fn set_default_path(mut dialog_builder: FileDialogBuilder, default_path: PathBuf
 			if parent.components().count() > 0 {
 				dialog_builder = dialog_builder.set_directory(parent);
 			}
-			dialog_builder = dialog_builder.set_file_name(&file_name.to_string_lossy().to_string());
+			dialog_builder = dialog_builder.set_file_name(&file_name.to_string_lossy());
 		} else {
 			dialog_builder = dialog_builder.set_directory(default_path);
 		}

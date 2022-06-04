@@ -16,6 +16,7 @@
 
 use std::{
 	collections::HashMap,
+	fmt::Write,
 	fs::{read_dir, read_to_string},
 	panic,
 	path::{Path, PathBuf},
@@ -387,9 +388,9 @@ fn crate_version(millennium_dir: &Path, manifest: Option<&CargoManifest>, lock: 
 							is_git = true;
 							let mut v = format!("git:{}", g);
 							if let Some(branch) = p.branch {
-								v.push_str(&format!("&branch={}", branch));
+								let _ = write!(v, "&branch={}", branch);
 							} else if let Some(rev) = p.rev {
-								v.push_str(&format!("#{}", rev));
+								let _ = write!(v, "#{}", rev);
 							}
 							v
 						} else {

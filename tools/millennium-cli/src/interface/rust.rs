@@ -211,7 +211,7 @@ impl AppSettings {
 						.iter()
 						.any(|bin| bin.name() == name || path.ends_with(bin.src_path().unwrap_or(&"".to_string())));
 					if !bin_exists {
-						binaries.push(BundleBinary::new(format!("{}{}", name.to_string_lossy().to_string(), &binary_extension), false))
+						binaries.push(BundleBinary::new(format!("{}{}", name.to_string_lossy(), &binary_extension), false))
 					}
 				}
 			}

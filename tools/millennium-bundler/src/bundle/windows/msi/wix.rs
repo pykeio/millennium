@@ -510,7 +510,7 @@ pub fn build_wix_app_installer(settings: &Settings, wix_toolset_path: &Path) -> 
 			to_json(
 				settings
 					.updater()
-					.and_then(|updater| updater.msiexec_args.clone())
+					.and_then(|updater| updater.msiexec_args)
 					.map(|args| args.join(" "))
 					.unwrap_or_else(|| "/passive".to_string())
 			)

@@ -94,7 +94,7 @@ impl SystemTray {
 }
 
 /// Type of user attention requested on a window.
-#[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
+#[derive(Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(tag = "type")]
 pub enum UserAttentionType {
 	/// ## Platform-specific

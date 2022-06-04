@@ -190,7 +190,7 @@ struct WINDOWCOMPOSITIONATTRIBDATA {
 	cbData: usize
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 #[repr(C)]
 enum ACCENT_STATE {
 	ACCENT_DISABLED = 0,

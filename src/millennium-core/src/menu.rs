@@ -412,7 +412,7 @@ impl MenuId {
 
 /// Type of menu the click is originating from.
 #[non_exhaustive]
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum MenuType {
 	/// Menubar menu item.
 	MenuBar,
