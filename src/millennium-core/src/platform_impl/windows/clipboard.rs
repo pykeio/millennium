@@ -78,6 +78,7 @@ impl Clipboard {
 						continue;
 					}
 				};
+				#[cfg_attr(not(debug_assertions), allow(unused_variables))]
 				if let Err(err) = SetClipboardData(format_id, handle) {
 					#[cfg(debug_assertions)]
 					println!("failed to set clipboard for fmt {}, error: {}", &format.identifier, err);
