@@ -58,7 +58,7 @@ millennium-macros = { version = "1.0.0-beta.2", path = "../millennium-macros" }
 millennium-utils = { version = "1.0.0-beta.2", features = [ "resources" ], path = "../millennium-utils" }
 millennium-runtime-webview = { version = "1.0.0-beta.2", path = "../millennium-runtime-webview", optional = true }
 rand = "0.8"
-semver = "1.0"
+semver = { version = "1.0", features = [ "serde" ] }
 serde_repr = "0.1"
 state = "0.5"
 tar = "0.4.36"

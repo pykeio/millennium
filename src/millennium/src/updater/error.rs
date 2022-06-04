@@ -71,9 +71,6 @@ pub enum Error {
 	/// On client side, it's important to catch this error.
 	#[error("No updates available")]
 	UpToDate,
-	/// The server did not include the signature field.
-	#[error("The `{0}` field was not set in the updater response.")]
-	MissingResponseField(&'static str),
 	/// The updater responded with an invalid signature type.
 	#[error("The updater response field `{0}` has an invalid type; expected {1}, but found {2}.")]
 	InvalidResponseType(&'static str, &'static str, serde_json::Value),

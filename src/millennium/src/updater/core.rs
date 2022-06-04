@@ -20,10 +20,12 @@ use std::ffi::OsStr;
 #[cfg(feature = "updater")]
 use std::io::Seek;
 use std::{
-	env, fmt,
+	collections::HashMap,
+	env,
+	fmt::{self},
 	io::{Cursor, Read},
 	path::{Path, PathBuf},
-	str::from_utf8,
+	str::{from_utf8, FromStr},
 	time::Duration
 };
 #[cfg(target_os = "windows")]
@@ -40,6 +42,9 @@ use http::{
 };
 use millennium_utils::{platform::current_exe, Env};
 use minisign_verify::{PublicKey, Signature};
+use semver::Version;
+use serde::{de::Error as DeError, Deserialize, Deserializer, Serialize};
+use url::Url;
 
 use super::error::{Error, Result};
 #[cfg(all(feature = "updater", not(target_os = "windows")))]
@@ -54,151 +59,133 @@ use crate::{
 	AppHandle, Manager, Runtime
 };
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(untagged)]
+pub enum RemoteReleaseInner {
+	Dynamic(ReleaseManifestPlatform),
+	Static { platforms: HashMap<String, ReleaseManifestPlatform> }
+}
+
+/// Information about a release returned by the remote update server.
+///
+/// This type can have one of two shapes: Server format (dynamic format) and static format.
+#[derive(Debug, Serialize)]
 pub struct RemoteRelease {
 	/// Version to install
-	pub version: String,
-	/// Release date
-	pub date: String,
-	/// Download URL for current platform
-	pub download_url: String,
-	/// Update short description
-	pub body: Option<String>,
-	/// Optional signature for the current platform
+	pub version: Version,
+	/// Release notes.
+	pub notes: Option<String>,
+	/// Release date.
+	pub pub_date: String,
+	/// Release data.
+	#[serde(flatten)]
+	pub data: RemoteReleaseInner
+}
+
+impl<'de> Deserialize<'de> for RemoteRelease {
+	fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+	where
+		D: Deserializer<'de>
+	{
+		#[derive(Deserialize)]
+		struct InnerRemoteRelease {
+			#[serde(alias = "name", deserialize_with = "parse_version")]
+			version: Version,
+			notes: Option<String>,
+			pub_date: String,
+			platforms: Option<HashMap<String, ReleaseManifestPlatform>>,
+			// dynamic platform response
+			url: Option<Url>,
+			signature: Option<String>,
+			#[cfg(target_os = "windows")]
+			#[serde(default)]
+			with_elevated_task: bool
+		}
+
+		let release = InnerRemoteRelease::deserialize(deserializer)?;
+
+		Ok(RemoteRelease {
+			version: release.version,
+			notes: release.notes,
+			pub_date: release.pub_date,
+			data: if let Some(platforms) = release.platforms {
+				RemoteReleaseInner::Static { platforms }
+			} else {
+				RemoteReleaseInner::Dynamic(ReleaseManifestPlatform {
+					url: release
+						.url
+						.ok_or_else(|| DeError::custom("the `url` field was not set on the updater response"))?,
+					signature: release
+						.signature
+						.ok_or_else(|| DeError::custom("the `signature` field was not set on the updater response"))?,
+					#[cfg(target_os = "windows")]
+					with_elevated_task: release.with_elevated_task
+				})
+			}
+		})
+	}
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ReleaseManifestPlatform {
+	/// Download URL for the platform.
+	pub url: Url,
+	/// Signature for the platform.
 	pub signature: String,
 	#[cfg(target_os = "windows")]
-	/// Optional: Windows only try to use elevated task
+	#[serde(default)]
+	/// On Windows, only attempt to run the updater with elevated privileges.
 	pub with_elevated_task: bool
 }
 
+fn parse_version<'de, D>(deserializer: D) -> std::result::Result<Version, D::Error>
+where
+	D: serde::Deserializer<'de>
+{
+	let str = String::deserialize(deserializer)?;
+	Version::from_str(str.trim_start_matches('v')).map_err(serde::de::Error::custom)
+}
+
 impl RemoteRelease {
-	// Read JSON and confirm this is a valid Schema
-	fn from_release(release: &serde_json::Value, target: &str) -> Result<RemoteRelease> {
-		// Version or name is required for static and dynamic JSON
-		// if `version` is not announced, we fallback to `name` (can be the tag name
-		// example v1.0.0)
-		let version = match release.get("version") {
-			Some(version) => version
-				.as_str()
-				.ok_or_else(|| Error::InvalidResponseType("version", "string", version.clone()))?
-				.trim_start_matches('v')
-				.to_string(),
-			None => {
-				let name = release.get("name").ok_or(Error::MissingResponseField("version or name"))?;
-				name.as_str()
-					.ok_or_else(|| Error::InvalidResponseType("name", "string", name.clone()))?
-					.trim_start_matches('v')
-					.to_string()
-			}
-		};
+	pub fn version(&self) -> &Version {
+		&self.version
+	}
 
-		// pub_date is required default is: `N/A` if not provided by the remote JSON
-		let date = if let Some(date) = release.get("pub_date") {
-			date.as_str()
-				.map(|d| d.to_string())
-				.ok_or_else(|| Error::InvalidResponseType("pub_date", "string", date.clone()))?
-		} else {
-			"N/A".into()
-		};
+	pub fn notes(&self) -> &Option<String> {
+		&self.notes
+	}
 
-		// body is optional to build our update
-		let body = if let Some(notes) = release.get("notes") {
-			Some(
-				notes
-					.as_str()
-					.map(|n| n.to_string())
-					.ok_or_else(|| Error::InvalidResponseType("notes", "string", notes.clone()))?
-			)
-		} else {
-			None
-		};
+	pub fn pub_date(&self) -> &String {
+		&self.pub_date
+	}
 
-		let download_url;
-		#[cfg(target_os = "windows")]
-		let with_elevated_task;
-		let signature;
-
-		match release.get("platforms") {
-			// Did we have a platforms field?
-			// If we did, that mean it's a static JSON.
-			// The main difference with STATIC and DYNAMIC is static announce ALL platforms
-			// and dynamic announce only the current platform.
-			//
-			// This could be used if you do NOT want an update server and use
-			// a GIST, S3 or any static JSON file to announce your updates.
-			//
-			// Notes:
-			// Dynamic help to reduce bandwidth usage or to intelligently update your clients
-			// based on the request you give. The server can remotely drive behaviors like
-			// rolling back or phased rollouts.
-			Some(platforms) => {
-				// make sure we have our target available
-				if let Some(current_target_data) = platforms.get(target) {
-					// use provided signature if available
-					signature = current_target_data
-						.get("signature")
-						.ok_or(Error::MissingResponseField("signature"))
-						.and_then(|signature| {
-							signature
-								.as_str()
-								.ok_or_else(|| Error::InvalidResponseType("signature", "string", signature.clone()))
-						})?;
-					// Download URL is required
-					let url = current_target_data.get("url").ok_or(Error::MissingResponseField("url"))?;
-					download_url = url
-						.as_str()
-						.ok_or_else(|| Error::InvalidResponseType("url", "string", url.clone()))?
-						.to_string();
-					#[cfg(target_os = "windows")]
-					{
-						with_elevated_task = current_target_data
-							.get("with_elevated_task")
-							.map(|v| {
-								v.as_bool()
-									.ok_or_else(|| Error::InvalidResponseType("with_elevated_task", "boolean", v.clone()))
-							})
-							.unwrap_or(Ok(false))?;
-					}
-				} else {
-					// make sure we have an available platform from the static
-					return Err(Error::TargetNotFound(target.into()));
-				}
-			}
-			// We don't have the `platforms` field announced, let's assume our
-			// download URL is at the root of the JSON.
-			None => {
-				signature = release
-					.get("signature")
-					.ok_or(Error::MissingResponseField("signature"))
-					.and_then(|signature| {
-						signature
-							.as_str()
-							.ok_or_else(|| Error::InvalidResponseType("signature", "string", signature.clone()))
-					})?;
-				let url = release.get("url").ok_or(Error::MissingResponseField("url"))?;
-				download_url = url
-					.as_str()
-					.ok_or_else(|| Error::InvalidResponseType("url", "string", url.clone()))?
-					.to_string();
-				#[cfg(target_os = "windows")]
-				{
-					with_elevated_task = match release.get("with_elevated_task") {
-						Some(with_elevated_task) => with_elevated_task.as_bool().unwrap_or(false),
-						None => false
-					};
-				}
-			}
+	pub fn download_url(&self, target: &str) -> Result<&Url> {
+		match self.data {
+			RemoteReleaseInner::Dynamic(ref platform) => Ok(&platform.url),
+			RemoteReleaseInner::Static { ref platforms } => platforms
+				.get(target)
+				.map_or(Err(Error::TargetNotFound(target.to_string())), |p| Ok(&p.url))
 		}
-		// Return our formatted release
-		Ok(RemoteRelease {
-			version,
-			date,
-			download_url,
-			body,
-			signature: signature.to_string(),
-			#[cfg(target_os = "windows")]
-			with_elevated_task
-		})
+	}
+
+	pub fn signature(&self, target: &str) -> Result<&String> {
+		match self.data {
+			RemoteReleaseInner::Dynamic(ref platform) => Ok(&platform.signature),
+			RemoteReleaseInner::Static { ref platforms } => platforms
+				.get(target)
+				.map_or(Err(Error::TargetNotFound(target.to_string())), |platform| Ok(&platform.signature))
+		}
+	}
+
+	#[cfg(target_os = "windows")]
+	/// Optional: Windows only try to use elevated task
+	pub fn with_elevated_task(&self, target: &str) -> Result<bool> {
+		match self.data {
+			RemoteReleaseInner::Dynamic(ref platform) => Ok(platform.with_elevated_task),
+			RemoteReleaseInner::Static { ref platforms } => platforms
+				.get(target)
+				.map_or(Err(Error::TargetNotFound(target.to_string())), |platform| Ok(platform.with_elevated_task))
+		}
 	}
 }
 
@@ -385,7 +372,7 @@ impl<R: Runtime> UpdateBuilder<R> {
 						return Err(Error::UpToDate);
 					};
 					// Convert the remote result to our local struct
-					let built_release = RemoteRelease::from_release(&res.data, &json_target);
+					let built_release = serde_json::from_value(res.data).map_err(Into::into);
 					// make sure all went well and the remote data is compatible
 					// with what we need locally
 					match built_release {
@@ -411,9 +398,9 @@ impl<R: Runtime> UpdateBuilder<R> {
 
 		// did the announced version is greated than our current one?
 		let should_update = if let Some(comparator) = self.should_install.take() {
-			comparator(&self.current_version, &final_release.version)
+			comparator(&self.current_version, &final_release.version().to_string())
 		} else {
-			version::is_greater(&self.current_version, &final_release.version).unwrap_or(false)
+			version::is_greater(&self.current_version, &final_release.version().to_string()).unwrap_or(false)
 		};
 
 		headers.remove("Accept");
@@ -424,14 +411,14 @@ impl<R: Runtime> UpdateBuilder<R> {
 			target,
 			extract_path,
 			should_update,
-			version: final_release.version,
-			date: final_release.date,
+			version: final_release.version().to_string(),
+			date: final_release.pub_date().to_string(),
 			current_version: self.current_version.to_owned(),
-			download_url: final_release.download_url,
-			body: final_release.body,
-			signature: final_release.signature,
+			download_url: final_release.download_url(&json_target)?.to_owned(),
+			body: final_release.notes().to_owned(),
+			signature: final_release.signature(&json_target)?.to_owned(),
 			#[cfg(target_os = "windows")]
-			with_elevated_task: final_release.with_elevated_task,
+			with_elevated_task: final_release.with_elevated_task(&json_target)?,
 			timeout: self.timeout,
 			headers
 		})
@@ -462,7 +449,7 @@ pub struct Update<R: Runtime> {
 	/// Extract path
 	extract_path: PathBuf,
 	/// Download URL announced
-	download_url: String,
+	download_url: Url,
 	/// Signature announced
 	signature: String,
 	#[cfg(target_os = "windows")]
