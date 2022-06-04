@@ -310,7 +310,7 @@ pub enum UpdaterEvent {
 		/// The update body.
 		body: String,
 		/// The update release date.
-		date: String,
+		date: Option<time::OffsetDateTime>,
 		/// The update version.
 		version: String
 	},
