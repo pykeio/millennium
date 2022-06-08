@@ -63,8 +63,8 @@ pub struct Options {
 	/// Target triple to build against
 	#[clap(short, long)]
 	target: Option<String>,
-	/// List of cargo features to activate
-	#[clap(short, long)]
+	/// Space or comma-separated list of Cargo features to activate
+	#[clap(short, long, multiple_occurrences(true), multiple_values(true))]
 	features: Option<Vec<String>>,
 	/// Exit on panic
 	#[clap(short, long)]

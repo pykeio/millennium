@@ -47,11 +47,11 @@ pub struct Options {
 	/// `aarch64-apple-darwin` and `x86_64-apple-darwin` targets to be installed.
 	#[clap(short, long)]
 	target: Option<String>,
-	/// List of cargo features to activate
-	#[clap(short, long)]
+	/// Space or comma-separated list of Cargo features to activate.
+	#[clap(short, long, multiple_occurrences(true), multiple_values(true))]
 	features: Option<Vec<String>>,
-	/// List of bundles to package
-	#[clap(short, long)]
+	/// Space or comma-separated list of bundles to package
+	#[clap(short, long, multiple_occurrences(true), multiple_values(true))]
 	bundles: Option<Vec<String>>,
 	/// JSON string or path to JSON file to merge with .millenniumrc
 	#[clap(short, long)]
@@ -228,7 +228,10 @@ pub fn command(options: Options) -> Result<()> {
 	if config_.millennium.bundle.active {
 		let package_types = if let Some(names) = options.bundles {
 			let mut types = vec![];
-			for name in names {
+			for name in names
+				.into_iter()
+				.flat_map(|n| n.split(',').map(|s| s.to_string()).collect::<Vec<String>>())
+			{
 				if name == "none" {
 					break;
 				}
