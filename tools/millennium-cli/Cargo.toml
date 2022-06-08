@@ -12,7 +12,6 @@ edition = "2021"
 include = [
 	"src/",
 	"/templates",
-	"MergeModules/",
 	"scripts/",
 	"*.json",
 	"*.rs",

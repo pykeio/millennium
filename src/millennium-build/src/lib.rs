@@ -24,6 +24,8 @@ use millennium_utils::resources::{external_binaries, resource_relpath, ResourceP
 
 #[cfg(feature = "codegen")]
 mod codegen;
+#[cfg(windows)]
+mod static_vcruntime;
 
 #[cfg(feature = "codegen")]
 #[cfg_attr(doc_cfg, doc(cfg(feature = "codegen")))]
@@ -197,6 +199,9 @@ pub fn try_build(attributes: Attributes) -> Result<()> {
 	} else {
 		serde_json::from_value(millennium_utils::config::parse::read_from(std::env::current_dir().unwrap())?)?
 	};
+
+	#[cfg(windows)]
+	static_vcruntime::build();
 
 	cfg_alias("dev", !has_feature("custom-protocol"));
 
