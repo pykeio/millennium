@@ -18,11 +18,16 @@
 set -euxo pipefail
 
 export ARCH={{arch}}
+APPIMAGE_BUNDLE_XDG_OPEN=${APPIMAGE_BUNDLE_XDG_OPEN-0}
 
 mkdir -p "{{app_name}}.AppDir"
 cp -r ../appimage_deb/data/usr "{{app_name}}.AppDir"
 
 cd "{{app_name}}.AppDir"
+
+if [[ "$APPIMAGE_BUNDLE_XDG_OPEN" != "0" ]] && [[ -f "/usr/bin/xdg-open" ]]; then
+	cp /usr/bin/xdg-open usr/bin
+fi
 
 # Copy WebKit files.
 find /usr/lib* -name WebKitNetworkProcess -exec mkdir -p "$(dirname '{}')" \; -exec cp --parents '{}' "." \; || true

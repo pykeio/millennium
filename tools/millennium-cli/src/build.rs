@@ -26,7 +26,7 @@ use millennium_bundler::bundle::{bundle_project, PackageType};
 use crate::helpers::{
 	app_paths::{app_dir, millennium_dir},
 	command_env,
-	config::{get as get_config, AppUrl, WindowUrl},
+	config::{get as get_config, AppUrl, ShellAllowlistOpen, WindowUrl},
 	manifest::rewrite_manifest,
 	updater_signature::sign_file_from_env_variables
 };
@@ -273,6 +273,11 @@ pub fn command(options: Options) -> Result<()> {
 		}
 		let settings = crate::interface::get_bundler_settings(app_settings, target, &enabled_features, &manifest, config_, &out_dir, package_types)
 			.with_context(|| "failed to build bundler settings")?;
+
+		// set env vars used by the bundler
+		if matches!(config_.millenniun.allowlist.shell.open, ShellAllowlistOpen::Flag(true) | ShellAllowlistOpen::Validate(_)) {
+			std::env::set_var("APPIMAGE_BUNDLE_XDG_OPEN", "1");
+		}
 
 		let bundles = bundle_project(settings).with_context(|| "failed to bundle project")?;
 
