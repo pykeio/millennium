@@ -40,7 +40,7 @@ export { appWindow } from './window';
 export * from './millennium';
 export type { ArgMatch, CliMatches, SubcommandMatch } from './cli';
 export type { Event, EventCallback, EventName, Unlistener } from './event';
-export { BaseDirectory } from './fs';
+export { BaseDirectory, BinaryFileContents } from './fs';
 export type { ShortcutHandler } from './globalShortcut';
 export type { Duration, Body as HttpBody, Client as HttpClient, FetchOptions, HttpOptions, HttpVerb, RequestOptions, Response as HttpResponse, ResponseType } from './http';
 export type { NotificationOptions, NotificationPermissionStatus } from './notification';

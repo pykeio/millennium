@@ -123,10 +123,12 @@ interface FsTextFileOptions {
 	contents: string;
 }
 
+export type BinaryFileContents = Iterable<number> | ArrayLike<number>;
+
 /** Options object used when writing binary data to a file. */
 interface FsBinaryFileOptions {
 	path: string;
-	contents: Iterable<number> | ArrayLike<number>;
+	contents: BinaryFileContents;
 }
 
 interface FileEntry {
@@ -216,30 +218,105 @@ export async function readFile(path: string, encoding: FsOptions | 'utf8' | 'utf
 
 /**
  * Writes a UTF-8 string to a file.
+ *
+ * @param path The file path.
+ * @param contents The file contents as a UTF-8 string.
+ * @param options Additional file writing options.
+ * @returns A promise that resolves when the file has been written.
  */
-export async function writeTextFile(file: FsTextFileOptions, options: FsOptions = {}): Promise<void> {
+export async function writeTextFile(path: string, contents: string, options?: FsOptions): Promise<void>;
+
+/**
+ * Writes a UTF-8 string to a file.
+ *
+ * @param file An object containing the file path and contents.
+ * @param options Additional file writing options.
+ * @returns A promise that resolves when the file has been written.
+ */
+export async function writeTextFile(file: FsTextFileOptions, options?: FsOptions): Promise<void>;
+
+/**
+ * Writes a UTF-8 string to a file.
+ *
+ * @param file An object containing the file path and contents.
+ * @param options Additional file writing options.
+ * @returns A promise that resolves when the file has been written.
+ */
+export async function writeTextFile(path: string | FsTextFileOptions, contents?: string | FsOptions, options?: FsOptions): Promise<void> {
+	const file: FsTextFileOptions = { path: '', contents: '' };
+	let fileOptions: FsOptions | undefined = options;
+	if (typeof path === 'string')
+		file.path = path;
+	else {
+		file.path = path.path;
+		file.contents = path.contents;
+	}
+
+	if (typeof contents === 'string')
+		file.contents = contents ?? '';
+	else
+		fileOptions = contents;
+
 	return await invokeMillenniumCommand<void>({
 		__millenniumModule: 'Fs',
 		message: {
 			cmd: 'writeTextFile',
 			path: file.path,
 			contents: Array.from(new TextEncoder().encode(file.contents)),
-			options
+			options: fileOptions
 		}
 	});
 }
 
 /**
  * Writes a raw byte array to a file.
+ *
+ * @param path The file path.
+ * @param contents The file contents as a raw byte array.
+ * @param options Additional file writing options.
+ * @returns A promise that resolves when the file has been written.
  */
-export async function writeBinaryFile(file: FsBinaryFileOptions, options: FsOptions = {}): Promise<void> {
+export async function writeBinaryFile(path: string, contents: BinaryFileContents, options?: FsOptions): Promise<void>;
+
+/**
+ * Writes a raw byte array to a file.
+ *
+ * @param file An object containing the file path and contents.
+ * @param options Additional file writing options.
+ * @returns A promise that resolves when the file has been written.
+ */
+export async function writeBinaryFile(file: FsBinaryFileOptions, options?: FsOptions): Promise<void>;
+
+/**
+ * Writes a raw byte array to a file.
+ *
+ * @param file An object containing the file path and contents.
+ * @param options Additional file writing options.
+ * @returns A promise that resolves when the file has been written.
+ */
+export async function writeBinaryFile(path: string | FsBinaryFileOptions, contents?: BinaryFileContents | FsOptions, options?: FsOptions): Promise<void> {
+	const file: FsBinaryFileOptions = { path: '', contents: [] };
+	let fileOptions: FsOptions | undefined = options;
+	if (typeof path === 'string')
+		file.path = path;
+	else {
+		file.path = path.path;
+		file.contents = path.contents;
+	}
+
+	if (contents && 'dir' in contents)
+		fileOptions = contents;
+	else
+		// @ts-expect-error
+		file.contents = contents ?? [];
+
 	return await invokeMillenniumCommand<void>({
 		__millenniumModule: 'Fs',
 		message: {
 			cmd: 'writeFile',
 			path: file.path,
 			contents: Array.from(file.contents),
-			options
+			options: fileOptions
 		}
 	});
 }
