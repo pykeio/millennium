@@ -206,6 +206,24 @@ export async function resolve(...paths: string[]): Promise<string> {
 }
 
 /**
+ * Resolve the path to a resource file.
+ *
+ * @param resourcePath The path to the resource. Must follow the same syntax as defined in `.millenniumrc > millennium >
+ * bundle > resources`, i.e. keeping subfolders and parent dir components (`../`).
+ * @returns The full path to the resource.
+ */
+export async function resolveResource(resourcePath: string): Promise<string> {
+	return invokeMillenniumCommand<string>({
+		__millenniumModule: 'Path',
+		message: {
+			cmd: 'resolvePath',
+			path: resourcePath,
+			directory: BaseDirectory.RESOURCE
+		}
+	});
+}
+
+/**
  * Normalizes the given `path`, resolving `'..'` and `'.'` segments and resolving symbolic links.
  */
 export async function normalize(path: string): Promise<string> {
