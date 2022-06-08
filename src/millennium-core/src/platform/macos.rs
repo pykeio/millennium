@@ -34,7 +34,7 @@ use crate::{
 	menu::CustomMenuItem,
 	monitor::MonitorHandle,
 	platform_impl::{get_aux_state_mut, Parent},
-	window::{Window, WindowBuilder}
+	window::{Theme, Window, WindowBuilder}
 };
 
 /// Additional methods on `Window` that are specific to MacOS.
@@ -66,6 +66,9 @@ pub trait WindowExtMacOS {
 
 	/// Sets whether or not the window has shadow.
 	fn set_has_shadow(&self, has_shadow: bool);
+
+	/// Returns the current window theme.
+	fn theme(&self) -> Theme;
 }
 
 impl WindowExtMacOS for Window {
@@ -97,6 +100,11 @@ impl WindowExtMacOS for Window {
 	#[inline]
 	fn set_has_shadow(&self, has_shadow: bool) {
 		self.window.set_has_shadow(has_shadow)
+	}
+
+	#[inline]
+	fn theme(&self) -> Theme {
+		self.window.theme()
 	}
 }
 
@@ -349,6 +357,8 @@ pub trait WindowBuilderExtMacOS {
 	fn with_resize_increments(self, increments: LogicalSize<f64>) -> WindowBuilder;
 	fn with_disallow_hidpi(self, disallow_hidpi: bool) -> WindowBuilder;
 	fn with_has_shadow(self, has_shadow: bool) -> WindowBuilder;
+	/// Forces a theme or uses the system settings if `None` was provided.
+	fn with_theme(self, theme: Option<Theme>) -> WindowBuilder;
 }
 
 impl WindowBuilderExtMacOS for WindowBuilder {
@@ -409,6 +419,12 @@ impl WindowBuilderExtMacOS for WindowBuilder {
 	#[inline]
 	fn with_has_shadow(mut self, has_shadow: bool) -> WindowBuilder {
 		self.platform_specific.has_shadow = has_shadow;
+		self
+	}
+
+	#[inline]
+	fn with_theme(mut self, theme: Option<Theme>) -> WindowBuilder {
+		self.platform_specific.preferred_theme = theme;
 		self
 	}
 }

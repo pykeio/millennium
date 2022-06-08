@@ -23,7 +23,7 @@ use std::{
 use cocoa::{
 	appkit::{self, NSApplicationPresentationOptions, NSView, NSWindow},
 	base::{id, nil},
-	foundation::{NSAutoreleasePool, NSUInteger}
+	foundation::{NSAutoreleasePool, NSString, NSUInteger}
 };
 use objc::{
 	declare::ClassDecl,
@@ -39,7 +39,7 @@ use crate::{
 		event::{EventProxy, EventWrapper},
 		util::{self, IdRef},
 		view::ViewState,
-		window::{get_window_id, UnownedWindow}
+		window::{get_ns_theme, get_window_id, UnownedWindow}
 	},
 	window::{Fullscreen, WindowId}
 };
@@ -195,6 +195,9 @@ lazy_static! {
 		decl.add_method(sel!(windowWillExitFullScreen:), window_will_exit_fullscreen as extern "C" fn(&Object, Sel, id));
 		decl.add_method(sel!(windowDidFailToEnterFullScreen:), window_did_fail_to_enter_fullscreen as extern "C" fn(&Object, Sel, id));
 
+		decl.add_method(sel!(effectiveAppearanceDidChange:), effective_appearance_did_change as extern "C" fn(&Object, Sel, id));
+		decl.add_method(sel!(effectiveAppearanceDidChangedOnMainThread:), effective_appearance_did_changed_on_main_thread as extern "C" fn(&Object, Sel, id));
+
 		decl.add_ivar::<*mut c_void>("millenniumState");
 		WindowDelegateClass(decl.register())
 	};
@@ -225,6 +228,17 @@ extern "C" fn init_with_millennium(this: &Object, _sel: Sel, state: *mut c_void)
 				let () = msg_send![*state.ns_window, setDelegate: this];
 			});
 		}
+
+		let notification_center: &Object = msg_send![class!(NSDistributedNotificationCenter), defaultCenter];
+		let notification_name = NSString::alloc(nil).init_str("AppleInterfaceThemeChangedNotification");
+		let _: () = msg_send![
+			notification_center,
+			addObserver: this
+			selector: sel!(effectiveAppearanceDidChange:)
+			name: notification_name
+			object: nil
+		];
+
 		this
 	}
 }
@@ -341,8 +355,6 @@ extern "C" fn dragging_entered(this: &Object, _: Sel, sender: id) -> BOOL {
 	for file in unsafe { filenames.iter() } {
 		use std::ffi::CStr;
 
-		use cocoa::foundation::NSString;
-
 		unsafe {
 			let f = NSString::UTF8String(file);
 			let path = CStr::from_ptr(f).to_string_lossy().into_owned();
@@ -377,8 +389,6 @@ extern "C" fn perform_drag_operation(this: &Object, _: Sel, sender: id) -> BOOL 
 
 	for file in unsafe { filenames.iter() } {
 		use std::ffi::CStr;
-
-		use cocoa::foundation::NSString;
 
 		unsafe {
 			let f = NSString::UTF8String(file);
@@ -568,4 +578,18 @@ extern "C" fn window_did_fail_to_enter_fullscreen(this: &Object, _: Sel, _: id) 
 		}
 	});
 	trace!("Completed `windowDidFailToEnterFullscreen:`");
+}
+
+// Observe theme change
+extern "C" fn effective_appearance_did_change(this: &Object, _: Sel, _: id) {
+	trace!("Triggered `effectiveAppearDidChange:`");
+	unsafe {
+		let _: () = msg_send![this, performSelectorOnMainThread: sel!(effectiveAppearanceDidChangedOnMainThread:) withObject:nil waitUntilDone:false];
+	}
+}
+extern "C" fn effective_appearance_did_changed_on_main_thread(this: &Object, _: Sel, _: id) {
+	with_state(this, |state| {
+		state.emit_event(WindowEvent::ThemeChanged(get_ns_theme()));
+	});
+	trace!("Completed `effectiveAppearDidChange:`");
 }

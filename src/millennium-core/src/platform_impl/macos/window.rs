@@ -31,7 +31,7 @@ use cocoa::{
 		NSWindowButton, NSWindowOrderingMode, NSWindowStyleMask
 	},
 	base::{id, nil},
-	foundation::{NSAutoreleasePool, NSDictionary, NSPoint, NSRect, NSSize, NSUInteger}
+	foundation::{NSArray, NSAutoreleasePool, NSDictionary, NSPoint, NSRect, NSSize, NSString, NSUInteger}
 };
 use core_graphics::display::{CGDisplay, CGDisplayMode};
 use objc::{
@@ -40,7 +40,7 @@ use objc::{
 };
 use raw_window_handle::{AppKitHandle, RawWindowHandle};
 
-use super::Menu;
+use super::{util::ns_string_to_rust, Menu};
 use crate::{
 	dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize, Position, Size, Size::Logical},
 	error::{ExternalError, NotSupportedError, OsError as RootOsError},
@@ -56,7 +56,7 @@ use crate::{
 		window_delegate::new_delegate,
 		OsError
 	},
-	window::{CursorIcon, Fullscreen, UserAttentionType, WindowAttributes, WindowId as RootWindowId}
+	window::{CursorIcon, Fullscreen, Theme, UserAttentionType, WindowAttributes, WindowId as RootWindowId}
 };
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -92,7 +92,8 @@ pub struct PlatformSpecificWindowBuilderAttributes {
 	pub fullsize_content_view: bool,
 	pub resize_increments: Option<LogicalSize<f64>>,
 	pub disallow_hidpi: bool,
-	pub has_shadow: bool
+	pub has_shadow: bool,
+	pub preferred_theme: Option<Theme>
 }
 
 impl Default for PlatformSpecificWindowBuilderAttributes {
@@ -108,7 +109,8 @@ impl Default for PlatformSpecificWindowBuilderAttributes {
 			fullsize_content_view: false,
 			resize_increments: None,
 			disallow_hidpi: false,
-			has_shadow: true
+			has_shadow: true,
+			preferred_theme: None
 		}
 	}
 }
@@ -247,10 +249,42 @@ fn create_window(attrs: &WindowAttributes, pl_attrs: &PlatformSpecificWindowBuil
 			if let Some(window_menu) = attrs.window_menu.clone() {
 				menu::initialize(window_menu);
 			}
+
 			ns_window
 		});
 		pool.drain();
 		res
+	}
+}
+
+pub(super) fn get_ns_theme() -> Theme {
+	unsafe {
+		let mut appearances: Vec<id> = Vec::new();
+		appearances.push(NSString::alloc(nil).init_str("NSAppearanceNameAqua"));
+		appearances.push(NSString::alloc(nil).init_str("NSAppearanceNameDarkAqua"));
+		let app_class = class!(NSApplication);
+		let app: id = msg_send![app_class, sharedApplication];
+		let appearance: id = msg_send![app, effectiveAppearance];
+		let name: id = msg_send![appearance, bestMatchFromAppearancesWithNames: NSArray::arrayWithObjects(nil, &appearances)];
+		let name = ns_string_to_rust(name);
+		match &name[..] {
+			"NSAppearanceNameDarkAqua" => Theme::Dark,
+			_ => Theme::Light
+		}
+	}
+}
+
+pub(super) fn set_ns_theme(theme: Theme) {
+	let name = match theme {
+		Theme::Dark => "NSAppearanceNameDarkAqua",
+		Theme::Light => "NSAppearanceNameAqua"
+	};
+	unsafe {
+		let name = NSString::alloc(nil).init_str(name);
+		let appearance: id = msg_send![class!(NSAppearance), appearanceNamed: name];
+		let app_class = class!(NSApplication);
+		let app: id = msg_send![app_class, sharedApplication];
+		let _: () = msg_send![app, setAppearance: appearance];
 	}
 }
 
@@ -311,7 +345,8 @@ pub struct SharedState {
 	/// the menu bar in exclusive fullscreen but want to restore the original
 	/// options when transitioning back to borderless fullscreen.
 	save_presentation_opts: Option<NSApplicationPresentationOptions>,
-	pub saved_desktop_display_mode: Option<(CGDisplay, CGDisplayMode)>
+	pub saved_desktop_display_mode: Option<(CGDisplay, CGDisplayMode)>,
+	current_theme: Theme
 }
 
 impl SharedState {
@@ -422,6 +457,18 @@ impl UnownedWindow {
 			cursor_state,
 			inner_rect
 		});
+
+		match pl_attribs.preferred_theme {
+			Some(theme) => {
+				set_ns_theme(theme);
+				let mut state = window.shared_state.lock().unwrap();
+				state.current_theme = theme;
+			}
+			None => {
+				let mut state = window.shared_state.lock().unwrap();
+				state.current_theme = get_ns_theme();
+			}
+		}
 
 		let delegate = new_delegate(&window, fullscreen.is_some());
 
@@ -1125,6 +1172,12 @@ impl WindowExtMacOS for UnownedWindow {
 	#[inline]
 	fn set_has_shadow(&self, has_shadow: bool) {
 		unsafe { self.ns_window.setHasShadow_(if has_shadow { YES } else { NO }) }
+	}
+
+	#[inline]
+	fn theme(&self) -> Theme {
+		let state = self.shared_state.lock().unwrap();
+		state.current_theme
 	}
 }
 

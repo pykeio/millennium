@@ -1066,6 +1066,12 @@ pub enum Theme {
 	Dark
 }
 
+impl Default for Theme {
+	fn default() -> Self {
+		Theme::Light
+	}
+}
+
 #[non_exhaustive]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UserAttentionType {
