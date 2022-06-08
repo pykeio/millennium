@@ -275,7 +275,7 @@ pub fn command(options: Options) -> Result<()> {
 			.with_context(|| "failed to build bundler settings")?;
 
 		// set env vars used by the bundler
-		if matches!(config_.millenniun.allowlist.shell.open, ShellAllowlistOpen::Flag(true) | ShellAllowlistOpen::Validate(_)) {
+		if matches!(config_.millennium.allowlist.shell.open, ShellAllowlistOpen::Flag(true) | ShellAllowlistOpen::Validate(_)) {
 			std::env::set_var("APPIMAGE_BUNDLE_XDG_OPEN", "1");
 		}
 

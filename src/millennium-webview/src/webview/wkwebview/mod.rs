@@ -633,7 +633,7 @@ impl NSString {
 		// Safety: objc runtime calls are unsafe
 		NSString(unsafe {
 			let ns_string: id = msg_send![class!(NSString), alloc];
-			let ns_string: id = msg_send![ns_string, initWithBytes: s.as_ptr(), length: s.len(), encoding: UTF8_ENCODING];
+			let ns_string: id = msg_send![ns_string, initWithBytes:s.as_ptr() length:s.len() encoding:UTF8_ENCODING];
 			let _: () = msg_send![ns_string, autorelease];
 			ns_string
 		})
