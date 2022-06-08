@@ -214,13 +214,10 @@ impl<T: UserEvent> Context<T> {
 
 		self.prepare_window(window_id);
 
-		// cannot use `send_user_message` here due to deadlock
-		self.proxy
-			.send_event(Message::CreateWebview(
-				window_id,
-				Box::new(move |event_loop, web_context| create_webview(window_id, event_loop, web_context, context, pending))
-			))
-			.map_err(|_| Error::FailedToSendMessage)?;
+		send_user_message(
+			self,
+			Message::CreateWebview(window_id, Box::new(move |event_loop, web_context| create_webview(window_id, event_loop, web_context, context, pending)))
+		)?;
 
 		let dispatcher = MillenniumDispatcher { window_id, context: self.clone() };
 		Ok(DetachedWindow {

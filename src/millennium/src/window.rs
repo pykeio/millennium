@@ -612,6 +612,11 @@ impl Window<crate::MillenniumWebview> {
 /// Base window functions.
 impl<R: Runtime> Window<R> {
 	/// Create a new window that is attached to the manager.
+	///
+	/// # Known issues
+	///
+	/// On Windows, this function deadlocks when used in a synchronous command handler.
+	/// You should use `async` commands when creating windows.
 	pub(crate) fn new(manager: WindowManager<R>, window: DetachedWindow<EventLoopMessage, R>, app_handle: AppHandle<R>) -> Self {
 		Self { window, manager, app_handle }
 	}
