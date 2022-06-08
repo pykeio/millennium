@@ -445,9 +445,9 @@ impl<R: Runtime> WindowManager<R> {
 			pending.register_uri_scheme_protocol("asset", move |request| {
 				let parsed_path = Url::parse(request.uri())?;
 				let filtered_path = &parsed_path[..Position::AfterPath];
-				// safe to unwrap: request.uri() always starts with this prefix
 				#[cfg(target_os = "windows")]
-				let path = filtered_path.strip_prefix("asset://localhost/").unwrap();
+				let path = filtered_path.strip_prefix("asset://localhost/").unwrap_or("");
+				// safe to unwrap: request.uri() always starts with this prefix
 				#[cfg(not(target_os = "windows"))]
 				let path = filtered_path.strip_prefix("asset://").unwrap();
 				let path = percent_encoding::percent_decode(path.as_bytes()).decode_utf8_lossy().to_string();
@@ -719,10 +719,9 @@ impl<R: Runtime> WindowManager<R> {
 				// ignore query string and fragment
 				.next()
 				.unwrap()
-				// safe to unwrap: request.uri() always starts with this prefix
 				.strip_prefix("millennium://localhost")
-				.unwrap()
-				.to_string();
+				.map(|p| p.to_string())
+				.unwrap_or_else(|| "".to_string());
 			let asset = manager.get_asset(path)?;
 			let mut builder = HttpResponseBuilder::new()
 				.header("Access-Control-Allow-Origin", &window_origin)
