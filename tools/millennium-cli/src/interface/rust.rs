@@ -367,10 +367,12 @@ fn millennium_config_to_bundle_settings(
 			let mut icon_path = system_tray_config.icon_path.clone();
 			icon_path.set_extension("png");
 			resources.push(icon_path.display().to_string());
-			if enabled_features.contains(&"millennium/gtk-tray".into()) {
-				depends.push("libappindicator3-1".into());
-			} else {
-				depends.push("libayatana-appindicator3-1".into());
+			depends.push("pkg-config".to_string());
+			let tray = std::env::var("MILLENNIUM_TRAY").unwrap_or_else(|_| "ayatana".to_string());
+			if tray == "ayatana" {
+				depends.push("libayatana-appindicator3-1".to_string());
+			} else if tray == "gtk" {
+				depends.push("libappindicator3-1".to_string());
 			}
 		}
 

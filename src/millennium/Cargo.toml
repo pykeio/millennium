@@ -29,7 +29,6 @@ features = [
 	"system-tray",
 	"devtools",
 	"http-multipart",
-	"gtk-tray",
 	"icon-png",
 	"dox"
 ]
@@ -132,8 +131,6 @@ default = [ "millennium_webview", "compression", "objc-exception" ]
 compression = [ "millennium-macros/compression", "millennium-utils/compression" ]
 millennium_webview = [ "millennium-runtime-webview" ]
 objc-exception = [ "millennium-runtime-webview/objc-exception" ]
-ayatana-tray = [ "millennium-runtime-webview/ayatana-tray" ]
-gtk-tray = [ "millennium-runtime-webview/gtk-tray" ]
 isolation = [ "millennium-utils/isolation", "millennium-macros/isolation" ]
 custom-protocol = [ "millennium-macros/custom-protocol" ]
 updater = [ "minisign-verify", "time", "base64", "http-api", "dialog-ask", "fs-extract-api" ]

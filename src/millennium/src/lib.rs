@@ -57,9 +57,6 @@
 //!   the `.millenniumrc` file.
 //! - **system-tray**: Enables application system tray API. Enabled by default if the `systemTray` config is defined on
 //!   the `.millenniumrc` file.
-//! - **ayatana-tray**: Uses `libayatana-appindicator` for system trays on Linux.
-//! - **gtk-tray**: Uses the older `libappindicator3-1` for system trays on Linux. To enable this, you need to disable
-//!   the default features, as `ayatana-tray` is enabled by default.
 //! - **macos-private-api**: Enables features only available in **macOS**'s private APIs, currently the `transparent`
 //!   window functionality and the `fullScreenEnabled` preference setting to `true`. Enabled by default if the
 //!   `millennium > macosPrivateApi` config flag is set to `true` on the `.millenniumrc` file.

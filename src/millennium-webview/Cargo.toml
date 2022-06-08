@@ -13,7 +13,7 @@ edition = "2021"
 
 [package.metadata.docs.rs]
 default-features = false
-features = [ "dox", "file-drop", "protocol", "tray", "ayatana-tray" ]
+features = [ "dox", "file-drop", "protocol", "tray" ]
 targets = [
 	"x86_64-unknown-linux-gnu",
 	"x86_64-pc-windows-msvc",
@@ -21,14 +21,12 @@ targets = [
 ]
 
 [features]
-default = [ "file-drop", "objc-exception", "protocol", "tray", "ayatana-tray" ]
+default = [ "file-drop", "objc-exception", "protocol" ]
 objc-exception = [ "objc/exception" ]
 file-drop = [ ]
 protocol = [ ]
 dox = [ "millennium-core/dox" ]
 tray = [ "millennium-core/tray" ]
-ayatana-tray = [ "millennium-core/ayatana-tray" ]
-gtk-tray = [ "millennium-core/gtk-tray" ]
 devtools = [ ]
 transparent = [ ]
 fullscreen = [ ]

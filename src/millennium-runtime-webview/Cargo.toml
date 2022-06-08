@@ -49,7 +49,5 @@ macos-private-api = [
 ]
 __rust_analyzer_hack = []
 objc-exception = [ "millennium-webview/objc-exception" ]
-gtk-tray = [ "millennium-webview/gtk-tray" ]
-ayatana-tray = [ "millennium-webview/ayatana-tray" ]
 global-shortcut = [ "millennium-runtime/global-shortcut" ]
 clipboard = [ "millennium-runtime/clipboard" ]

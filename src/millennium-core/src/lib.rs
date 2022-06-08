@@ -205,9 +205,7 @@ pub mod system_tray;
 
 #[cfg(all(
 	any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"),
-	feature = "tray",
-	any(feature = "gtk-tray", feature = "ayatana-tray"),
-	not(all(feature = "gtk-tray", feature = "ayatana-tray"))
+	feature = "tray"
 ))]
 pub mod system_tray;
 

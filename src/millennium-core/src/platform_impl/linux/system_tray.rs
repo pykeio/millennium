@@ -18,10 +18,7 @@ use std::path::PathBuf;
 
 use glib::Sender;
 use gtk::{prelude::WidgetExt, AccelGroup};
-#[cfg(feature = "gtk-tray")]
 use libappindicator::{AppIndicator, AppIndicatorStatus};
-#[cfg(feature = "ayatana-tray")]
-use libayatana_appindicator::{AppIndicator, AppIndicatorStatus};
 
 use super::{menu::Menu, window::WindowRequest, WindowId};
 use crate::{error::OsError, event_loop::EventLoopWindowTarget, system_tray::SystemTray as RootSystemTray};
