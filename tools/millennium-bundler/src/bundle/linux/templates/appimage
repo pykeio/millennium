@@ -19,6 +19,7 @@ set -euxo pipefail
 
 export ARCH={{arch}}
 APPIMAGE_BUNDLE_XDG_OPEN=${APPIMAGE_BUNDLE_XDG_OPEN-0}
+TRAY_LIBRARY_PATH=${TRAY_LIBRARY_PATH-0}
 
 if [ "$ARCH" == "i686" ]; then
     linuxdeploy_arch="i386"
@@ -33,6 +34,10 @@ cd "{{app_name}}.AppDir"
 
 if [[ "$APPIMAGE_BUNDLE_XDG_OPEN" != "0" ]] && [[ -f "/usr/bin/xdg-open" ]]; then
 	cp /usr/bin/xdg-open usr/bin
+fi
+
+if [[ "$TRAY_LIBRARY_PATH" != "0" ]]; then
+	cp ${TRAY_LIBRARY_PATH} usr/lib
 fi
 
 # Copy WebKit files.
