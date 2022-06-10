@@ -204,7 +204,6 @@ pub mod window;
 use millennium_runtime as runtime;
 /// The allowlist scopes.
 pub mod scope;
-pub mod settings;
 mod state;
 #[cfg(updater)]
 #[cfg_attr(doc_cfg, doc(cfg(feature = "updater")))]

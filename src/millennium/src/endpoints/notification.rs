@@ -26,7 +26,6 @@ use crate::{api::notification::Notification, Env, Manager};
 
 // `Granted` response from `request_permission`. Matches the Web API return
 // value.
-#[cfg(notification_all)]
 const PERMISSION_GRANTED: &str = "granted";
 // `Denied` response from `request_permission`. Matches the Web API return
 // value.
@@ -60,13 +59,6 @@ pub enum Cmd {
 impl Cmd {
 	#[module_command_handler(notification_all)]
 	fn notification<R: Runtime>(context: InvokeContext<R>, options: NotificationOptions) -> super::Result<()> {
-		let allowed = match is_permission_granted(&context) {
-			Some(p) => p,
-			None => request_permission(&context)
-		};
-		if !allowed {
-			return Err(crate::Error::NotificationNotAllowed.into_anyhow());
-		}
 		let mut notification = Notification::new(context.config.millennium.bundle.identifier.clone()).title(options.title);
 		if let Some(body) = options.body {
 			notification = notification.body(body);
@@ -78,56 +70,13 @@ impl Cmd {
 		Ok(())
 	}
 
-	#[cfg(notification_all)]
-	fn request_notification_permission<R: Runtime>(context: InvokeContext<R>) -> super::Result<&'static str> {
-		if request_permission(&context) { Ok(PERMISSION_GRANTED) } else { Ok(PERMISSION_DENIED) }
-	}
-
-	#[cfg(not(notification_all))]
 	fn request_notification_permission<R: Runtime>(_context: InvokeContext<R>) -> super::Result<&'static str> {
-		Ok(PERMISSION_DENIED)
+		Ok(if cfg!(notification_all) { PERMISSION_GRANTED } else { PERMISSION_DENIED })
 	}
 
-	#[cfg(notification_all)]
-	fn is_notification_permission_granted<R: Runtime>(context: InvokeContext<R>) -> super::Result<Option<bool>> {
-		if let Some(allow_notification) = is_permission_granted(&context) {
-			Ok(Some(allow_notification))
-		} else {
-			Ok(None)
-		}
+	fn is_notification_permission_granted<R: Runtime>(_context: InvokeContext<R>) -> super::Result<bool> {
+		Ok(cfg!(notification_all))
 	}
-
-	#[cfg(not(notification_all))]
-	fn is_notification_permission_granted<R: Runtime>(_context: InvokeContext<R>) -> super::Result<Option<bool>> {
-		Ok(Some(false))
-	}
-}
-
-#[cfg(notification_all)]
-fn request_permission<R: Runtime>(context: &InvokeContext<R>) -> bool {
-	if context.config.millennium.security.allow_notifications {
-		return true;
-	}
-
-	let mut settings = crate::settings::read_settings(&context.config, &context.package_info, context.window.state::<Env>().inner());
-	if let Some(allow_notification) = settings.allow_notification {
-		return allow_notification;
-	}
-	let answer = crate::api::dialog::blocking::ask(Some(&context.window), "Permissions", "This app wants to show notifications. Do you allow?");
-
-	settings.allow_notification = Some(answer);
-	let _ = crate::settings::write_settings(&context.config, &context.package_info, context.window.state::<Env>().inner(), settings);
-
-	answer
-}
-
-#[cfg(notification_all)]
-fn is_permission_granted<R: Runtime>(context: &InvokeContext<R>) -> Option<bool> {
-	if context.config.millennium.security.allow_notifications {
-		return Some(true);
-	}
-
-	crate::settings::read_settings(&context.config, &context.package_info, context.window.state::<Env>().inner()).allow_notification
 }
 
 #[cfg(test)]
@@ -146,16 +95,17 @@ mod tests {
 		}
 	}
 
-	#[cfg(not(notification_all))]
 	#[test]
 	fn request_notification_permission() {
-		assert_eq!(super::Cmd::request_notification_permission(crate::test::mock_invoke_context()).unwrap(), super::PERMISSION_DENIED)
+		assert_eq!(
+			super::Cmd::request_notification_permission(crate::test::mock_invoke_context()).unwrap(),
+			if cfg!(notification_all) { super::PERMISSION_GRANTED } else { super::PERMISSION_DENIED }
+		)
 	}
 
-	#[cfg(not(notification_all))]
 	#[test]
 	fn is_notification_permission_granted() {
-		assert_eq!(super::Cmd::is_notification_permission_granted(crate::test::mock_invoke_context()).unwrap(), Some(false));
+		assert_eq!(super::Cmd::is_notification_permission_granted(crate::test::mock_invoke_context()).unwrap(), cfg!(notification_all));
 	}
 
 	#[millennium_macros::module_command_test(notification_all, "notification > all")]

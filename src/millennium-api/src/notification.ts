@@ -49,7 +49,7 @@ export type NotificationPermissionStatus = 'granted' | 'denied' | 'default';
 /**
  * Checks if the permission to send notifications is granted.
  */
-export async function isPermissionGranted(): Promise<boolean | null> {
+export async function isPermissionGranted(): Promise<boolean> {
 	if (window.Notification.permission !== 'default')
 		return Promise.resolve(window.Notification.permission === 'granted');
 

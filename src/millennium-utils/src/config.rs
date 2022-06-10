@@ -879,10 +879,6 @@ pub struct SecurityConfig {
 	/// Freeze the `Object.prototype` when using the custom protocol.
 	#[serde(default)]
 	pub freeze_prototype: bool,
-	/// Allow the use of notifications without prompting the user for
-	/// permission.
-	#[serde(default)]
-	pub allow_notifications: bool,
 	/// Disables the Millennium-injected CSP sources.
 	///
 	/// At compile time, Millennium parses all the frontend assets and changes the Content-Security-Policy
@@ -2853,10 +2849,9 @@ mod build {
 			let csp = opt_lit(self.csp.as_ref());
 			let dev_csp = opt_lit(self.dev_csp.as_ref());
 			let freeze_prototype = self.freeze_prototype;
-			let allow_notifications = self.allow_notifications;
 			let dangerous_disable_asset_csp_modification = &self.dangerous_disable_asset_csp_modification;
 
-			literal_struct!(tokens, SecurityConfig, csp, dev_csp, freeze_prototype, allow_notifications, dangerous_disable_asset_csp_modification);
+			literal_struct!(tokens, SecurityConfig, csp, dev_csp, freeze_prototype, dangerous_disable_asset_csp_modification);
 		}
 	}
 
@@ -3091,7 +3086,6 @@ mod test {
 				csp: None,
 				dev_csp: None,
 				freeze_prototype: false,
-				allow_notifications: false,
 				dangerous_disable_asset_csp_modification: DisabledCspModificationKind::Flag(false)
 			},
 			allowlist: AllowlistConfig::default(),
