@@ -45,6 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-latest'
         run: |
           sudo apt update
           sudo apt install -y libgtk-3-dev
