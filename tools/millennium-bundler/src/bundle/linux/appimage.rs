@@ -63,6 +63,16 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
 	sh_map.insert("app_name", settings.main_binary_name());
 	sh_map.insert("app_name_uppercase", &upcase_app_name);
 	sh_map.insert("appimage_filename", &appimage_filename);
+	let millennium_tools_path = dirs_next::cache_dir().map_or_else(
+		|| output_path.to_path_buf(),
+		|mut p| {
+			p.push("millennium");
+			p
+		}
+	);
+	std::fs::create_dir_all(&millennium_tools_path)?;
+	let millennium_tools_path_str = millennium_tools_path.to_string_lossy();
+	sh_map.insert("millennium_tools_path", &millennium_tools_path_str);
 	let larger_icon = icons
 		.iter()
 		.filter(|i| i.width == i.height)

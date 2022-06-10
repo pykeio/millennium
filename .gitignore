@@ -179,6 +179,3 @@ dist
 
 # Node binaries
 *.node
-
-# Wix tools
-WixTools/
