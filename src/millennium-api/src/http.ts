@@ -71,7 +71,7 @@ export enum ResponseType {
 }
 
 interface FilePart<T> {
-	value: string | T;
+	file: string | T;
 	mime?: string;
 	fileName?: string;
 }
@@ -91,8 +91,6 @@ export class Body {
 	 *
 	 * Note that a file path must be allowed in the `fs` scope configuration.
 	 *
-	 *
-	 *
 	 * @param data The body data.
 	 */
 	public static form(data: Record<string, Part>): Body {
@@ -103,9 +101,9 @@ export class Body {
 				? v
 				: v instanceof Uint8Array || Array.isArray(v)
 					? Array.from(v)
-					: typeof v.value === 'string'
-						? { value: v.value, mime: v.mime, fileName: v.fileName }
-						: { value: Array.from(v.value), mime: v.mime, fileName: v.fileName };
+					: typeof v.file === 'string'
+						? { file: v.file, mime: v.mime, fileName: v.fileName }
+						: { file: Array.from(v.file), mime: v.mime, fileName: v.fileName };
 		}
 		return new Body('Form', form);
 	}
