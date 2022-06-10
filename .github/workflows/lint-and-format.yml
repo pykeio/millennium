@@ -46,7 +46,7 @@ jobs:
           - { args: '--features api-all', key: 'api-all' }
     steps:
       - uses: actions/checkout@v2
-      - name: Install webkit2gtk
+      - name: Install Linux dependencies
         run: |
           sudo apt update
           sudo apt install -y libgtk-3-dev libwebkit2gtk-4.0-dev libayatana-appindicator3-dev librsvg2-dev patchelf
