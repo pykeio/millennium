@@ -544,12 +544,20 @@ pub trait SystemTrayBuilderExtMacOS {
 	/// clear colors. You can use the alpha channel in the image to adjust the
 	/// opacity of black content.
 	fn with_icon_as_template(self, is_template: bool) -> Self;
+
+	/// Enables or disables showing the tray menu on left click. Default is true.
+	fn with_menu_on_left_click(self, enable: bool) -> Self;
 }
 
 #[cfg(feature = "tray")]
 impl SystemTrayBuilderExtMacOS for SystemTrayBuilder {
 	fn with_icon_as_template(mut self, is_template: bool) -> Self {
 		self.0.system_tray.icon_is_template = is_template;
+		self
+	}
+
+	fn with_menu_on_left_click(mut self, enable: bool) -> Self {
+		self.0.system_tray.menu_on_left_click = enable;
 		self
 	}
 }
@@ -560,11 +568,18 @@ pub trait SystemTrayExtMacOS {
 	///
 	/// You need to update this value before changing the icon.
 	fn set_icon_as_template(&mut self, is_template: bool);
+
+	/// Enables or disables showing the tray menu on left click. Default is true.
+	fn set_menu_on_left_click(&mut self, enable: bool);
 }
 
 #[cfg(feature = "tray")]
 impl SystemTrayExtMacOS for SystemTray {
 	fn set_icon_as_template(&mut self, is_template: bool) {
 		self.0.icon_is_template = is_template;
+	}
+
+	fn set_menu_on_left_click(&mut self, enable: bool) {
+		self.0.menu_on_left_click = enable;
 	}
 }
