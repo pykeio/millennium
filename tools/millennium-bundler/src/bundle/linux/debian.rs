@@ -248,7 +248,7 @@ fn copy_custom_files(settings: &Settings, data_dir: &Path) -> crate::Result<()> 
 fn generate_icon_files(settings: &Settings, data_dir: &Path) -> crate::Result<BTreeSet<DebIcon>> {
 	let base_dir = data_dir.join("usr/share/icons/hicolor");
 	let get_dest_path = |width: u32, height: u32, is_high_density: bool| {
-		base_dir.join(format!("{}x{}{}/apps/{}.png", width, height, if is_high_density { "@2x" } else { "" }, settings.main_binary_name()))
+		base_dir.join(format!("{}x{}{}/apps/{}.png", width, height, if is_high_density { "@2" } else { "" }, settings.main_binary_name()))
 	};
 	let mut icons = BTreeSet::new();
 	for icon_path in settings.icon_files() {
