@@ -137,7 +137,7 @@ impl Client {
 	/// 	}
 	/// }
 	/// ```
-	pub async fn send(&self, request: HttpRequestBuilder) -> crate::api::Result<Response> {
+	pub async fn send(&self, mut request: HttpRequestBuilder) -> crate::api::Result<Response> {
 		let method = Method::from_bytes(request.method.to_uppercase().as_bytes())?;
 
 		let mut request_builder = attohttpc::RequestBuilder::try_new(method, &request.url)?;
@@ -170,11 +170,14 @@ impl Client {
 					#[allow(unused_variables)]
 					fn send_form(
 						request_builder: attohttpc::RequestBuilder,
-						headers: &Option<HeaderMap>,
+						headers: &mut Option<HeaderMap>,
 						form_body: FormBody
 					) -> crate::api::Result<attohttpc::Response> {
 						#[cfg(feature = "http-multipart")]
 						if matches!(headers.as_ref().and_then(|h| h.0.get("content-type")).map(|v| v.as_bytes()), Some(b"multipart/form-data")) {
+							// the Content-Type header will be set by reqwest in `.multipart`
+							headers.as_mut().map(|h| h.0.remove("content-type"));
+
 							let mut multipart = attohttpc::MultipartBuilder::new();
 							let mut byte_cache: HashMap<String, Vec<u8>> = Default::default();
 
@@ -215,7 +218,7 @@ impl Client {
 						request_builder.form(&form)?.send().map_err(Into::into)
 					}
 
-					send_form(request_builder, &request.headers, form_body)?
+					send_form(request_builder, &mut request.headers, form_body)?
 				}
 			}
 		} else {
