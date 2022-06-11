@@ -120,6 +120,9 @@
         },
         "bundle": {
           "active": false,
+          "appimage": {
+            "bundleMediaFramework": false
+          },
           "deb": {
             "files": {}
           },
@@ -143,7 +146,6 @@
           "use": "brownfield"
         },
         "security": {
-          "allowNotifications": false,
           "dangerousDisableAssetCspModification": false,
           "freezePrototype": false
         },
@@ -383,6 +385,18 @@
       },
       "additionalProperties": false
     },
+    "AppImageConfig": {
+      "description": "Configuration for AppImage bundles.",
+      "type": "object",
+      "properties": {
+        "bundleMediaFramework": {
+          "description": "Include additional gstreamer dependencies needed for audio and video playback. This increases the bundle size by ~15-35MB depending on your build system.",
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
     "AppUrl": {
       "description": "Defines the URL or assets to embed in the application.",
       "anyOf": [
@@ -475,6 +489,17 @@
           "description": "Whether we should build your app with millennium-bundler or plain `cargo build`",
           "default": false,
           "type": "boolean"
+        },
+        "appimage": {
+          "description": "Configuration for AppImage bundles.",
+          "default": {
+            "bundleMediaFramework": false
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/AppImageConfig"
+            }
+          ]
         },
         "category": {
           "description": "The type of application.\n\nShould be one of the following: Business, DeveloperTool, Education, Entertainment, Finance, Game, ActionGame, AdventureGame, ArcadeGame, BoardGame, CardGame, CasinoGame, DiceGame, EducationalGame, FamilyGame, KidsGame, MusicGame, PuzzleGame, RacingGame, RolePlayingGame, SimulationGame, SportsGame, StrategyGame, TriviaGame, WordGame, GraphicsAndDesign, HealthcareAndFitness, Lifestyle, Medical, Music, News, Photography, Productivity, Reference, SocialNetworking, Sports, Travel, Utility, Video, Weather.",
@@ -1296,6 +1321,9 @@
           "description": "The bundler configuration.",
           "default": {
             "active": false,
+            "appimage": {
+              "bundleMediaFramework": false
+            },
             "deb": {
               "files": {}
             },
@@ -1350,7 +1378,6 @@
         "security": {
           "description": "Security configuration.",
           "default": {
-            "allowNotifications": false,
             "dangerousDisableAssetCspModification": false,
             "freezePrototype": false
           },
@@ -1566,11 +1593,6 @@
       "description": "Security configuration.",
       "type": "object",
       "properties": {
-        "allowNotifications": {
-          "description": "Allow the use of notifications without prompting the user for permission.",
-          "default": false,
-          "type": "boolean"
-        },
         "csp": {
           "description": "The Content Security Policy that will be injected on all HTML files on the built application. If [`dev_csp`](#SecurityConfig.devCsp) is not specified, this value is also injected on dev.\n\nThis is a really important part of the configuration since it helps you ensure your WebView is secured. See <https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP>.",
           "anyOf": [

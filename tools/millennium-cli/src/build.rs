@@ -304,6 +304,10 @@ pub fn command(options: Options) -> Result<()> {
 			}
 		}
 
+		if config_.millennium.bundle.appimage.bundle_media_framework {
+			std::env::set_var("APPIMAGE_BUNDLE_GSTREAMER", "1");
+		}
+
 		let bundles = bundle_project(settings).with_context(|| "failed to bundle project")?;
 
 		// If updater is active
