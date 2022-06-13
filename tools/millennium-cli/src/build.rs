@@ -98,8 +98,7 @@ pub fn command(options: Options) -> Result<()> {
 				.arg(before_build)
 				.current_dir(app_dir())
 				.envs(command_env(options.debug))
-				.pipe()?
-				.status()
+				.piped()
 				.with_context(|| format!("failed to run `{}` with `cmd /C`", before_build))?;
 			#[cfg(not(target_os = "windows"))]
 			let status = Command::new("sh")
@@ -107,8 +106,7 @@ pub fn command(options: Options) -> Result<()> {
 				.arg(before_build)
 				.current_dir(app_dir())
 				.envs(command_env(options.debug))
-				.pipe()?
-				.status()
+				.piped()
 				.with_context(|| format!("failed to run `{}` with `sh -c`", before_build))?;
 
 			if !status.success() {
