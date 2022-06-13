@@ -98,9 +98,17 @@ fn cfg_alias(alias: &str, has_feature: bool) {
 #[derive(Debug, Default)]
 pub struct WindowsAttributes {
 	window_icon_path: Option<PathBuf>,
-	/// The path to the sdk location. This can be a absolute or relative path.
-	/// If not supplied this defaults to whatever `winres` crate determines is
-	/// the best. See the [winres documentation](https://docs.rs/winres/*/winres/struct.WindowsResource.html#method.set_toolkit_path)
+	/// The path to the Windows SDK. This can be an absolute or relative path.
+	///
+	/// For GNU targets, this has to be the path to where MinGW puts `windres.exe` and `ar.exe`.
+	/// This could be something like `C:\Program Files\mingw-w64\x86_64-5.3.0-win32-seh-rt_v4-rev0\mingw64\bin`.
+	///
+	/// For MSVC targets, the Windows SDK has to be installed via Visual Studio. This should be set to the root
+	/// directory of the Windows SDK, e.g. `C:\Program Files (x86)\Windows Kits\10`, or, if multiple Windows 10 SDK
+	/// versions are installed, use the path to the `bin` directory of the SDK version you want to use, e.g. `C:\Program
+	/// Files (x86)\Windows Kits\10\bin\10.0.22000.0\x64`.
+	///
+	/// If left unset, the SDK path will be inferred from the registry.
 	sdk_dir: Option<PathBuf>
 }
 
@@ -200,11 +208,6 @@ pub fn try_build(attributes: Attributes) -> Result<()> {
 		serde_json::from_value(millennium_utils::config::parse::read_from(std::env::current_dir().unwrap())?)?
 	};
 
-	#[cfg(windows)]
-	if std::env::var("STATIC_VCRUNTIME").map_or(false, |v| v == "true") {
-		static_vcruntime::build();
-	}
-
 	cfg_alias("dev", !has_feature("custom-protocol"));
 
 	let mut manifest = Manifest::from_path("Cargo.toml")?;
@@ -247,9 +250,9 @@ pub fn try_build(attributes: Attributes) -> Result<()> {
 	}
 
 	let target_triple = std::env::var("TARGET").unwrap();
-	let out_dir = std::env::var("OUT_DIR").unwrap();
+	let out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
 	// TODO: far from ideal, but there's no other way to get the target dir, see <https://github.com/rust-lang/cargo/issues/5457>
-	let target_dir = Path::new(&out_dir).parent().unwrap().parent().unwrap().parent().unwrap();
+	let target_dir = out_dir.parent().unwrap().parent().unwrap().parent().unwrap();
 
 	if let Some(paths) = &config.millennium.bundle.external_bin {
 		copy_binaries(ResourcePaths::new(external_binaries(paths, &target_triple).as_slice(), true), &target_triple, target_dir)?;
@@ -329,6 +332,33 @@ pub fn try_build(attributes: Attributes) -> Result<()> {
 				"`{}` not found; required for generating a Windows Resource file during millennium-build",
 				window_icon_path.display()
 			)));
+		}
+
+		let target_env = std::env::var("CARGO_CFG_TARGET_ENV").unwrap();
+		match target_env.as_str() {
+			"gnu" => {
+				let target_arch = match std::env::var("CARGO_CFG_TARGET_ARCH").unwrap().as_str() {
+					"x86_64" => Some("x64"),
+					"x86" => Some("x86"),
+					"aarch64" => Some("arm64"),
+					arch => None
+				};
+				if let Some(target_arch) = target_arch {
+					for entry in std::fs::read_dir(target_dir.join("build"))? {
+						let path = entry?.path();
+						let webview2_loader_path = path.join("out").join(target_arch).join("WebView2Loader.dll");
+						if path.to_string_lossy().contains("webview2-com-sys") && webview2_loader_path.exists() {
+							std::fs::copy(webview2_loader_path, target_dir.join("WebView2Loader.dll"))?;
+						}
+					}
+				}
+			}
+			"msvc" => {
+				if std::env::var("STATIC_VCRUNTIME").map_or(false, |v| v == "true") {
+					static_vcruntime::build();
+				}
+			}
+			_ => {}
 		}
 	}
 
