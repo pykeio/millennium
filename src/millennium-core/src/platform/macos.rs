@@ -546,7 +546,7 @@ pub trait SystemTrayBuilderExtMacOS {
 	fn with_icon_as_template(self, is_template: bool) -> Self;
 
 	/// Enables or disables showing the tray menu on left click. Default is true.
-	fn with_menu_on_left_click(self, enable: bool) -> Self;
+	fn with_enable_menu_on_left_click(self, enable: bool) -> Self;
 }
 
 #[cfg(feature = "tray")]
@@ -556,7 +556,7 @@ impl SystemTrayBuilderExtMacOS for SystemTrayBuilder {
 		self
 	}
 
-	fn with_menu_on_left_click(mut self, enable: bool) -> Self {
+	fn with_enable_menu_on_left_click(mut self, enable: bool) -> Self {
 		self.0.system_tray.menu_on_left_click = enable;
 		self
 	}
@@ -570,7 +570,7 @@ pub trait SystemTrayExtMacOS {
 	fn set_icon_as_template(&mut self, is_template: bool);
 
 	/// Enables or disables showing the tray menu on left click. Default is true.
-	fn set_menu_on_left_click(&mut self, enable: bool);
+	fn enable_menu_on_left_click(&mut self, enable: bool);
 }
 
 #[cfg(feature = "tray")]
@@ -579,7 +579,7 @@ impl SystemTrayExtMacOS for SystemTray {
 		self.0.icon_is_template = is_template;
 	}
 
-	fn set_menu_on_left_click(&mut self, enable: bool) {
+	fn enable_menu_on_left_click(&mut self, enable: bool) {
 		self.0.menu_on_left_click = enable;
 	}
 }
