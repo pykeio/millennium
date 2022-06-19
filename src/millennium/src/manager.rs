@@ -1129,7 +1129,9 @@ fn on_window_event<R: Runtime>(window: &Window<R>, manager: &WindowManager<R>, e
 		WindowEvent::Destroyed => {
 			window.emit(WINDOW_DESTROYED_EVENT, ())?;
 			let label = window.label();
-			for window in manager.inner.windows.lock().unwrap().values() {
+			let windows_map = manager.inner.windows.lock().unwrap();
+			let windows = windows_map.values();
+			for window in windows {
 				window.eval(&format!(
 					r#"window.__MILLENNIUM_METADATA__.__windows = window.__MILLENNIUM_METADATA__.__windows.filter(w => w.label !== "{}");"#,
 					label
