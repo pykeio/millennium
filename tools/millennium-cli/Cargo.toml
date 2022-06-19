@@ -70,9 +70,6 @@ winapi = { version = "0.3", features = [ "handleapi", "processenv", "winbase", "
 [target."cfg(unix)".dependencies]
 libc = "0.2"
 
-[target."cfg(target_os = \"linux\")".dependencies]
-libappindicator-sys = "0.7.2"
-
 [build-dependencies]
 millennium-utils = { version = "1.0.0-beta.2", path = "../../src/millennium-utils", features = [ "schema", "isolation" ] }
 schemars = { version = "0.8", features = [ "url" ] }
