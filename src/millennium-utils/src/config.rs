@@ -331,7 +331,9 @@ pub struct BundleConfig {
 	/// The bundle targets, currently supports ["deb", "app", "msi", "appimage",
 	/// "dmg"] or "all"
 	pub targets: Option<BundleTarget>,
-	/// The app's identifier
+	/// The application identifier in reverse domain name notation (e.g. `io.pyke.example`).
+	/// This string must be unique across applications as it is used for system configurations like bundle ID and the
+	/// path to the webview data directory.
 	pub identifier: String,
 	/// The app's icons
 	#[serde(default)]

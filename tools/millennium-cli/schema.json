@@ -545,7 +545,7 @@
           }
         },
         "identifier": {
-          "description": "The app's identifier",
+          "description": "The application identifier in reverse domain name notation (e.g. `io.pyke.example`). This string must be unique across applications as it is used for system configurations like bundle ID and the path to the webview data directory.",
           "type": "string"
         },
         "longDescription": {
