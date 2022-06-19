@@ -133,7 +133,10 @@
 
 	// drag region
 	document.addEventListener('mousedown', e => {
-		if (/** @type {HTMLElement} */(e.target).hasAttribute('data-app-drag-region') && e.buttons === 1)
+		if (/** @type {HTMLElement} */(e.target).hasAttribute('data-app-drag-region') && e.buttons === 1) {
+			// Prevents a text cursor from appearing when dragging
+			e.preventDefault();
+
 			// Start dragging if the element has an `app-drag-region` data attribute and maximize on double-clicking it
 			window.__MILLENNIUM_INVOKE__('millennium', {
 				__millenniumModule: 'Window',
@@ -146,6 +149,7 @@
 					}
 				}
 			});
+		}
 	});
 
 	listen('millennium://window-created', function (event) {
