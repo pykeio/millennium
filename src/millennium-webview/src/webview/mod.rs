@@ -42,7 +42,7 @@ use jni::{
 	sys::jobject,
 	JNIEnv
 };
-use url::Url;
+pub use url::Url;
 #[cfg(target_os = "windows")]
 use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Controller;
 #[cfg(target_os = "windows")]
