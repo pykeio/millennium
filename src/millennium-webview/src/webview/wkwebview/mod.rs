@@ -64,7 +64,7 @@ pub struct InnerWebView {
 	// Note that if following functions signatures are changed in the future,
 	// all fucntions pointer declarations in objc callbacks below all need to get updated.
 	ipc_handler_ptr: *mut (Box<dyn Fn(&Window, String)>, Rc<Window>),
-	nav_handler_ptr: *mut Box<dyn Fn(String) -> bool>,
+	nav_decide_policy_ptr: *mut Box<dyn Fn(String) -> bool>,
 	#[cfg(target_os = "macos")]
 	file_drop_ptr: *mut (Box<dyn Fn(&Window, FileDropEvent) -> bool>, Rc<Window>),
 	protocol_ptrs: Vec<*mut Box<dyn Fn(&HttpRequest) -> Result<HttpResponse>>>
@@ -305,12 +305,16 @@ impl InnerWebView {
 					let url: id = msg_send![request, URL];
 					let url: id = msg_send![url, absoluteString];
 					let url = NSString(url);
+
+					let target_frame: id = msg_send![action, targetFrame];
+					let is_main_frame: bool = msg_send![target_frame, isMainFrame];
+
 					let handler = handler as *mut block::Block<(NSInteger,), c_void>;
 
 					let function = this.get_ivar::<*mut c_void>("function");
 					if !function.is_null() {
-						let function = &mut *(*function as *mut Box<dyn for<'s> Fn(String) -> bool>);
-						match (function)(url.to_str().to_string()) {
+						let function = &mut *(*function as *mut Box<dyn for<'s> Fn(String, bool) -> bool>);
+						match (function)(url.to_str().to_string(), is_main_frame) {
 							true => (*handler).call((1,)),
 							false => (*handler).call((0,))
 						};
@@ -321,7 +325,7 @@ impl InnerWebView {
 				}
 			}
 
-			let nav_handler_ptr = if let Some(nav_handler) = attributes.navigation_handler {
+			let nav_decide_policy_ptr = if attributes.navigation_handler.is_some() || attributes.new_window_req_handler.is_some() {
 				let cls = match ClassDecl::new("UIViewController", class!(NSObject)) {
 					Some(mut cls) => {
 						cls.add_ivar::<*mut c_void>("function");
@@ -335,11 +339,23 @@ impl InnerWebView {
 				};
 
 				let handler: id = msg_send![cls, new];
-				let nav_handler_ptr = Box::into_raw(Box::new(nav_handler));
-				(*handler).set_ivar("function", nav_handler_ptr as *mut _ as *mut c_void);
+				let function_ptr = {
+					let navigation_handler = attributes.navigation_handler;
+					let new_window_req_handler = attributes.new_window_req_handler;
+					Box::into_raw(Box::new(Box::new(move |url: String, is_main_frame: bool| -> bool {
+						if is_main_frame {
+							navigation_handler.as_ref().map_or(true, |navigation_handler| (navigation_handler)(url))
+						} else {
+							new_window_req_handler
+								.as_ref()
+								.map_or(true, |new_window_req_handler| (new_window_req_handler)(url))
+						}
+					}) as Box<dyn Fn(String, bool) -> bool>))
+				};
+				(*handler).set_ivar("function", function_ptr as *mut _ as *mut c_void);
 
 				let _: () = msg_send![webview, setNavigationDelegate: handler];
-				nav_handler_ptr
+				function_ptr
 			} else {
 				null_mut()
 			};
@@ -407,7 +423,7 @@ impl InnerWebView {
 				ns_window,
 				manager,
 				ipc_handler_ptr,
-				nav_handler_ptr,
+				nav_decide_policy_ptr,
 				#[cfg(target_os = "macos")]
 				file_drop_ptr,
 				protocol_ptrs
@@ -603,8 +619,8 @@ impl Drop for InnerWebView {
 				let _ = Box::from_raw(self.ipc_handler_ptr);
 			}
 
-			if !self.nav_handler_ptr.is_null() {
-				let _ = Box::from_raw(self.nav_handler_ptr);
+			if !self.nav_decide_policy_ptr.is_null() {
+				let _ = Box::from_raw(self.nav_decide_policy_ptr);
 			}
 
 			#[cfg(target_os = "macos")]

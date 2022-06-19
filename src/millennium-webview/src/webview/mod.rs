@@ -147,6 +147,11 @@ pub struct WebViewAttributes {
 	/// The closure takes the URL as a `String` parameter and returns a `bool` to determine whether to allow navigation.
 	pub navigation_handler: Option<Box<dyn Fn(String) -> bool>>,
 
+	/// Set a new window handler to decide if an incoming URL is allowed to open in a new window.
+	///
+	/// The closure takes the URL as a `String` parameter and returns a `bool` to determine whether to allow navigation.
+	pub new_window_handler: Option<Box<dyn Fn(String) -> bool>>,
+
 	/// Enables clipboard access for the page rendered on **Linux** and
 	/// **Windows**.
 	///
@@ -184,6 +189,7 @@ impl Default for WebViewAttributes {
 			ipc_handler: None,
 			file_drop_handler: None,
 			navigation_handler: None,
+			new_window_handler: None,
 			clipboard: false,
 			devtools: false,
 			zoom_hotkeys_enabled: false
@@ -375,6 +381,14 @@ impl<'a> WebViewBuilder<'a> {
 	/// - **iOS**: Open Safari > Develop > [Device Name] > [Your WebView] to get the devtools window.
 	pub fn with_devtools(mut self, devtools: bool) -> Self {
 		self.webview.devtools = devtools;
+		self
+	}
+
+	/// Set a new window request handler to decide if an incoming URL is allowed to open in a new window.
+	///
+	/// The closure takes the URL as a `String` parameter and returns a `bool` to determine whether to allow navigation.
+	pub fn with_new_window_handler(mut self, callback: impl Fn(String) -> bool + 'static) -> Self {
+		self.webview.new_window_handler = Some(Box::new(callback));
 		self
 	}
 

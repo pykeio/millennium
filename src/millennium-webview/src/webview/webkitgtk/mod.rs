@@ -200,14 +200,20 @@ impl InnerWebView {
 			Inhibit(false)
 		});
 
-		if let Some(nav_handler) = attributes.navigation_handler {
+		if attributes.navigation_handler.is_some() || attributes.new_window_handler.is_some() {
 			webview.connect_decide_policy(move |_webview, policy_decision, policy_type| {
-				if let PolicyDecisionType::NavigationAction = policy_type {
+				let handler = match policy_type {
+					PolicyDecisionType::NavigationAction => &attributes.navigation_handler,
+					PolicyDecisionType::NewWindowAction => &attributes.new_window_handler,
+					_ => &None
+				};
+
+				if let Some(handler) = handler {
 					if let Some(policy) = policy_decision.dynamic_cast_ref::<NavigationPolicyDecision>() {
 						if let Some(nav_action) = policy.navigation_action() {
 							if let Some(uri_req) = nav_action.request() {
 								if let Some(uri) = uri_req.uri() {
-									let allow = nav_handler(uri.to_string());
+									let allow = handler(uri.to_string());
 									let pointer = policy_decision.as_ptr();
 									unsafe {
 										if allow { webkit_policy_decision_use(pointer) } else { webkit_policy_decision_ignore(pointer) }
