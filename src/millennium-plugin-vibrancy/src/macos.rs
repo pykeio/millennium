@@ -23,18 +23,16 @@
 #[repr(u64)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NSVisualEffectMaterial {
-	#[deprecated(
-		since = "macOS 10.14",
-		note = "A default material for the view's effectiveAppearance. You should instead choose an appropriate semantic material."
-	)]
+	/// A default material for the view's effectiveAppearance.
+	#[deprecated = "Use a semantic material instead."]
 	AppearanceBased = 0,
-	#[deprecated(since = "macOS 10.14", note = "Use a semantic material instead.")]
+	#[deprecated = "Use a semantic material instead."]
 	Light = 1,
-	#[deprecated(since = "macOS 10.14", note = "Use a semantic material instead.")]
+	#[deprecated = "Use a semantic material instead."]
 	Dark = 2,
-	#[deprecated(since = "macOS 10.14", note = "Use a semantic material instead.")]
+	#[deprecated = "Use a semantic material instead."]
 	MediumLight = 8,
-	#[deprecated(since = "macOS 10.14", note = "Use a semantic material instead.")]
+	#[deprecated = "Use a semantic material instead."]
 	UltraDark = 9,
 
 	// macOS 10.10+
