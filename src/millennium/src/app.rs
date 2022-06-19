@@ -1285,7 +1285,6 @@ impl<R: Runtime> Builder<R> {
 		if let Some(system_tray) = self.system_tray {
 			#[allow(unused_mut)] // for rust analyzer hack
 			let mut ids = HashMap::new();
-			#[cfg(not(feature = "__rust_analyzer_hack"))]
 			if let Some(menu) = system_tray.menu() {
 				tray::get_menu_ids(&mut ids, menu);
 			}

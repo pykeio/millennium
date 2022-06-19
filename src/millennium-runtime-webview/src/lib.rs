@@ -90,7 +90,7 @@ use millennium_webview::{
 	webview::{FileDropEvent as MillenniumFileDropEvent, WebContext, WebView, WebViewBuilder}
 };
 use uuid::Uuid;
-#[cfg(all(windows, not(feature = "__rust_analyzer_hack")))]
+#[cfg(windows)]
 use webview2_com::FocusChangedEventHandler;
 #[cfg(windows)]
 #[allow(unused_imports)]
@@ -2537,7 +2537,7 @@ fn create_webview<T: UserEvent>(
 		..
 	} = pending;
 	let webview_id_map = context.webview_id_map.clone();
-	#[cfg(all(windows, not(feature = "__rust_analyzer_hack")))]
+	#[cfg(windows)]
 	let proxy = context.proxy.clone();
 
 	#[cfg(target_os = "macos")]
@@ -2619,7 +2619,7 @@ fn create_webview<T: UserEvent>(
 		.build()
 		.map_err(|e| Error::CreateWebview(Box::new(e)))?;
 
-	#[cfg(all(windows, not(feature = "__rust_analyzer_hack")))]
+	#[cfg(windows)]
 	{
 		let controller = webview.controller();
 		let proxy_ = proxy.clone();

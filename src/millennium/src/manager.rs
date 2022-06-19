@@ -843,7 +843,7 @@ impl<R: Runtime> WindowManager<R> {
 	}
 
 	fn event_initialization_script(&self) -> String {
-		return format!(
+		format!(
 			"Object.defineProperty(window, '{function}', {{
 				value: function (eventData) {{
 					const listeners = (window['{listeners}'] && window['{listeners}'][eventData.event]) || [];
@@ -858,13 +858,13 @@ impl<R: Runtime> WindowManager<R> {
 			}});",
 			function = self.event_emit_function_name(),
 			listeners = self.event_listeners_object_name()
-		);
+		)
 	}
 }
 
-#[cfg(all(test, not(feature = "__rust_analyzer_hack")))]
+#[cfg(test)]
 mod test {
-	use super::WindowManager;
+	use super::*;
 	use crate::{generate_context, plugin::PluginStore, MillenniumWebview, StateManager};
 
 	#[test]

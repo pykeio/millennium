@@ -47,7 +47,6 @@ macos-private-api = [
 	"millennium-webview/transparent",
 	"millennium-runtime/macos-private-api"
 ]
-__rust_analyzer_hack = []
 objc-exception = [ "millennium-webview/objc-exception" ]
 global-shortcut = [ "millennium-runtime/global-shortcut" ]
 clipboard = [ "millennium-runtime/clipboard" ]

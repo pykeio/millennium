@@ -17,6 +17,8 @@
 // taken from https://github.com/ChrisDenton/static_vcruntime/
 // we're not using static_vcruntime directly because we want this for debug builds too
 
+#![allow(dead_code)]
+
 use std::{env, fs, io::Write, path::Path};
 
 pub fn build() {
