@@ -325,7 +325,7 @@ impl InnerWebView {
 				}
 			}
 
-			let nav_decide_policy_ptr = if attributes.navigation_handler.is_some() || attributes.new_window_req_handler.is_some() {
+			let nav_decide_policy_ptr = if attributes.navigation_handler.is_some() || attributes.new_window_handler.is_some() {
 				let cls = match ClassDecl::new("UIViewController", class!(NSObject)) {
 					Some(mut cls) => {
 						cls.add_ivar::<*mut c_void>("function");
@@ -341,14 +341,12 @@ impl InnerWebView {
 				let handler: id = msg_send![cls, new];
 				let function_ptr = {
 					let navigation_handler = attributes.navigation_handler;
-					let new_window_req_handler = attributes.new_window_req_handler;
+					let new_window_handler = attributes.new_window_handler;
 					Box::into_raw(Box::new(Box::new(move |url: String, is_main_frame: bool| -> bool {
 						if is_main_frame {
 							navigation_handler.as_ref().map_or(true, |navigation_handler| (navigation_handler)(url))
 						} else {
-							new_window_req_handler
-								.as_ref()
-								.map_or(true, |new_window_req_handler| (new_window_req_handler)(url))
+							new_window_handler.as_ref().map_or(true, |new_window_handler| (new_window_handler)(url))
 						}
 					}) as Box<dyn Fn(String, bool) -> bool>))
 				};
