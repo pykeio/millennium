@@ -64,7 +64,7 @@ pub struct InnerWebView {
 	// Note that if following functions signatures are changed in the future,
 	// all fucntions pointer declarations in objc callbacks below all need to get updated.
 	ipc_handler_ptr: *mut (Box<dyn Fn(&Window, String)>, Rc<Window>),
-	nav_decide_policy_ptr: *mut Box<dyn Fn(String) -> bool>,
+	nav_decide_policy_ptr: *mut Box<dyn Fn(String, bool) -> bool>,
 	#[cfg(target_os = "macos")]
 	file_drop_ptr: *mut (Box<dyn Fn(&Window, FileDropEvent) -> bool>, Rc<Window>),
 	protocol_ptrs: Vec<*mut Box<dyn Fn(&HttpRequest) -> Result<HttpResponse>>>
