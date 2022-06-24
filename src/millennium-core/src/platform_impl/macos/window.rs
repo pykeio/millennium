@@ -346,7 +346,7 @@ pub struct SharedState {
 	/// options when transitioning back to borderless fullscreen.
 	save_presentation_opts: Option<NSApplicationPresentationOptions>,
 	pub saved_desktop_display_mode: Option<(CGDisplay, CGDisplayMode)>,
-	current_theme: Theme
+	pub current_theme: Theme
 }
 
 impl SharedState {
