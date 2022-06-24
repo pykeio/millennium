@@ -233,7 +233,7 @@ pub fn context_codegen(data: ContextData) -> Result<TokenStream, EmbeddedAssetsE
 		if dev {
 			let info_plist_path = config_parent.join("Info.plist");
 			let mut info_plist = if info_plist_path.exists() {
-				plist::Value::from_file(&info_plist_path).unwrap_or_else(|e| panic!("failed to read plist {}" {}, info_plist_path.display(), e))
+				plist::Value::from_file(&info_plist_path).unwrap_or_else(|e| panic!("failed to read plist {}: {}", info_plist_path.display(), e))
 			} else {
 				plist::Value::Dictionary(Default::default())
 			};
