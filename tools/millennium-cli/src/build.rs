@@ -88,6 +88,19 @@ pub fn command(options: Options) -> Result<()> {
 		std::process::exit(1);
 	}
 
+	if config_
+		.millennium
+		.bundle
+		.identifier
+		.chars()
+		.any(|ch| !(ch.is_alphanumeric() || ch == '-' || ch == '.'))
+	{
+		error!(
+			"You must change the bundle identifier in `.millenniumrc > millennium > bundle > identifier` to a valid bundle identifier. Check the documentation for more info."
+		);
+		std::process::exit(1);
+	}
+
 	if let Some(before_build) = &config_.build.before_build_command {
 		if !before_build.is_empty() {
 			info!(action = "Running"; "beforeBuildCommand `{}`", before_build);

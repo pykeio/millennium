@@ -334,6 +334,9 @@ pub struct BundleConfig {
 	/// The application identifier in reverse domain name notation (e.g. `io.pyke.example`).
 	/// This string must be unique across applications as it is used for system configurations like bundle ID and the
 	/// path to the webview data directory.
+	///
+	/// The bundle identifier must contain only alphanumeric characters (A-Z, a-z, 0-9), hyphens (-), and periods (.).
+	/// The bundle identifier should preferably be all lowercase, but it is not required to be.
 	pub identifier: String,
 	/// The app's icons
 	#[serde(default)]
