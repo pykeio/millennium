@@ -468,7 +468,7 @@ class WindowManager extends WebviewWindowHandle {
 		return await this._manage('close');
 	}
 
-	/** Gets the system theme. */
+	/** Gets the window's current theme. Only implemented on Windows and macOS 10.14+. */
 	public async theme(): Promise<Theme | null> {
 		return await this._manage('theme');
 	}
@@ -754,7 +754,7 @@ export interface WindowOptions {
 	/**
 	 * The initial window theme. Defaults to the system theme.
 	 *
-	 * Currently only implemented on Windows.
+	 * Currently only implemented on Windows and macOS 10.14+.
 	 */
 	theme?: Theme;
 }

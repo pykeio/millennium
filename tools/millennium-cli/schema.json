@@ -2079,7 +2079,7 @@
           "type": "boolean"
         },
         "theme": {
-          "description": "The initial window theme. Defaults to the system theme. Currently only implemented on Windows.",
+          "description": "The initial window theme. Defaults to the system theme. Currently only implemented on Windows and macOS 10.14+.",
           "anyOf": [
             {
               "$ref": "#/definitions/Theme"
