@@ -27,9 +27,6 @@ use core_foundation::{
 	string::CFString
 };
 use core_graphics::display::{CGDirectDisplayID, CGDisplay, CGDisplayBounds};
-use core_video_sys::{
-	kCVReturnSuccess, kCVTimeIsIndefinite, CVDisplayLinkCreateWithCGDisplay, CVDisplayLinkGetNominalOutputVideoRefreshPeriod, CVDisplayLinkRelease
-};
 
 use super::{ffi, util};
 use crate::{
@@ -229,14 +226,14 @@ impl MonitorHandle {
 	pub fn video_modes(&self) -> impl Iterator<Item = RootVideoMode> {
 		let cv_refresh_rate = unsafe {
 			let mut display_link = std::ptr::null_mut();
-			assert_eq!(CVDisplayLinkCreateWithCGDisplay(self.0, &mut display_link), kCVReturnSuccess);
-			let time = CVDisplayLinkGetNominalOutputVideoRefreshPeriod(display_link);
-			CVDisplayLinkRelease(display_link);
+			assert_eq!(ffi::CVDisplayLinkCreateWithCGDisplay(self.0, &mut display_link), ffi::kCVReturnSuccess);
+			let time = ffi::CVDisplayLinkGetNominalOutputVideoRefreshPeriod(display_link);
+			ffi::CVDisplayLinkRelease(display_link);
 
 			// This value is indefinite if an invalid display link was specified
-			assert!(time.flags & kCVTimeIsIndefinite == 0);
+			assert!(time.flags & ffi::kCVTimeIsIndefinite == 0);
 
-			time.timeScale as i64 / time.timeValue
+			time.time_scale as i64 / time.time_value
 		};
 
 		let monitor = self.clone();
