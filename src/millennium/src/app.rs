@@ -1366,7 +1366,7 @@ fn on_event_loop_event<R: Runtime, F: FnMut(&AppHandle<R>, RunEvent) + 'static>(
 				use objc::*;
 				if let Some(icon) = app_handle.manager.inner.app_icon.clone() {
 					let ns_app: id = msg_send![class!(NSApplication), sharedApplication];
-					let data = NSData::dataWithBytes_length(nil, icon.as_ptr() as *const std::os::raw::c_void, icon.len() as u64);
+					let data = NSData::dataWithBytes_length_(nil, icon.as_ptr() as *const std::os::raw::c_void, icon.len() as u64);
 					let app_icon = NSImage::initWithData_(NSImage::alloc(nil), data);
 					let _: () = msg_send![ns_app, setApplicationIconImage: app_icon];
 				}
