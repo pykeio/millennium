@@ -311,6 +311,28 @@ pub mod blocking {
 			response
 		}
 
+		/// Shows the dialog to select multiple folders.
+		/// This is a blocking operation and should *NOT* be used when running on the main thread context.
+		///
+		/// # Examples
+		///
+		/// ```rust,no_run
+		/// use millennium::api::dialog::blocking::FileDialogBuilder;
+		/// #[millennium::command]
+		/// fn my_command() {
+		/// 	let folder_paths = FileDialogBuilder::new().pick_folders();
+		/// 	// do something with the optional folder paths here
+		/// 	// the folder paths value is `None` if the user closed the dialog
+		/// }
+		/// ```
+		pub fn pick_folders(self) -> Option<Vec<PathBuf>> {
+			#[allow(clippy::let_and_return)]
+			let response = run_dialog_sync!(self.0.pick_folders());
+			#[cfg(not(target_os = "linux"))]
+			let response = response.map(|paths| paths.into_iter().map(|p| p.path().to_path_buf()).collect());
+			response
+		}
+
 		/// Shows the dialog to save a file.
 		/// This is a blocking operation,
 		/// and should *NOT* be used when running on the main thread context.
@@ -510,6 +532,30 @@ mod nonblocking {
 			#[cfg(not(target_os = "linux"))]
 			let f = |path: Option<rfd::FileHandle>| f(path.map(|p| p.path().to_path_buf()));
 			run_file_dialog!(self.0.pick_folder(), f)
+		}
+
+		/// Shows the dialog to select multiple folders.
+		/// This is not a blocking operation,
+		/// and should be used when running on the main thread to avoid deadlocks with the event loop.
+		///
+		/// # Examples
+		///
+		/// ```rust,no_run
+		/// use millennium::api::dialog::FileDialogBuilder;
+		/// millennium::Builder::default()
+		/// 	.build(millennium::generate_context!("test/fixture/.millenniumrc"))
+		/// 	.expect("failed to build millennium app")
+		/// 	.run(|_app, _event| {
+		/// 		FileDialogBuilder::new().pick_folders(|file_paths| {
+		/// 			// do something with the optional folder paths here
+		/// 			// the folder paths value is `None` if the user closed the dialog
+		/// 		})
+		/// 	})
+		/// ```
+		pub fn pick_folders<F: FnOnce(Option<Vec<PathBuf>>) + Send + 'static>(self, f: F) {
+			#[cfg(not(target_os = "linux"))]
+			let f = |paths: Option<Vec<rfd::FileHandle>>| f(paths.map(|list| list.into_iter().map(|p| p.path().to_path_buf()).collect()));
+			run_file_dialog!(self.0.pick_folders(), f)
 		}
 
 		/// Shows the dialog to save a file.
