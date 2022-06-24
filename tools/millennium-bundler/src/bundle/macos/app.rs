@@ -196,6 +196,7 @@ fn create_info_plist(bundle_dir: &Path, bundle_icon_file: Option<PathBuf>, setti
 	file.flush()?;
 
 	if let Some(user_plist_path) = &settings.macos().info_plist_path {
+		// TODO: use the plist crate instead
 		Command::new("/usr/libexec/PlistBuddy")
 			.args(&["-c".into(), format!("Merge {}", user_plist_path.display()), bundle_plist_path.display().to_string()])
 			.output_ok()
