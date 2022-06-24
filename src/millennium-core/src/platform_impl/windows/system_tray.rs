@@ -147,7 +147,7 @@ pub struct SystemTray {
 }
 
 impl SystemTray {
-	pub fn set_icon(&self, icon: Icon) {
+	pub fn set_icon(&mut self, icon: Icon) {
 		unsafe {
 			let mut nid = NOTIFYICONDATAW {
 				uFlags: NIF_ICON,

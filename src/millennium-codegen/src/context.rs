@@ -338,9 +338,7 @@ fn png_icon<P: AsRef<Path>>(root: &TokenStream, out_dir: &Path, path: P) -> Resu
 		.unwrap_or_else(|_| panic!("failed to read icon {}", path.display()))
 		.to_vec();
 	let decoder = png::Decoder::new(std::io::Cursor::new(bytes));
-	let mut reader = decoder
-		.read_info()
-		.unwrap_or_else(|_| panic!("failed to read icon {}", path.display()));
+	let mut reader = decoder.read_info().unwrap_or_else(|_| panic!("failed to read icon {}", path.display()));
 	let mut buffer: Vec<u8> = Vec::new();
 	while let Ok(Some(row)) = reader.next_row() {
 		buffer.extend(row.data());
