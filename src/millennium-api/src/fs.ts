@@ -306,7 +306,7 @@ export async function writeBinaryFile(path: string | FsBinaryFileOptions, conten
 
 	if (contents && 'dir' in contents)
 		fileOptions = contents;
-	else
+	else if (typeof path === 'string')
 		// @ts-expect-error
 		file.contents = contents ?? [];
 
