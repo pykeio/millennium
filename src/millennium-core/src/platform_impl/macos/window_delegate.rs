@@ -17,7 +17,7 @@
 use std::{
 	f64,
 	os::raw::c_void,
-	sync::{atomic::Ordering, Arc, Weak}
+	sync::{Arc, Weak}
 };
 
 use cocoa::{
@@ -35,7 +35,7 @@ use crate::{
 	event::{Event, WindowEvent},
 	keyboard::ModifiersState,
 	platform_impl::platform::{
-		app_state::{AppState, INTERRUPT_EVENT_LOOP_EXIT},
+		app_state::AppState,
 		event::{EventProxy, EventWrapper},
 		util::{self, IdRef},
 		view::ViewState,
@@ -421,8 +421,6 @@ extern "C" fn dragging_exited(this: &Object, _: Sel, _: id) {
 extern "C" fn window_will_enter_fullscreen(this: &Object, _: Sel, _: id) {
 	trace!("Triggered `windowWillEnterFullscreen:`");
 
-	INTERRUPT_EVENT_LOOP_EXIT.store(true, Ordering::SeqCst);
-
 	with_state(this, |state| {
 		state.with_window(|window| {
 			trace!("Locked shared state in `window_will_enter_fullscreen`");
@@ -454,8 +452,6 @@ extern "C" fn window_will_enter_fullscreen(this: &Object, _: Sel, _: id) {
 /// Invoked when before exit fullscreen
 extern "C" fn window_will_exit_fullscreen(this: &Object, _: Sel, _: id) {
 	trace!("Triggered `windowWillExitFullScreen:`");
-
-	INTERRUPT_EVENT_LOOP_EXIT.store(true, Ordering::SeqCst);
 
 	with_state(this, |state| {
 		state.with_window(|window| {
@@ -497,8 +493,6 @@ extern "C" fn window_will_use_fullscreen_presentation_options(this: &Object, _: 
 
 /// Invoked when entered fullscreen
 extern "C" fn window_did_enter_fullscreen(this: &Object, _: Sel, _: id) {
-	INTERRUPT_EVENT_LOOP_EXIT.store(false, Ordering::SeqCst);
-
 	trace!("Triggered `windowDidEnterFullscreen:`");
 	with_state(this, |state| {
 		state.initial_fullscreen = false;
@@ -519,8 +513,6 @@ extern "C" fn window_did_enter_fullscreen(this: &Object, _: Sel, _: id) {
 
 /// Invoked when exited fullscreen
 extern "C" fn window_did_exit_fullscreen(this: &Object, _: Sel, _: id) {
-	INTERRUPT_EVENT_LOOP_EXIT.store(false, Ordering::SeqCst);
-
 	trace!("Triggered `windowDidExitFullscreen:`");
 	with_state(this, |state| {
 		state.with_window(|window| {
