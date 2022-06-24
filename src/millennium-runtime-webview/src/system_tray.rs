@@ -22,14 +22,15 @@ use std::{
 use millennium_runtime::{menu::MenuHash, UserEvent};
 pub use millennium_runtime::{
 	menu::{Menu, MenuEntry, MenuItem, MenuUpdate, Submenu, SystemTrayMenu, SystemTrayMenuEntry, SystemTrayMenuItem, TrayHandle},
-	SystemTrayEvent, TrayIcon
+	Icon, SystemTrayEvent
 };
 #[cfg(target_os = "macos")]
 pub use millennium_webview::application::platform::macos::CustomMenuItemExtMacOS;
 pub use millennium_webview::application::{
 	event::TrayEvent,
 	event_loop::EventLoopProxy,
-	menu::{ContextMenu as MillenniumContextMenu, CustomMenuItem as MillenniumCustomMenuItem, MenuItem as MillenniumMenuItem}
+	menu::{ContextMenu as MillenniumContextMenu, CustomMenuItem as MillenniumCustomMenuItem, MenuItem as MillenniumMenuItem},
+	system_tray::Icon as MillenniumTrayIcon
 };
 use uuid::Uuid;
 
@@ -39,13 +40,26 @@ pub type SystemTrayEventHandler = Box<dyn Fn(&SystemTrayEvent) + Send>;
 pub type SystemTrayEventListeners = Arc<Mutex<HashMap<Uuid, Arc<SystemTrayEventHandler>>>>;
 pub type SystemTrayItems = Arc<Mutex<HashMap<u16, MillenniumCustomMenuItem>>>;
 
+/// Wrapper around a [`millennium_webview::application::system_tray::Icon`] that can be created from a [`WindowIcon`].
+pub struct TrayIcon(pub(crate) MillenniumTrayIcon);
+
+impl TryFrom<Icon> for TrayIcon {
+	type Error = Error;
+
+	fn try_from(icon: Icon) -> std::result::Result<Self, Self::Error> {
+		MillenniumTrayIcon::from_rgba(icon.rgba, icon.width, icon.height)
+			.map(Self)
+			.map_err(crate::icon_err)
+	}
+}
+
 #[derive(Debug, Clone)]
 pub struct SystemTrayHandle<T: UserEvent> {
 	pub(crate) proxy: EventLoopProxy<super::Message<T>>
 }
 
 impl<T: UserEvent> TrayHandle for SystemTrayHandle<T> {
-	fn set_icon(&self, icon: TrayIcon) -> Result<()> {
+	fn set_icon(&self, icon: Icon) -> Result<()> {
 		self.proxy
 			.send_event(Message::Tray(TrayMessage::UpdateIcon(icon)))
 			.map_err(|_| Error::FailedToSendMessage)

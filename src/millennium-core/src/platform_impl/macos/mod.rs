@@ -24,6 +24,7 @@ mod event;
 mod event_loop;
 mod ffi;
 mod global_shortcut;
+mod icon;
 mod keycode;
 mod menu;
 mod monitor;
@@ -36,6 +37,8 @@ mod window;
 mod window_delegate;
 
 use std::{fmt, ops::Deref, sync::Arc};
+
+pub(crate) use icon::PlatformIcon;
 
 #[cfg(feature = "tray")]
 pub use self::system_tray::{SystemTray, SystemTrayBuilder};
@@ -50,7 +53,6 @@ pub use self::{
 	monitor::{MonitorHandle, VideoMode},
 	window::{Id as WindowId, Parent, PlatformSpecificWindowBuilderAttributes, UnownedWindow}
 };
-pub(crate) use crate::icon::NoIcon as PlatformIcon;
 use crate::{error::OsError as RootOsError, event::DeviceId as RootDeviceId, window::WindowAttributes};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

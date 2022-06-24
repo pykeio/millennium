@@ -24,8 +24,11 @@
 //! Linux. On macOS it's used in the menubar.
 //!
 //! ```rust,ignore
+//! # let icon_rgba = Vec::<u8>::new();
+//! # let icon_width = 0;
+//! # let icon_height = 0;
 //! let mut tray_menu = ContextMenu::new();
-//! let icon = include_bytes!("my_icon.png").to_vec();
+//! let icon = Icon::from_rgba(icon_rgba, icon_width, icon_height);
 //!
 //! tray_menu.add_item(MenuItemAttributes::new("My menu item"));
 //!
@@ -42,6 +45,7 @@
 //! [menu_bar]: crate::menu::MenuBar
 //! [context_menu]: crate::menu::ContextMenu
 
+pub use crate::icon::{BadIcon, Icon};
 use crate::{
 	error::OsError,
 	event_loop::EventLoopWindowTarget,
@@ -56,24 +60,7 @@ use std::path::PathBuf;
 
 impl SystemTrayBuilder {
 	/// Creates a new SystemTray for platforms where this is appropriate.
-	///
-	/// ## Platform-specific
-	///
-	/// - **macOS / Windows:**: receive icon as bytes (`Vec<u8>`)
-	/// - **Linux:**: receive icon's path (`PathBuf`)
-	#[cfg(not(target_os = "linux"))]
-	pub fn new(icon: Vec<u8>, tray_menu: Option<ContextMenu>) -> Self {
-		Self(SystemTrayBuilderPlatform::new(icon, tray_menu.map(|m| m.0.menu_platform)))
-	}
-
-	/// Creates a new SystemTray for platforms where this is appropriate.
-	///
-	/// ## Platform-specific
-	///
-	/// - **macOS / Windows:**: receive icon as bytes (`Vec<u8>`)
-	/// - **Linux:**: receive icon's path (`PathBuf`)
-	#[cfg(target_os = "linux")]
-	pub fn new(icon: PathBuf, tray_menu: Option<ContextMenu>) -> Self {
+	pub fn new(icon: Icon, tray_menu: Option<ContextMenu>) -> Self {
 		Self(SystemTrayBuilderPlatform::new(icon, tray_menu.map(|m| m.0.menu_platform)))
 	}
 
@@ -91,24 +78,7 @@ pub struct SystemTray(pub SystemTrayPlatform);
 
 impl SystemTray {
 	/// Set new tray icon.
-	///
-	/// ## Platform-specific
-	///
-	/// - **macOS / Windows:**: receive icon as bytes (`Vec<u8>`)
-	/// - **Linux:**: receive icon's path (`PathBuf`)
-	#[cfg(not(target_os = "linux"))]
-	pub fn set_icon(&mut self, icon: Vec<u8>) {
-		self.0.set_icon(icon)
-	}
-
-	/// Set new tray icon.
-	///
-	/// ## Platform-specific
-	///
-	/// - **macOS / Windows:**: receive icon as bytes (`Vec<u8>`)
-	/// - **Linux:**: receive icon's path (`PathBuf`)
-	#[cfg(target_os = "linux")]
-	pub fn set_icon(&mut self, icon: PathBuf) {
+	pub fn set_icon(&mut self, icon: Icon) {
 		self.0.set_icon(icon)
 	}
 

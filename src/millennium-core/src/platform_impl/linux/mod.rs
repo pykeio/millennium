@@ -19,6 +19,7 @@
 mod clipboard;
 mod event_loop;
 mod global_shortcut;
+mod icon;
 mod keyboard;
 mod keycode;
 mod menu;
@@ -28,8 +29,9 @@ mod system_tray;
 mod window;
 
 pub use event_loop::{EventLoop, EventLoopProxy, EventLoopWindowTarget};
+pub use icon::PlatformIcon;
 pub use monitor::{MonitorHandle, VideoMode};
-pub use window::{hit_test, PlatformIcon, Window, WindowId};
+pub use window::{hit_test, Window, WindowId};
 
 #[cfg(feature = "tray")]
 pub use self::system_tray::{SystemTray, SystemTrayBuilder};

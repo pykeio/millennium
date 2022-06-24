@@ -35,7 +35,7 @@ use millennium_utils::PackageInfo;
 use crate::runtime::menu::{Menu, MenuId, MenuIdRef};
 use crate::runtime::RuntimeHandle;
 #[cfg(feature = "system-tray")]
-use crate::runtime::{SystemTrayEvent as RuntimeSystemTrayEvent, TrayIcon};
+use crate::runtime::SystemTrayEvent as RuntimeSystemTrayEvent;
 #[cfg(shell_scope)]
 use crate::scope::ShellScope;
 #[cfg(updater)]
@@ -1162,28 +1162,7 @@ impl<R: Runtime> Builder<R> {
 	#[allow(clippy::type_complexity)]
 	pub fn build<A: Assets>(mut self, context: Context<A>) -> crate::Result<App<R>> {
 		#[cfg(feature = "system-tray")]
-		let system_tray_icon = {
-			let icon = context.system_tray_icon.clone();
-
-			// check the icon format if the system tray is configured
-			if self.system_tray.is_some() {
-				use std::io::{Error, ErrorKind};
-				#[cfg(target_os = "linux")]
-				if let Some(TrayIcon::Raw(..)) = icon {
-					return Err(crate::Error::InvalidIcon(Error::new(ErrorKind::InvalidInput, "system tray icons on linux must be a file path")));
-				}
-
-				#[cfg(not(target_os = "linux"))]
-				if let Some(TrayIcon::File(_)) = icon {
-					return Err(crate::Error::InvalidIcon(Error::new(
-						ErrorKind::InvalidInput,
-						"system tray icons on non-linux platforms must be the raw bytes"
-					)));
-				}
-			}
-
-			icon
-		};
+		let system_tray_icon = context.system_tray_icon.clone();
 
 		#[cfg(all(feature = "system-tray", target_os = "macos"))]
 		let system_tray_icon_as_template = context
@@ -1288,12 +1267,14 @@ impl<R: Runtime> Builder<R> {
 			if let Some(menu) = system_tray.menu() {
 				tray::get_menu_ids(&mut ids, menu);
 			}
-			let mut tray = tray::SystemTray::new().with_icon(
-				system_tray
-					.icon
-					.or(system_tray_icon)
-					.expect("tray icon not found; please configure it in .millenniumrc")
-			);
+			let tray_icon = if let Some(icon) = system_tray.icon {
+				Some(icon)
+			} else if let Some(tray_icon) = system_tray_icon {
+				Some(tray_icon.try_into()?)
+			} else {
+				None
+			};
+			let mut tray = tray::SystemTray::new().with_icon(tray_icon.expect("tray icon not found; please configure it in .millenniumrc"));
 			if let Some(menu) = system_tray.menu {
 				tray = tray.with_menu(menu);
 			}

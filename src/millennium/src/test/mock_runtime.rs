@@ -30,12 +30,12 @@ use millennium_runtime::{
 		dpi::{PhysicalPosition, PhysicalSize, Position, Size},
 		CursorIcon, DetachedWindow, MenuEvent, PendingWindow, WindowEvent
 	},
-	Dispatch, EventLoopProxy, Result, RunEvent, Runtime, RuntimeHandle, UserAttentionType, UserEvent, WindowIcon
+	Dispatch, EventLoopProxy, Icon, Result, RunEvent, Runtime, RuntimeHandle, UserAttentionType, UserEvent
 };
 #[cfg(feature = "system-tray")]
 use millennium_runtime::{
 	menu::{SystemTrayMenu, TrayHandle},
-	SystemTray, SystemTrayEvent, TrayIcon
+	SystemTray, SystemTrayEvent
 };
 use millennium_utils::{config::WindowConfig, Theme};
 use uuid::Uuid;
@@ -223,7 +223,7 @@ impl WindowBuilder for MockWindowBuilder {
 		self
 	}
 
-	fn icon(self, icon: WindowIcon) -> Result<Self> {
+	fn icon(self, icon: Icon) -> Result<Self> {
 		Ok(self)
 	}
 
@@ -454,7 +454,7 @@ impl<T: UserEvent> Dispatch<T> for MockDispatcher {
 		Ok(())
 	}
 
-	fn set_icon(&self, icon: WindowIcon) -> Result<()> {
+	fn set_icon(&self, icon: Icon) -> Result<()> {
 		Ok(())
 	}
 
@@ -499,7 +499,7 @@ pub struct MockTrayHandler {
 
 #[cfg(feature = "system-tray")]
 impl TrayHandle for MockTrayHandler {
-	fn set_icon(&self, icon: TrayIcon) -> Result<()> {
+	fn set_icon(&self, icon: Icon) -> Result<()> {
 		Ok(())
 	}
 	fn set_menu(&self, menu: SystemTrayMenu) -> Result<()> {

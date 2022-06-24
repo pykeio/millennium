@@ -260,10 +260,6 @@ pub fn try_build(attributes: Attributes) -> Result<()> {
 
 	#[allow(unused_mut, clippy::redundant_clone)]
 	let mut resources = config.millennium.bundle.resources.clone().unwrap_or_default();
-	#[cfg(target_os = "linux")]
-	if let Some(tray) = config.millennium.system_tray {
-		resources.push(tray.icon_path.display().to_string());
-	}
 
 	#[cfg(windows)]
 	if let Some(fixed_webview2_runtime_path) = &config.millennium.bundle.windows.webview_fixed_runtime_path {
