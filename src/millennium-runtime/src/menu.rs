@@ -570,7 +570,7 @@ pub enum MenuItem {
 	///
 	/// ## Platform-specific
 	///
-	/// - **Windows / Android / iOS:** Unsupported
+	/// - **Android / iOS:** Unsupported
 	Hide,
 
 	/// A standard "Services" menu item.
@@ -598,28 +598,28 @@ pub enum MenuItem {
 	///
 	/// ## Platform-specific
 	///
-	/// - **Windows / Android / iOS:** Unsupported
+	/// - **Android / iOS:** Unsupported
 	CloseWindow,
 
 	/// A "quit this app" menu icon.
 	///
 	/// ## Platform-specific
 	///
-	/// - **Windows / Android / iOS:** Unsupported
+	/// - **Android / iOS:** Unsupported
 	Quit,
 
 	/// A menu item for enabling copying (often text) from responders.
 	///
 	/// ## Platform-specific
 	///
-	/// - **Windows / Android / iOS:** Unsupported
+	/// - **Android / iOS / Linux:** Unsupported
 	Copy,
 
 	/// A menu item for enabling cutting (often text) from responders.
 	///
 	/// ## Platform-specific
 	///
-	/// - **Windows / Android / iOS:** Unsupported
+	/// - **Android / iOS / Linux:** Unsupported
 	Cut,
 
 	/// An "undo" menu item; particularly useful for supporting the
@@ -642,14 +642,14 @@ pub enum MenuItem {
 	///
 	/// ## Platform-specific
 	///
-	/// - **Windows / Android / iOS:** Unsupported
+	/// - **Windows / Android / iOS / Linux:** Unsupported
 	SelectAll,
 
 	/// A menu item for pasting (often text) into responders.
 	///
 	/// ## Platform-specific
 	///
-	/// - **Windows / Android / iOS:** Unsupported
+	/// - **Android / iOS / Linux:** Unsupported
 	Paste,
 
 	/// A standard "enter full screen" item.
@@ -663,7 +663,7 @@ pub enum MenuItem {
 	///
 	/// ## Platform-specific
 	///
-	/// - **Windows / Android / iOS:** Unsupported
+	/// - **Android / iOS:** Unsupported
 	Minimize,
 
 	/// An item for instructing the app to zoom
@@ -677,6 +677,6 @@ pub enum MenuItem {
 	///
 	/// ## Platform-specific
 	///
-	/// - **Windows / Android / iOS:** Unsupported
+	/// - **Android / iOS:** Unsupported
 	Separator
 }
