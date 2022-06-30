@@ -26,7 +26,7 @@ use millennium_bundler::bundle::{bundle_project, PackageType};
 use crate::helpers::{
 	app_paths::{app_dir, millennium_dir},
 	command_env,
-	config::{get as get_config, AppUrl, ShellAllowlistOpen, WindowUrl},
+	config::{get as get_config, AppUrl, WindowUrl},
 	manifest::rewrite_manifest,
 	updater_signature::sign_file_from_env_variables
 };
@@ -288,6 +288,7 @@ pub fn command(options: Options) -> Result<()> {
 		// set env vars used by the bundler
 		#[cfg(target_os = "linux")]
 		{
+			use crate::helpers::config::ShellAllowlistOpen;
 			if matches!(config_.millennium.allowlist.shell.open, ShellAllowlistOpen::Flag(true) | ShellAllowlistOpen::Validate(_)) {
 				std::env::set_var("APPIMAGE_BUNDLE_XDG_OPEN", "1");
 			}
