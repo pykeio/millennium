@@ -1144,13 +1144,18 @@ impl<R: Runtime> Builder<R> {
 	///
 	/// ```no_run
 	/// let kind = if cfg!(debug_assertions) { "debug" } else { "release" };
-	/// millennium::Builder::default().updater_target(format!("{}-{}", millennium::updater::target().unwrap(), kind));
+	/// millennium::Builder::default().updater_target(format!(
+	/// 	"{}-{}",
+	/// 	millennium::updater::target().unwrap(),
+	/// 	kind
+	/// ));
 	/// ```
 	///
 	/// - Use the platform's target triple:
 	///
 	/// ```no_run
-	/// millennium::Builder::default().updater_target(millennium::utils::platform::target_triple().unwrap());
+	/// millennium::Builder::default()
+	/// 	.updater_target(millennium::utils::platform::target_triple().unwrap());
 	/// ```
 	#[cfg(updater)]
 	pub fn updater_target<T: Into<String>>(mut self, target: T) -> Self {

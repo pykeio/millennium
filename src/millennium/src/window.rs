@@ -175,7 +175,8 @@ impl<'a, R: Runtime> WindowBuilder<'a, R> {
 	/// 				// for this example, let's dynamically change the CSP
 	/// 				if let Some(csp) = response.headers_mut().get_mut("Content-Security-Policy") {
 	/// 					// use the Millennium helper to parse the CSP policy to a map
-	/// 					let mut csp_map: HashMap<String, CspDirectiveSources> = Csp::Policy(csp.to_str().unwrap().to_string()).into();
+	/// 					let mut csp_map: HashMap<String, CspDirectiveSources> =
+	/// 						Csp::Policy(csp.to_str().unwrap().to_string()).into();
 	/// 					csp_map
 	/// 						.entry("script-src".to_string())
 	/// 						.or_insert_with(Default::default)

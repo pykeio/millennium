@@ -603,11 +603,12 @@ impl<R: Runtime> UpdateBuilder<R> {
 	/// millennium::Builder::default().setup(|app| {
 	/// 	let handle = app.handle();
 	/// 	millennium::async_runtime::spawn(async move {
-	/// 		let builder = millennium::updater::builder(handle).target(if cfg!(target_os = "macos") {
-	/// 			"darwin-universal".to_string()
-	/// 		} else {
-	/// 			millennium::updater::target().unwrap()
-	/// 		});
+	/// 		let builder =
+	/// 			millennium::updater::builder(handle).target(if cfg!(target_os = "macos") {
+	/// 				"darwin-universal".to_string()
+	/// 			} else {
+	/// 				millennium::updater::target().unwrap()
+	/// 			});
 	/// 		match builder.check().await {
 	/// 			Ok(update) => {}
 	/// 			Err(error) => {}
@@ -626,7 +627,11 @@ impl<R: Runtime> UpdateBuilder<R> {
 	/// 	let handle = app.handle();
 	/// 	millennium::async_runtime::spawn(async move {
 	/// 		let kind = if cfg!(debug_assertions) { "debug" } else { "release" };
-	/// 		let builder = millennium::updater::builder(handle).target(format!("{}-{}", millennium::updater::target().unwrap(), kind));
+	/// 		let builder = millennium::updater::builder(handle).target(format!(
+	/// 			"{}-{}",
+	/// 			millennium::updater::target().unwrap(),
+	/// 			kind
+	/// 		));
 	/// 		match builder.check().await {
 	/// 			Ok(update) => {}
 	/// 			Err(error) => {}
@@ -642,7 +647,8 @@ impl<R: Runtime> UpdateBuilder<R> {
 	/// millennium::Builder::default().setup(|app| {
 	/// 	let handle = app.handle();
 	/// 	millennium::async_runtime::spawn(async move {
-	/// 		let builder = millennium::updater::builder(handle).target(millennium::utils::platform::target_triple().unwrap());
+	/// 		let builder = millennium::updater::builder(handle)
+	/// 			.target(millennium::utils::platform::target_triple().unwrap());
 	/// 		match builder.check().await {
 	/// 			Ok(update) => {}
 	/// 			Err(error) => {}

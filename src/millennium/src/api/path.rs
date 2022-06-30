@@ -150,7 +150,12 @@ impl BaseDirectory {
 /// ```rust,no_run
 /// use millennium::Manager;
 /// millennium::Builder::default().setup(|app| {
-/// 	let path = millennium::api::path::parse(&app.config(), app.package_info(), &app.env(), "$HOME/.bashrc")?;
+/// 	let path = millennium::api::path::parse(
+/// 		&app.config(),
+/// 		app.package_info(),
+/// 		&app.env(),
+/// 		"$HOME/.bashrc"
+/// 	)?;
 /// 	assert_eq!(path.to_str().unwrap(), "/home/${whoami}/.bashrc");
 /// 	Ok(())
 /// });
@@ -196,9 +201,18 @@ pub fn parse<P: AsRef<Path>>(config: &Config, package_info: &PackageInfo, env: &
 /// };
 /// // on an actual app, remove the string argument
 /// let context = millennium::generate_context!("test/fixture/.millenniumrc");
-/// let path = resolve_path(context.config(), context.package_info(), &Env::default(), "db/millennium.sqlite", Some(BaseDirectory::App))
-/// 	.expect("failed to resolve path");
-/// assert_eq!(path.to_str().unwrap(), "/home/${whoami}/.config/com.millennium.app/db/millennium.sqlite");
+/// let path = resolve_path(
+/// 	context.config(),
+/// 	context.package_info(),
+/// 	&Env::default(),
+/// 	"db/millennium.sqlite",
+/// 	Some(BaseDirectory::App)
+/// )
+/// .expect("failed to resolve path");
+/// assert_eq!(
+/// 	path.to_str().unwrap(),
+/// 	"/home/${whoami}/.config/com.millennium.app/db/millennium.sqlite"
+/// );
 ///
 /// millennium::Builder::default()
 /// 	.run(context)
@@ -212,7 +226,13 @@ pub fn parse<P: AsRef<Path>>(config: &Config, package_info: &PackageInfo, env: &
 /// 	Manager
 /// };
 /// millennium::Builder::default().setup(|app| {
-/// 	let path = resolve_path(&app.config(), app.package_info(), &app.env(), "path/to/something", Some(BaseDirectory::Config))?;
+/// 	let path = resolve_path(
+/// 		&app.config(),
+/// 		app.package_info(),
+/// 		&app.env(),
+/// 		"path/to/something",
+/// 		Some(BaseDirectory::Config)
+/// 	)?;
 /// 	assert_eq!(path.to_str().unwrap(), "/home/${whoami}/.config/path/to/something");
 /// 	Ok(())
 /// });

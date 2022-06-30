@@ -30,7 +30,7 @@ use cocoa::{
 use core_graphics::display::CGDisplay;
 use objc::runtime::{Class, Object, Sel, BOOL, YES};
 
-pub use self::{cursor::*, r#async::*};
+pub use self::{r#async::*, cursor::*};
 use crate::{dpi::LogicalPosition, platform_impl::platform::ffi};
 
 // Replace with `!` once stable

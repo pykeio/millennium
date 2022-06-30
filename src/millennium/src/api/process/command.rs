@@ -240,7 +240,10 @@ impl Command {
 	/// ```rust,no_run
 	/// use millennium::api::process::{Command, CommandEvent};
 	/// millennium::async_runtime::spawn(async move {
-	/// 	let (mut rx, mut child) = Command::new("cargo").args(["millennium", "dev"]).spawn().expect("Failed to spawn cargo");
+	/// 	let (mut rx, mut child) = Command::new("cargo")
+	/// 		.args(["millennium", "dev"])
+	/// 		.spawn()
+	/// 		.expect("Failed to spawn cargo");
 	///
 	/// 	let mut i = 0;
 	/// 	while let Some(event) = rx.recv().await {
