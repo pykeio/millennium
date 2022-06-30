@@ -13,7 +13,7 @@ members = [
 	"src/millennium-webview",
 ]
 exclude = [
-	"examples/helloworld"
+	"examples/hello-world"
 ]
 
 # default to small, optimized workspace release binaries
