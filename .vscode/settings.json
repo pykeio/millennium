@@ -8,7 +8,8 @@
 		"editor.semanticHighlighting.enabled": true
 	},
 	"rust-analyzer.diagnostics.disabled": [
-		"unresolved-macro-call"
+		"unresolved-macro-call",
+		"macro-error" // rust-lang/rust-analyzer#12600
 	],
 	"[mdx]": {
 		"editor.wordWrap": "on",
