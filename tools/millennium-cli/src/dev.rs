@@ -18,7 +18,7 @@ use std::{
 	env::set_current_dir,
 	ffi::OsStr,
 	fs::FileType,
-	io::{BufReader, Write},
+	io::{BufReader, ErrorKind, Write},
 	path::{Path, PathBuf},
 	process::{exit, Command, Stdio},
 	sync::{
@@ -124,7 +124,24 @@ fn command_internal(options: Options) -> Result<()> {
 			command.stdout(os_pipe::dup_stdout()?);
 			command.stderr(os_pipe::dup_stderr()?);
 
-			let child = SharedChild::spawn(&mut command).unwrap_or_else(|_| panic!("failed to run `{}`", before_dev));
+			let child = match SharedChild::spawn(&mut command) {
+				Ok(c) => c,
+				Err(e) => {
+					if e.kind() == ErrorKind::NotFound {
+						return Err(anyhow::anyhow!(
+							"`{}` not found.{}",
+							runner,
+							if runner == "cargo" {
+								" Rust/Cargo appears to not be installed. Please follow the prerequisites setup guide: https://millennium.pyke.io/docs/main/your-first-app/prerequisites"
+							} else {
+								""
+							}
+						));
+					} else {
+						return Err(e.into());
+					}
+				}
+			};
 			let child = Arc::new(child);
 			let child_ = child.clone();
 			std::thread::spawn(move || {

@@ -16,7 +16,7 @@
 
 use std::{
 	fs::File,
-	io::Read,
+	io::{ErrorKind, Read},
 	path::{Path, PathBuf},
 	process::Command,
 	str::FromStr
@@ -108,16 +108,34 @@ struct CargoConfig {
 }
 
 pub fn build_project(runner: String, args: Vec<String>) -> crate::Result<()> {
-	let status = Command::new(&runner)
+	match Command::new(&runner)
 		.args(&["build", "--features=custom-protocol"])
 		.args(args)
 		.env("STATIC_VCRUNTIME", "true")
-		.piped()?;
-
-	if status.success() {
-		Ok(())
-	} else {
-		Err(anyhow::anyhow!("Result of `{} build` operation was unsuccessful", runner))
+		.piped()
+	{
+		Ok(status) => {
+			if status.success() {
+				Ok(())
+			} else {
+				Err(anyhow::anyhow!("Result of `{} build` operation was unsuccessful.", runner))
+			}
+		}
+		Err(e) => {
+			if e.kind() == ErrorKind::NotFound {
+				Err(anyhow::anyhow!(
+					"`{}` not found.{}",
+					runner,
+					if runner == "cargo" {
+						" Rust/Cargo appears to not be installed. Please follow the prerequisites setup guide: https://millennium.pyke.io/docs/main/your-first-app/prerequisites"
+					} else {
+						""
+					}
+				))
+			} else {
+				Err(e.into())
+			}
+		}
 	}
 }
 
