@@ -81,9 +81,7 @@ const MIN_JSON_PARSE_LEN: usize = 10_240;
 /// 	bar: String
 /// }
 /// let foo = Foo { bar: "x".repeat(20_000).into() };
-/// let value =
-/// 	serialize_js_with(&foo, SerializeOptions::default(), |v| format!("console.log({})", v))
-/// 		.unwrap();
+/// let value = serialize_js_with(&foo, SerializeOptions::default(), |v| format!("console.log({})", v)).unwrap();
 /// assert_eq!(value, format!("console.log(JSON.parse('{{\"bar\":\"{}\"}}'))", foo.bar));
 /// ```
 pub fn serialize_js_with<T: Serialize, F: FnOnce(&str) -> String>(value: &T, options: SerializeOptions, cb: F) -> crate::api::Result<String> {

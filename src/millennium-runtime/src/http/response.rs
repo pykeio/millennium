@@ -199,8 +199,7 @@ impl Builder {
 	/// ```
 	/// # use millennium_runtime::http::*;
 	///
-	/// let response =
-	/// 	ResponseBuilder::new().status(200).mimetype("text/html").body(Vec::new()).unwrap();
+	/// let response = ResponseBuilder::new().status(200).mimetype("text/html").body(Vec::new()).unwrap();
 	/// ```
 	#[inline]
 	pub fn new() -> Builder {

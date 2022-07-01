@@ -193,10 +193,7 @@ impl<R: Runtime, C: DeserializeOwned> Builder<R, C> {
 	/// };
 	///
 	/// #[millennium::command]
-	/// async fn foobar<R: Runtime>(
-	/// 	app: millennium::AppHandle<R>,
-	/// 	window: millennium::Window<R>
-	/// ) -> Result<(), String> {
+	/// async fn foobar<R: Runtime>(app: millennium::AppHandle<R>, window: millennium::Window<R>) -> Result<(), String> {
 	/// 	println!("foobar");
 	/// 	Ok(())
 	/// }

@@ -107,8 +107,7 @@ impl Matches {
 /// ```rust,no_run
 /// use millennium::api::cli::get_matches;
 /// millennium::Builder::default().setup(|app| {
-/// 	let matches =
-/// 		get_matches(app.config().millennium.cli.as_ref().unwrap(), app.package_info())?;
+/// 	let matches = get_matches(app.config().millennium.cli.as_ref().unwrap(), app.package_info())?;
 /// 	Ok(())
 /// });
 /// ```

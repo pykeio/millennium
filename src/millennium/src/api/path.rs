@@ -150,12 +150,7 @@ impl BaseDirectory {
 /// ```rust,no_run
 /// use millennium::Manager;
 /// millennium::Builder::default().setup(|app| {
-/// 	let path = millennium::api::path::parse(
-/// 		&app.config(),
-/// 		app.package_info(),
-/// 		&app.env(),
-/// 		"$HOME/.bashrc"
-/// 	)?;
+/// 	let path = millennium::api::path::parse(&app.config(), app.package_info(), &app.env(), "$HOME/.bashrc")?;
 /// 	assert_eq!(path.to_str().unwrap(), "/home/${whoami}/.bashrc");
 /// 	Ok(())
 /// });
@@ -209,10 +204,7 @@ pub fn parse<P: AsRef<Path>>(config: &Config, package_info: &PackageInfo, env: &
 /// 	Some(BaseDirectory::App)
 /// )
 /// .expect("failed to resolve path");
-/// assert_eq!(
-/// 	path.to_str().unwrap(),
-/// 	"/home/${whoami}/.config/com.millennium.app/db/millennium.sqlite"
-/// );
+/// assert_eq!(path.to_str().unwrap(), "/home/${whoami}/.config/com.millennium.app/db/millennium.sqlite");
 ///
 /// millennium::Builder::default()
 /// 	.run(context)
