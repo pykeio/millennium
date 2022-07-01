@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "A very simple Millennium Appplication"
 edition = "2021"
 rust-version = "1.57"
+publish = false
 
 [profile.release]
 strip = true
@@ -14,12 +15,12 @@ incremental = false
 opt-level = "s"
 
 [build-dependencies]
-millennium-build = { path = "../../src/millennium-build", features = ["codegen"] }
+millennium-build = { path = "../../src/millennium-build", version = "1.0.0-beta.3", features = ["codegen"] }
 
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = [ "derive" ] }
-millennium = { path = "../../src/millennium", features = [] }
+millennium = { path = "../../src/millennium", version = "1.0.0-beta.3", features = [] }
 
 [features]
 default = [ "custom-protocol" ]

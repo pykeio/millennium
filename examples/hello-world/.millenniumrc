@@ -22,8 +22,8 @@
 		"windows": [
 			{
 				"title": "Millennium Example",
-				"width": 600,
-				"height": 600,
+				"width": 450,
+				"height": 300,
 				"resizable": true,
 				"fullscreen": false,
 				"center": true
