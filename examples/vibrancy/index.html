@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<style>
+			* {
+				font-family: 'Segoe UI', sans-serif;
+			}
+
+			:root {
+				--easing: cubic-bezier(0, 0, 0, 1);
+			}
+
+			body {
+				margin: 0;
+			}
+
+			main {
+				width: 100vw;
+				height: 100vh;
+
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex-direction: column;
+			}
+
+			main > div {
+				padding: 10px;
+
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex-direction: row;
+			}
+
+			button {
+				font-size: 14px;
+				color: black;
+				background-color: #fbfbfb;
+				padding: 10px 11px;
+				border: 1px solid #e7e7e7;
+				border-radius: 6px;
+				border-bottom-width: 0;
+				box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+				margin: 0 7px;
+				transition: background-color 0.25s var(--easing);
+			}
+
+			button:hover {
+				background-color: #f6f6f6;
+			}
+
+			button:active {
+				background-color: #e7e7e7;
+			}
+
+			button.primary {
+				color: black;
+				background-color: #4cc2ff;
+			}
+
+			button.primary:hover {
+				background-color: #47b1e8;
+			}
+
+			button.primary:active {
+				color: #254453;
+				background-color: #42a1d2;
+			}
+
+			@media (prefers-color-scheme: dark) {
+				body {
+					color: white;
+				}
+
+				button {
+					border: 1px solid #2D2D2D;
+					color: white;
+					background-color: #2D2D2D;
+					border-color: #2D2D2D;
+				}
+
+				button:hover {
+					background-color: #323232;
+				}
+
+				button:active {
+					background-color: #272727;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<h1 style='margin-top:0'>Millennium Vibrancy</h1>
+			<p>Press the buttons to enable/disable different effects.</p>
+			<div>
+				<button id='mica' class='primary'>Toggle Mica</button>
+				<button id='acrylic'>Toggle Acrylic</button>
+			</div>
+		</main>
+
+		<script>
+			const micaButton = document.getElementById('mica');
+			const acrylicButton = document.getElementById('acrylic');
+
+			micaButton.addEventListener('click', async () => {
+				if (acrylicButton.classList.contains('primary'))
+					acrylicButton.classList.remove('primary');
+
+				micaButton.classList.toggle('primary');
+				await Millennium.invoke('toggle_mica');
+			});
+			acrylicButton.addEventListener('click', async () => {
+				if (micaButton.classList.contains('primary'))
+					micaButton.classList.remove('primary');
+
+				acrylicButton.classList.toggle('primary');
+				await Millennium.invoke('toggle_acrylic');
+			});
+		</script>
+	</body>
+</html>

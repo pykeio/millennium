@@ -1,0 +1,39 @@
+{
+	"$schema": "https://millennium.pyke.io/v1",
+	"build": {
+		"distDir": [ "./index.html" ],
+		"devPath": [ "./index.html" ],
+		"withGlobalMillennium": true
+	},
+	"millennium": {
+		"bundle": {
+			"active": true,
+			"targets": "all",
+			"identifier": "io.pyke.vibrancy-demo",
+			"icon": [
+				"../../.icons/32x32.png",
+				"../../.icons/128x128.png",
+				"../../.icons/256x256.png",
+				"../../.icons/icon.ico"
+			]
+		},
+		"allowlist": {
+			"all": false
+		},
+		"windows": [
+			{
+				"title": "Millennium Vibrancy",
+				"width": 600,
+				"height": 400,
+				"resizable": true,
+				"transparent": true,
+				"center": true
+			}
+		],
+		"security": {
+			"csp": {
+				"default-src": "millennium: millennium.localhost 'unsafe-inline' 'self'"
+			}
+		}
+	}
+}
