@@ -46,8 +46,10 @@ pub struct VersionMetadata {
 
 #[derive(Deserialize)]
 pub struct PackageJson {
+	#[allow(dead_code)]
 	name: Option<String>,
 	version: Option<String>,
+	#[allow(dead_code)]
 	product_name: Option<String>
 }
 
