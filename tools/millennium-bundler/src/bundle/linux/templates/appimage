@@ -38,6 +38,9 @@ cp -r "${OUTDIR}/../appimage_deb/data/usr" "{{app_name}}.AppDir"
 
 cd "{{app_name}}.AppDir"
 
+mkdir -p "usr/bin"
+mkdir -p "usr/lib"
+
 if [[ "$APPIMAGE_BUNDLE_XDG_OPEN" != "0" ]] && [[ -f "/usr/bin/xdg-open" ]]; then
 	cp /usr/bin/xdg-open usr/bin
 fi
