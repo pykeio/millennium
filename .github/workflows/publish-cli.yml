@@ -55,7 +55,7 @@ jobs:
             build: |
               cd tools/millennium-cli-node
               pnpm build:release --target aarch64-unknown-linux-gnu
-              aarch64-linux-gnu-strip *.node
+              aarch64-unknown-linux-gnu-strip *.node
           - host: ubuntu-18.04
             architecture: x64
             target: armv7-unknown-linux-gnueabihf
