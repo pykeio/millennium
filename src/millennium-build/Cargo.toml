@@ -36,5 +36,4 @@ semver = "1"
 [features]
 codegen = [ "millennium-codegen", "quote" ]
 isolation = [ "millennium-codegen/isolation", "millennium-utils/isolation" ]
-config-json5 = [ "millennium-utils/config-json5" ]
 cxx = [ ]

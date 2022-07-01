@@ -36,7 +36,7 @@ notify = "4.0"
 shared_child = "1.0"
 toml_edit = "0.13"
 json-patch = "0.2"
-millennium-utils = { version = "1.0.0-beta.2", path = "../../src/millennium-utils", features = [ "isolation", "schema", "config-json5" ] }
+millennium-utils = { version = "1.0.0-beta.2", path = "../../src/millennium-utils", features = [ "isolation", "schema" ] }
 toml = "0.5"
 valico = "3.6"
 handlebars = "4.2"

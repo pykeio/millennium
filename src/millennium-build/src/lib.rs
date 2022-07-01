@@ -198,8 +198,6 @@ pub fn try_build(attributes: Attributes) -> Result<()> {
 		println!("cargo:rerun-if-env-changed=MILLENNIUM_CONFIG");
 		println!("cargo:rerun-if-changed=.millenniumrc");
 		println!("cargo:rerun-if-changed=.millenniumrc.json");
-		#[cfg(feature = "config-json5")]
-		println!("cargo:rerun-if-changed=.millenniumrc.json5");
 	}
 
 	let config: Config = if let Ok(env) = std::env::var("MILLENNIUM_CONFIG") {

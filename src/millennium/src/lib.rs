@@ -63,7 +63,6 @@
 //! - **window-data-url**: Enables usage of data URLs on the webview.
 //! - **compression**: Enables asset compression. You should only disable this if you want faster compile times in
 //!   release builds, though it produces larger binaries.
-//! - **config-json5**: Adds support for the JSON5 format for `.millenniumrc`.
 //! - **icon-ico**: Adds support to set `.ico` window icons. Enables [`Icon::File`] and [`Icon::Raw`] variants.
 //! - **icon-png**: Adds support to set `.png` window icons. Enables [`Icon::File`] and [`Icon::Raw`] variants.
 //!
