@@ -19,7 +19,10 @@ use std::{
 	path::{Path, PathBuf}
 };
 
-use millennium_utils::resources::{external_binaries, ResourcePaths};
+use millennium_utils::{
+	config::BundleType,
+	resources::{external_binaries, ResourcePaths}
+};
 
 use super::category::AppCategory;
 use crate::bundle::{common, platform::target_triple};
@@ -44,6 +47,19 @@ pub enum PackageType {
 	Dmg,
 	/// The Updater bundle.
 	Updater
+}
+
+impl From<BundleType> for PackageType {
+	fn from(bundle: BundleType) -> Self {
+		match bundle {
+			BundleType::Deb => Self::Deb,
+			BundleType::AppImage => Self::AppImage,
+			BundleType::Msi => Self::WindowsMsi,
+			BundleType::App => Self::MacOsBundle,
+			BundleType::Dmg => Self::Dmg,
+			BundleType::Updater => Self::Updater
+		}
+	}
 }
 
 impl PackageType {

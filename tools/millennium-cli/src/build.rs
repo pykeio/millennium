@@ -20,7 +20,7 @@ use anyhow::{bail, Context};
 use clap::Parser;
 #[cfg(target_os = "linux")]
 use heck::ToKebabCase;
-use log::{error, info};
+use log::{error, info, warn};
 use millennium_bundler::bundle::{bundle_project, PackageType};
 
 use crate::helpers::{
@@ -42,15 +42,20 @@ pub struct Options {
 	#[clap(short, long)]
 	debug: bool,
 	/// Target triple to build against.
-	/// It must be one of the values outputted by `$rustc --print target-list` or `universal-apple-darwin` for an
-	/// universal macOS application. Note that compiling an universal macOS application requires both
-	/// `aarch64-apple-darwin` and `x86_64-apple-darwin` targets to be installed.
+	///
+	/// Must be one of the values outputted by `$rustc --print target-list` or `universal-apple-darwin` for a
+	/// universal macOS application. Note that compiling a universal macOS application requires both the
+	/// `aarch64-apple-darwin` and `x86_64-apple-darwin` toolchains to be installed.
 	#[clap(short, long)]
 	target: Option<String>,
 	/// Space or comma-separated list of Cargo features to activate.
 	#[clap(short, long, multiple_occurrences(true), multiple_values(true))]
 	features: Option<Vec<String>>,
-	/// Space or comma-separated list of bundles to package
+	/// Space or comma-separated list of bundles to package.
+	///
+	/// Bundles must be one of `deb`, `appimage`, `msi`, `app`, `dmg`, or `updater`.
+	///
+	/// Note that the `updater` bundle is not automatically added, so you must specify it if the updater is enabled.
 	#[clap(short, long, multiple_occurrences(true), multiple_values(true))]
 	bundles: Option<Vec<String>>,
 	/// JSON string or path to JSON file to merge with .millenniumrc
@@ -256,27 +261,16 @@ pub fn command(options: Options) -> Result<()> {
 				}
 			}
 			Some(types)
-		} else if let Some(targets) = &config_.millennium.bundle.targets {
-			let mut types = vec![];
-			let targets = targets.to_vec();
-			if !targets.contains(&"all".into()) {
-				for name in targets {
-					match PackageType::from_short_name(&name) {
-						Some(package_type) => {
-							types.push(package_type);
-						}
-						None => {
-							return Err(anyhow::anyhow!(format!("Unsupported bundle format: {}", name)));
-						}
-					}
-				}
-				Some(types)
-			} else {
-				None
-			}
 		} else {
-			None
+			let targets = config_.millennium.bundle.targets.to_vec();
+			if targets.is_empty() { None } else { Some(targets.into_iter().map(Into::into).collect()) }
 		};
+
+		if let Some(types) = &package_types {
+			if config_.millennium.updater.active && !types.contains(&PackageType::Updater) {
+				warn!("Updater is enabled, but the bundle target list does not contain `updater`; updater artifacts won't be generated.");
+			}
+		}
 
 		let mut enabled_features = features.clone();
 		if !no_default_features {

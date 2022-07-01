@@ -131,6 +131,7 @@
           "macOS": {
             "minimumSystemVersion": "10.13"
           },
+          "targets": "all",
           "windows": {
             "allowDowngrades": true,
             "certificateThumbprint": null,
@@ -486,7 +487,7 @@
       ],
       "properties": {
         "active": {
-          "description": "Whether we should build your app with millennium-bundler or plain `cargo build`",
+          "description": "Whether Millennium should handle bundling your application or just output the executable.",
           "default": false,
           "type": "boolean"
         },
@@ -584,13 +585,11 @@
           ]
         },
         "targets": {
-          "description": "The bundle targets, currently supports [\"deb\", \"app\", \"msi\", \"appimage\", \"dmg\"] or \"all\"",
-          "anyOf": [
+          "description": "The bundle targets to build. Currently supports `[\"deb\", \"appimage\", \"msi\", \"app\", \"dmg\", \"updater\"]` or \"all\" to build all targets.",
+          "default": "all",
+          "allOf": [
             {
               "$ref": "#/definitions/BundleTarget"
-            },
-            {
-              "type": "null"
             }
           ]
         },
@@ -615,19 +614,41 @@
       "additionalProperties": false
     },
     "BundleTarget": {
-      "description": "Targets to bundle.",
+      "description": "Targets to bundle. Values are case insensitive.",
       "anyOf": [
+        {
+          "description": "Bundle all targets.",
+          "enum": [
+            "all"
+          ]
+        },
         {
           "description": "A list of bundle targets.",
           "type": "array",
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/BundleType"
           }
         },
         {
           "description": "A single bundle target.",
-          "type": "string"
+          "allOf": [
+            {
+              "$ref": "#/definitions/BundleType"
+            }
+          ]
         }
+      ]
+    },
+    "BundleType": {
+      "description": "A bundle referenced by `millennium-bundler`",
+      "type": "string",
+      "enum": [
+        "deb",
+        "appimage",
+        "msi",
+        "app",
+        "dmg",
+        "updater"
       ]
     },
     "CliArg": {
@@ -1332,6 +1353,7 @@
             "macOS": {
               "minimumSystemVersion": "10.13"
             },
+            "targets": "all",
             "windows": {
               "allowDowngrades": true,
               "certificateThumbprint": null,
