@@ -27,8 +27,7 @@ use clap::Parser;
 use colored::Colorize;
 use serde::Deserialize;
 
-use crate::helpers::config::get as get_config;
-use crate::Result;
+use crate::{helpers::config::get as get_config, interface::rust::get_workspace_dir, Result};
 
 #[derive(Deserialize)]
 struct YarnVersionInfo {
@@ -428,8 +427,8 @@ fn crate_version(millennium_dir: &Path, manifest: Option<&CargoManifest>, lock: 
 			};
 
 			let lock_version = match (lock, crate_lock_packages.is_empty()) {
-				(Some(_lock), true) => crate_lock_packages.iter().map(|p| p.version.clone()).collect::<Vec<String>>().join(", "),
-				(Some(_lock), false) => "unknown lockfile".to_string(),
+				(Some(_lock), false) => crate_lock_packages.iter().map(|p| p.version.clone()).collect::<Vec<String>>().join(", "),
+				(Some(_lock), true) => "unknown lockfile".to_string(),
 				_ => "no lockfile".to_string()
 			};
 
@@ -668,7 +667,7 @@ pub fn command(_options: Options) -> Result<()> {
 			} else {
 				None
 			};
-			let lock: Option<CargoLock> = if let Ok(lock_contents) = read_to_string(millennium_dir.join("Cargo.lock")) {
+			let lock: Option<CargoLock> = if let Ok(lock_contents) = read_to_string(get_workspace_dir(&millennium_dir).join("Cargo.lock")) {
 				toml::from_str(&lock_contents).ok()
 			} else {
 				None
