@@ -1,19 +1,19 @@
 lockfileVersion: 5.4
 
 specifiers:
-  '@napi-rs/cli': ^2.9.0
+  '@napi-rs/cli': ^2.10.0
   cross-spawn: ^7.0.3
   fs-extra: ^10.1.0
 
 devDependencies:
-  '@napi-rs/cli': 2.9.0
+  '@napi-rs/cli': 2.10.0
   cross-spawn: 7.0.3
   fs-extra: 10.1.0
 
 packages:
 
-  /@napi-rs/cli/2.9.0:
-    resolution: {integrity: sha512-qZ49ORZJ8rsHlvnnLsJCg9Ik+KfhiIgSea1HDMf6A9KBVxwWCijNhSO8zFvvBr7m1m44cx9WWhnQDnwPqSDeLA==}
+  /@napi-rs/cli/2.10.0:
+    resolution: {integrity: sha512-pK/VLOdo690FEItPJ9T5PLEfzmDTHgXjzuVChnsKvqI9vPg+rH12iyoxOrux6PAqg/pImJTd4CCabRqEfLt/sA==}
     engines: {node: '>= 10'}
     hasBin: true
     dev: true
@@ -41,7 +41,7 @@ packages:
     dev: true
 
   /isexe/2.0.0:
-    resolution: {integrity: sha1-6PvzdNxVb/iUehDcsFctYz8s+hA=}
+    resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
     dev: true
 
   /jsonfile/6.1.0:
