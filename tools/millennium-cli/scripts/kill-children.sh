@@ -1,4 +1,6 @@
-function getcpid() {
+#!/usr/bin/env sh
+
+getcpid() {
     cpids=`pgrep -P $1|xargs`
     for cpid in $cpids;
     do
