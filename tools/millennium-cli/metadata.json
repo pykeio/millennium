@@ -1,8 +1,8 @@
 {
 	"cli.js": {
-		"version": "1.0.0-beta.2",
+		"version": "1.0.0-beta.3",
 		"node": ">= 10.0.0"
 	},
-	"millennium": "1.0.0-beta.2",
-	"millennium-build": "1.0.0-beta.2"
+	"millennium": "1.0.0-beta.3",
+	"millennium-build": "1.0.0-beta.3"
 }
