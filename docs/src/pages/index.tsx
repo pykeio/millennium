@@ -3,7 +3,7 @@ import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import useBaseUrl from '@docusaurus/useBaseUrl';
-import { useColorMode } from '@docusaurus/theme-common';
+import { ColorModeProvider, useColorMode } from '@docusaurus/theme-common';
 import { ResponsiveBar } from '@nivo/bar';
 
 function Homepage() {
@@ -12,14 +12,8 @@ function Homepage() {
 		<div className="absolute z-0 top-0 inset-x-0 flex justify-center overflow-hidden pointer-events-none" style={{ userSelect: 'none' }}>
 			<div className="w-[108rem] flex-none flex justify-end">
 				{colorMode === 'dark'
-					? <picture>
-						<source srcSet={useBaseUrl('/img/tailwind-bg-dark.avif')} type="image/avif" />
-						<img src={useBaseUrl('/img/tailwind-bg-dark.png')} alt="" className="w-[90rem] flex-none max-w-none" />
-					</picture>
-					: <picture>
-						<source srcSet={useBaseUrl('/img/tailwind-bg-light.avif')} type="image/avif" />
-						<img src={useBaseUrl('/img/tailwind-bg-light.png')} alt="" className="w-[71.75rem] flex-none max-w-none" />
-					</picture>
+					? <img src={useBaseUrl('/img/tailwind-bg-dark.png')} alt="" className="w-[90rem] flex-none max-w-none" />
+					: <img src={useBaseUrl('/img/tailwind-bg-light.png')} alt="" className="w-[71.75rem] flex-none max-w-none" />
 				}
 			</div>
 		</div>
@@ -59,7 +53,7 @@ function Homepage() {
 							data={[
 								{ framework: 'NW.js', binary: 223.82 },
 								{ framework: 'Electron', binary: 185.95 },
-								{ framework: 'Millennium', binary: 1.69 },
+								{ framework: 'Millennium', binary: 1.91 },
 							]}
 							keys={[ 'binary' ]}
 							valueFormat={v => `${v} MB`}
@@ -114,8 +108,10 @@ export default function Home(): JSX.Element {
 	const { siteConfig } = useDocusaurusContext();
 
 	return (
-		<Layout title={`Hello from ${siteConfig.title}`} description="Millennium is a cross-platform GUI framework written in Rust. With Millennium, you can design consistent UI that works across all platforms, using HTML, CSS, and JavaScript.">
-			<Homepage />
+		<Layout title={`Hello from ${siteConfig.title}`} description="Millennium is a cross-platform application framework written in Rust. With Millennium, you can create apps with a consistent UI that works across all desktop platforms with HTML, CSS, and JavaScript.">
+			<ColorModeProvider>
+				<Homepage />
+			</ColorModeProvider>
 		</Layout>
 	);
 }

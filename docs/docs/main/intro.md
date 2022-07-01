@@ -76,7 +76,7 @@ This compilation process happens several times during the bootstrapping phase of
 ### Function Hardening
 
 #### Functional ASLR
-Functional Address Space Layout Randomization randomizes function names at runtime and can implement OTP hashing, so no two sessions are ever the same. We propose a novel type of function naming at boot time and optionally after every execution. Using a UID for each function pointer prevents static attacks.
+Functional Address Space Layout Randomization randomizes function names at runtime and can implement OTP hashing, so no two sessions are ever the same. We propose a novel type of function naming at boot time and optionally after every execution. Using a unique ID for each function pointer prevents static attacks.
 
 #### Kamikaze Function Injection
 This advanced type of FASLR using the Event API endpoint is a promise wrapped in a closure (with randomized handle) that Rust inserts at runtime into the WebView, where its interface is locked within the promise resolution handler and is nullified after execution.

@@ -1,0 +1,118 @@
+---
+sidebar_position: 2
+---
+
+# Installation
+Now that we have our build tools installed, we can install Millennium CLI. Millennium CLI makes it easy to create, build, and package your application.
+
+Millennium CLI can be installed through either Cargo or `npm`.
+
+## Installation via Cargo (*preferred*)
+
+:::note
+
+Installing through Cargo will build `millennium-cli`, which may take a long time. In CI environments or on a very slow machine, you may want to download pre-compiled binaries by installing via `npm`.
+
+:::
+
+To install Millennium CLI via Cargo, run the following in a terminal:
+
+```bash
+$ cargo install millennium-cli
+```
+
+To check if Millennium CLI is installed properly:
+
+```bash
+$ cargo millennium --help
+```
+
+:::note
+
+The next sections will teach you how to use some of Millennium CLI's commands. Make sure to use **`cargo millennium`** when running these commands!
+
+:::
+
+## Installation via npm
+For CI environments or slower machines, you can install prebuilt binaries of Millennium CLI through your preferred package manager. This can also have benefits if you're developing custom tools that use Millennium CLI, or if you want to peg the version of Millennium CLI.
+
+### Global installation
+This will install Millennium CLI globally and make it accessible everywhere via the **`millennium`** command. If you'd like to handle the version or are developing custom tools, we recommend [installing the CLI as a dependency](#installation-as-a-dependency) instead.
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+<!-- note: use h2s here so they don't show up in the table of contents -->
+
+<Tabs groupId="package-manager">
+<TabItem value="npm" label="npm" default>
+
+```bash
+$ npm i -g @pyke/millennium-cli
+```
+
+</TabItem>
+<TabItem value="pnpm" label="pnpm">
+
+```bash
+$ pnpm add -g @pyke/millennium-cli
+```
+
+</TabItem>
+<TabItem value="yarn" label="Yarn">
+
+```bash
+$ yarn global add @pyke/millennium-cli
+```
+
+</TabItem>
+</Tabs>
+
+Run `millennium --help` to check if Millennium CLI was installed properly.
+
+### Installation as a dependency
+If you want to peg the Millennium CLI version or are writing custom tools that use Millennium CLI, you can instead install the CLI as a development dependency in your Node project.
+
+<Tabs groupId="package-manager">
+<TabItem value="npm" label="npm" default>
+
+```bash
+$ npm i -D @pyke/millennium-cli
+```
+
+</TabItem>
+<TabItem value="pnpm" label="pnpm">
+
+```bash
+$ pnpm add -D @pyke/millennium-cli
+```
+
+</TabItem>
+<TabItem value="yarn" label="Yarn">
+
+```bash
+$ yarn add -D @pyke/millennium-cli
+```
+
+</TabItem>
+</Tabs>
+
+Then, you can use Millennium CLI in your scripts like so:
+
+```json title=package.json showLineNumbers
+{
+    "scripts": {
+        "build": "... && millennium build"
+    }
+}
+```
+
+Or, in a JS script:
+
+```js title=custom-build-script.js showLineNumbers
+const cli = require('@pyke/millennium-cli');
+cli.run([ 'build', '--target', target ], 'custom-build-script').catch(err => {
+	console.log(`Error running CLI: ${err.message}`);
+	process.exit(1);
+});
+```
