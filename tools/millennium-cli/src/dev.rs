@@ -124,24 +124,7 @@ fn command_internal(options: Options) -> Result<()> {
 			command.stdout(os_pipe::dup_stdout()?);
 			command.stderr(os_pipe::dup_stderr()?);
 
-			let child = match SharedChild::spawn(&mut command) {
-				Ok(c) => c,
-				Err(e) => {
-					if e.kind() == ErrorKind::NotFound {
-						return Err(anyhow::anyhow!(
-							"`{}` not found.{}",
-							runner,
-							if runner == "cargo" {
-								" Rust/Cargo appears to not be installed. Please follow the prerequisites setup guide: https://millennium.pyke.io/docs/main/your-first-app/prerequisites"
-							} else {
-								""
-							}
-						));
-					} else {
-						return Err(e.into());
-					}
-				}
-			};
+			let child = SharedChild::spawn(&mut command).unwrap_or_else(|_| panic!("failed to run `{}`", before_dev));
 			let child = Arc::new(child);
 			let child_ = child.clone();
 			std::thread::spawn(move || {
@@ -419,7 +402,24 @@ fn start_app(options: &Options, runner: &str, manifest: &Manifest, features: &[S
 	command.stdout(os_pipe::dup_stdout().unwrap());
 	command.stderr(Stdio::piped());
 
-	let child = SharedChild::spawn(&mut command).with_context(|| format!("failed to run {}", runner))?;
+	let child = match SharedChild::spawn(&mut command) {
+		Ok(c) => c,
+		Err(e) => {
+			if e.kind() == ErrorKind::NotFound {
+				return Err(anyhow::anyhow!(
+					"`{}` not found.{}",
+					runner,
+					if runner == "cargo" {
+						" Rust/Cargo appears to not be installed. Please follow the prerequisites setup guide: https://millennium.pyke.io/docs/main/your-first-app/prerequisites"
+					} else {
+						""
+					}
+				));
+			} else {
+				return Err(e.into());
+			}
+		}
+	};
 	let child_arc = Arc::new(child);
 	let child_stderr = child_arc.take_stderr().unwrap();
 	let mut stderr = BufReader::new(child_stderr);
