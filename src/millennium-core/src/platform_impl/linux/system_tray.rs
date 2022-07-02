@@ -108,7 +108,7 @@ fn temp_icon_path(temp_icon_dir: Option<&PathBuf>) -> std::io::Result<(PathBuf, 
 	};
 
 	std::fs::create_dir_all(&parent_path)?;
-	let icon_path = parent_path.join(uuid::Uuid::new_v4());
+	let icon_path = parent_path.join(format!("_tray-{}", uuid::Uuid::new_v4()));
 	Ok((parent_path, icon_path))
 }
 
