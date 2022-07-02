@@ -2415,20 +2415,6 @@ fn handle_event_loop<T: UserEvent>(
 						}
 					}
 				}
-				MillenniumWindowEvent::Resized(_) => {
-					if let Some(WindowHandle::Webview(webview)) = windows
-						.lock()
-						.expect("poisoned webview collection")
-						.get(&window_id)
-						.and_then(|w| w.inner.as_ref())
-					{
-						#[cfg_attr(not(debug_assertions), allow(unused_variables))]
-						if let Err(e) = webview.resize() {
-							#[cfg(debug_assertions)]
-							eprintln!("{}", e);
-						}
-					}
-				}
 				_ => {}
 			}
 		}
