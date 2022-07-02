@@ -391,6 +391,17 @@ class WindowManager extends WebviewWindowHandle {
 		return await this._manage('isVisible');
 	}
 
+	/**
+	 * Gets the window's current theme.
+	 *
+	 * ## Platform-specific
+	 * - **Linux**: Not implemented; always returns `light`.
+	 * - **macOS**: Window themes were introduced in macOS 10.14. Returns `light` on macOS 10.13 and below.
+	 */
+	public async theme(): Promise<Theme | null> {
+		return await this._manage('theme');
+	}
+
 	/** Centers the window on the display the window is currently on. */
 	public async center(): Promise<void> {
 		return await this._manage('center');
@@ -466,11 +477,6 @@ class WindowManager extends WebviewWindowHandle {
 	/** Closes the window. */
 	public async close(): Promise<void> {
 		return await this._manage('close');
-	}
-
-	/** Gets the window's current theme. Only implemented on Windows and macOS 10.14+. */
-	public async theme(): Promise<Theme | null> {
-		return await this._manage('theme');
 	}
 
 	/** Sets whether or not the window should have borders and bars. */
