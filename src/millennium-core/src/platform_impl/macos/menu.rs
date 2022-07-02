@@ -184,7 +184,7 @@ impl Menu {
 			MenuItem::Hide => Some((None, make_menu_item("Hide", Some(selector("hide:")), Some(Accelerator::new(RawMods::Meta, KeyCode::KeyH)), menu_type))),
 			MenuItem::HideOthers => Some((
 				None,
-				make_menu_item("Hide Others", Some(selector("hideOtherApplications:")), Some(Accelerator::new(RawMods::AltMeta, KeyCode::KeyW)), menu_type)
+				make_menu_item("Hide Others", Some(selector("hideOtherApplications:")), Some(Accelerator::new(RawMods::AltMeta, KeyCode::KeyH)), menu_type)
 			)),
 			MenuItem::ShowAll => Some((None, make_menu_item("Show All", Some(selector("unhideAllApplications:")), None, menu_type))),
 			MenuItem::EnterFullScreen => Some((
