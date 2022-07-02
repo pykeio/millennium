@@ -22,7 +22,7 @@ use std::{
 	process::Command
 };
 
-use anyhow::Context;
+use anyhow::{bail, Context};
 use handlebars::{to_json, Handlebars};
 use log::info;
 use millennium_utils::resources::resource_relpath;
@@ -327,6 +327,24 @@ fn run_light(wix_toolset_path: &Path, build_path: &Path, arguments: Vec<String>,
 //   Ok(())
 // }
 
+fn validate_version(version: &str) -> anyhow::Result<()> {
+	let version = semver::Version::parse(version).context("invalid app version")?;
+	if version.major > 255 {
+		bail!("app version major number cannot be greater than 255");
+	}
+	if version.minor > 255 {
+		bail!("app version minor number cannot be greater than 255");
+	}
+	if version.patch > 65535 {
+		bail!("app version patch number cannot be greater than 65535");
+	}
+	if !(version.pre.is_empty() && version.build.is_empty()) {
+		bail!("app version cannot have build metadata or pre-release identifier");
+	}
+
+	Ok(())
+}
+
 // Entry point for bundling and creating the MSI installer. For now the only supported platform is Windows x64.
 pub fn build_wix_app_installer(settings: &Settings, wix_toolset_path: &Path) -> crate::Result<Vec<PathBuf>> {
 	let arch = match settings.binary_arch() {
@@ -334,6 +352,8 @@ pub fn build_wix_app_installer(settings: &Settings, wix_toolset_path: &Path) -> 
 		"x86" => "x86",
 		target => return Err(crate::Error::ArchError(format!("unsupported target: {}", target)))
 	};
+
+	validate_version(settings.version_string())?;
 
 	// target only supports x64.
 	info!("Target: {}", arch);
