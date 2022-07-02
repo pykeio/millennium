@@ -28,7 +28,8 @@ mod signer;
 use std::{
 	ffi::OsString,
 	io::{BufReader, Write},
-	process::{Command, ExitStatus, Stdio}
+	process::{Command, ExitStatus, Output, Stdio},
+	sync::{Arc, Mutex}
 };
 
 use clap::{FromArgMatches, IntoApp, Parser, Subcommand};
@@ -191,7 +192,7 @@ pub trait CommandExt {
 	// The `pipe` function sets the stdout and stderr to properly
 	// show the command output in the Node.js wrapper.
 	fn piped(&mut self) -> std::io::Result<ExitStatus>;
-	fn output_ok(&mut self) -> crate::Result<()>;
+	fn output_ok(&mut self) -> crate::Result<Output>;
 }
 
 impl CommandExt for Command {
@@ -205,7 +206,7 @@ impl CommandExt for Command {
 		self.status().map_err(Into::into)
 	}
 
-	fn output_ok(&mut self) -> crate::Result<()> {
+	fn output_ok(&mut self) -> crate::Result<Output> {
 		let program = self.get_program().to_string_lossy().into_owned();
 		debug!(action = "Running"; "Command `{} {}`", program, self.get_args().map(|arg| arg.to_string_lossy()).fold(String::new(), |acc, arg| format!("{} {}", acc, arg)));
 
@@ -215,8 +216,11 @@ impl CommandExt for Command {
 		let mut child = self.spawn()?;
 
 		let mut stdout = child.stdout.take().map(BufReader::new).unwrap();
+		let stdout_lines = Arc::new(Mutex::new(Vec::new()));
+		let stdout_lines_ = stdout_lines.clone();
 		std::thread::spawn(move || {
 			let mut buf = Vec::new();
+			let mut lines = stdout_lines_.lock().unwrap();
 			loop {
 				buf.clear();
 				match millennium_utils::io::read_line(&mut stdout, &mut buf) {
@@ -224,12 +228,17 @@ impl CommandExt for Command {
 					_ => ()
 				}
 				debug!(action = "stdout"; "{}", String::from_utf8_lossy(&buf));
+				lines.extend(buf.clone());
+				lines.push(b'\n');
 			}
 		});
 
 		let mut stderr = child.stderr.take().map(BufReader::new).unwrap();
+		let stderr_lines = Arc::new(Mutex::new(Vec::new()));
+		let stderr_lines_ = stderr_lines.clone();
 		std::thread::spawn(move || {
 			let mut buf = Vec::new();
+			let mut lines = stderr_lines_.lock().unwrap();
 			loop {
 				buf.clear();
 				match millennium_utils::io::read_line(&mut stderr, &mut buf) {
@@ -237,10 +246,23 @@ impl CommandExt for Command {
 					_ => ()
 				}
 				debug!(action = "stderr"; "{}", String::from_utf8_lossy(&buf));
+				lines.extend(buf.clone());
+				lines.push(b'\n');
 			}
 		});
 
 		let status = child.wait()?;
-		if status.success() { Ok(()) } else { Err(anyhow::anyhow!("failed to run {}", program)) }
+
+		let output = Output {
+			status,
+			stdout: std::mem::take(&mut *stdout_lines.lock().unwrap()),
+			stderr: std::mem::take(&mut *stderr_lines.lock().unwrap())
+		};
+
+		if output.status.success() {
+			Ok(output)
+		} else {
+			Err(anyhow::anyhow!("failed to run {}", program))
+		}
 	}
 }
