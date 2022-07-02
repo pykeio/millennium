@@ -98,10 +98,27 @@ impl Drop for SystemTray {
 }
 
 fn temp_icon_path() -> std::io::Result<(PathBuf, PathBuf)> {
-	let mut parent_path = std::env::temp_dir();
+	let mut parent_path = dirs_next::runtime_dir().unwrap_or_else(|| std::env::temp_dir());
+
 	parent_path.push("millennium");
 	std::fs::create_dir_all(&parent_path)?;
 	let mut icon_path = parent_path.clone();
 	icon_path.push(format!("{}.png", uuid::Uuid::new_v4()));
 	Ok((parent_path, icon_path))
+}
+
+#[test]
+fn temp_icon_path_prefers_runtime() {
+	let runtime_dir = option_env!("XDG_RUNTIME_DIR");
+
+	let (dir1, _file1) = temp_icon_path().unwrap();
+	std::env::remove_var("XDG_RUNTIME_DIR");
+	let (dir2, _file2) = temp_icon_path().unwrap();
+
+	if let Some(runtime_dir) = runtime_dir {
+		std::env::set_var("XDG_RUNTIME_DIR", runtime_dir);
+		assert_eq!(dir1, PathBuf::from(format!("{}/millennium", runtime_dir)));
+	}
+
+	assert_eq!(dir2, PathBuf::from("/tmp/millennium"));
 }
