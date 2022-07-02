@@ -14,29 +14,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Contains traits with platform-specific methods in them.
-//!
-//! Contains the follow OS-specific modules:
-//!
-//!  - `android`
-//!  - `ios`
-//!  - `macos`
-//!  - `unix`
-//!  - `linux`
-//!  - `windows`
-//!
-//! And the following platform-specific module:
-//!
-//! - `global_shortcut` (available on `windows`, `unix`, `macos`)
-//! - `run_return` (available on `windows`, `unix`, `macos`, and `android`)
-//!
-//! However only the module corresponding to the platform you're compiling to
-//! will be available.
+#![cfg(target_os = "linux")]
 
-pub mod android;
-pub mod ios;
-pub mod linux;
-pub mod macos;
-pub mod run_return;
-pub mod unix;
-pub mod windows;
+#[cfg(feature = "tray")]
+use std::path::Path;
+
+#[cfg(feature = "tray")]
+use crate::system_tray::SystemTrayBuilder;
+
+#[cfg(feature = "tray")]
+pub trait SystemTrayBuilderExtLinux {
+	/// Sets a custom temp icon dir to store generated icon files.
+	fn with_temp_icon_dir<P: AsRef<Path>>(self, p: P) -> Self;
+}
+
+#[cfg(feature = "tray")]
+impl SystemTrayBuilderExtLinux for SystemTrayBuilder {
+	fn with_temp_icon_dir<P: AsRef<Path>>(mut self, p: P) -> Self {
+		self.0.temp_icon_dir = Some(p.as_ref().to_path_buf());
+		self
+	}
+}
