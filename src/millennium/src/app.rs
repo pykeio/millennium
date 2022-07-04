@@ -407,12 +407,69 @@ impl<R: Runtime> AppHandle<R> {
 	}
 
 	/// Adds a plugin to the runtime.
+	///
+	/// This function can be used to register a plugin that is loaded dynamically, e.g. after login.
+	/// For plugins to be loaded when the app is started, see [`Builder::plugin`].
+	///
+	/// See [`Builder::plugin`] for more information.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use millennium::{
+	/// 	plugin::{Builder as PluginBuilder, MillenniumPlugin},
+	/// 	Runtime
+	/// };
+	///
+	/// fn init_plugin<R: Runtime>() -> MillenniumPlugin<R> {
+	/// 	PluginBuilder::new("dummy").build()
+	/// }
+	///
+	/// millennium::Builder::default().setup(move |app| {
+	/// 	let handle = app.handle();
+	/// 	std::thread::spawn(move || {
+	/// 		handle.plugin(init_plugin());
+	/// 	});
+	///
+	/// 	Ok(())
+	/// });
+	/// ```
 	pub fn plugin<P: Plugin<R> + 'static>(&self, mut plugin: P) -> crate::Result<()> {
 		plugin
 			.initialize(self, self.config().plugins.0.get(plugin.name()).cloned().unwrap_or_default())
 			.map_err(|e| crate::Error::PluginInitialization(plugin.name().to_string(), e.to_string()))?;
 		self.manager().inner.plugins.lock().unwrap().register(plugin);
 		Ok(())
+	}
+
+	/// Removes the plugin with the given name.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use millennium::{
+	/// 	plugin::{Builder as PluginBuilder, MillenniumPlugin, Plugin},
+	/// 	Runtime
+	/// };
+	///
+	/// fn init_plugin<R: Runtime>() -> MillenniumPlugin<R> {
+	/// 	PluginBuilder::new("dummy").build()
+	/// }
+	///
+	/// let plugin = init_plugin();
+	/// // note: `.name()` requires the `Plugin` trait import
+	/// let plugin_name = plugin.name();
+	/// millennium::Builder::default().plugin(plugin).setup(move |app| {
+	/// 	let handle = app.handle();
+	/// 	std::thread::spawn(move || {
+	/// 		handle.remove_plugin(plugin_name);
+	/// 	});
+	///
+	/// 	Ok(())
+	/// });
+	/// ```
+	pub fn remove_plugin(&self, plugin: &'static str) -> bool {
+		self.manager().inner.plugins.lock().unwrap().unregister(plugin)
 	}
 
 	/// Exits the app. This is the same as [`std::process::exit`], but it
@@ -894,6 +951,48 @@ impl<R: Runtime> Builder<R> {
 	}
 
 	/// Adds a plugin to the runtime.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// mod plugin {
+	/// 	use millennium::{
+	/// 		plugin::{Builder as PluginBuilder, MillenniumPlugin},
+	/// 		RunEvent, Runtime
+	/// 	};
+	///
+	/// 	// This command can be called in the frontend using `invoke('plugin:window|do_something')`
+	/// 	#[millennium::command]
+	/// 	async fn do_something<R: Runtime>(
+	/// 		app: millennium::AppHandle<R>,
+	/// 		window: millennium::Window<R>
+	/// 	) -> Result<(), String> {
+	/// 		println!("command called");
+	/// 		Ok(())
+	/// 	}
+	///
+	/// 	pub fn init<R: Runtime>() -> MillenniumPlugin<R> {
+	/// 		PluginBuilder::new("window")
+	/// 			.setup(|app| {
+	/// 				// initialize the plugin here
+	/// 				Ok(())
+	/// 			})
+	/// 			.on_event(|app, event| match event {
+	/// 				RunEvent::Ready => {
+	/// 					println!("app is ready");
+	/// 				}
+	/// 				RunEvent::WindowEvent { label, event, .. } => {
+	/// 					println!("window {} received an event: {:?}", label, event);
+	/// 				}
+	/// 				_ => ()
+	/// 			})
+	/// 			.invoke_handler(millennium::generate_handler![do_something])
+	/// 			.build()
+	/// 	}
+	/// }
+	///
+	/// millennium::Builder::default().plugin(plugin::init());
+	/// ```
 	#[must_use]
 	pub fn plugin<P: Plugin<R> + 'static>(mut self, plugin: P) -> Self {
 		self.plugins.register(plugin);
