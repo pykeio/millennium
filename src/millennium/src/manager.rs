@@ -37,18 +37,17 @@ use url::Url;
 
 #[cfg(any(target_os = "linux", target_os = "windows"))]
 use crate::api::path::{resolve_path, BaseDirectory};
-use crate::app::{GlobalMenuEventListener, WindowMenuEvent};
-use crate::hooks::IpcJavascript;
 #[cfg(feature = "isolation")]
 use crate::hooks::IsolationJavascript;
-use crate::pattern::{format_real_schema, PatternJavascript};
 use crate::{
-	app::{AppHandle, GlobalWindowEvent, GlobalWindowEventListener},
+	app::{AppHandle, GlobalMenuEventListener, GlobalWindowEvent, GlobalWindowEventListener, WindowMenuEvent},
 	event::{assert_event_name_is_valid, Event, EventHandler, Listeners},
-	hooks::{InvokeHandler, InvokePayload, InvokeResponder, OnPageLoad, PageLoadPayload},
+	hooks::{InvokeHandler, InvokePayload, InvokeResponder, IpcJavascript, OnPageLoad, PageLoadPayload},
+	pattern::{format_real_schema, PatternJavascript},
 	plugin::PluginStore,
 	runtime::{
 		http::{MimeType, Request as HttpRequest, Response as HttpResponse, ResponseBuilder as HttpResponseBuilder},
+		menu::Menu,
 		webview::{WebviewIpcHandler, WindowBuilder},
 		window::{dpi::PhysicalSize, DetachedWindow, FileDropEvent, PendingWindow}
 	},
@@ -57,9 +56,9 @@ use crate::{
 		config::{AppUrl, Config, WindowUrl},
 		PackageInfo
 	},
-	Context, EventLoopMessage, Icon, Invoke, Manager, Pattern, Runtime, Scopes, StateManager, Window, WindowEvent
+	window::WebResourceRequestHandler,
+	Context, EventLoopMessage, Icon, Invoke, Manager, MenuEvent, Pattern, Runtime, Scopes, StateManager, Window, WindowEvent
 };
-use crate::{runtime::menu::Menu, MenuEvent};
 
 const WINDOW_RESIZED_EVENT: &str = "millennium://resize";
 const WINDOW_MOVED_EVENT: &str = "millennium://move";
@@ -354,7 +353,7 @@ impl<R: Runtime> WindowManager<R> {
 		label: &str,
 		window_labels: &[String],
 		app_handle: AppHandle<R>,
-		web_resource_request_handler: Option<Box<dyn Fn(&HttpRequest, &mut HttpResponse) + Send + Sync>>
+		web_resource_request_handler: Option<Box<WebResourceRequestHandler>>
 	) -> crate::Result<PendingWindow<EventLoopMessage, R>> {
 		let is_init_global = self.inner.config.build.with_global_millennium;
 		let plugin_init = self.inner.plugins.lock().expect("poisoned plugin store").initialization_script();
@@ -705,7 +704,7 @@ impl<R: Runtime> WindowManager<R> {
 	fn prepare_uri_scheme_protocol(
 		&self,
 		window_origin: &str,
-		web_resource_request_handler: Option<Box<dyn Fn(&HttpRequest, &mut HttpResponse) + Send + Sync>>
+		web_resource_request_handler: Option<Box<WebResourceRequestHandler>>
 	) -> Box<dyn Fn(&HttpRequest) -> Result<HttpResponse, Box<dyn std::error::Error>> + Send + Sync> {
 		let manager = self.clone();
 		let window_origin = window_origin.to_string();
