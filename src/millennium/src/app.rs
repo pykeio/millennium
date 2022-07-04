@@ -56,8 +56,12 @@ use crate::{
 	},
 	scope::FsScope,
 	sealed::{ManagerBase, RuntimeOrDispatch},
-	utils::config::Config,
-	utils::{assets::Assets, resources::resource_relpath, Env},
+	utils::{
+		assets::Assets,
+		config::{Config, WebviewInstallMode},
+		resources::resource_relpath,
+		Env
+	},
 	Context, EventLoopMessage, Invoke, InvokeError, InvokeResponse, Manager, Runtime, Scopes, StateManager, Theme, Window
 };
 
@@ -1349,9 +1353,9 @@ impl<R: Runtime> Builder<R> {
 
 		#[cfg(windows)]
 		{
-			if let Some(w) = &app.manager.config().millennium.bundle.windows.webview_fixed_runtime_path {
+			if let WebviewInstallMode::FixedRuntime { path } = &app.manager.config().millennium.bundle.windows.webview_install_mode {
 				if let Some(resource_dir) = app.path_resolver().resource_dir() {
-					std::env::set_var("WEBVIEW2_BROWSER_EXECUTABLE_FOLDER", resource_dir.join(w));
+					std::env::set_var("WEBVIEW2_BROWSER_EXECUTABLE_FOLDER", resource_dir.join(path));
 				} else {
 					#[cfg(debug_assertions)]
 					eprintln!("failed to resolve resource directory; fallback to the installed Webview2 runtime.");

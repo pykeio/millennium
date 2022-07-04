@@ -139,6 +139,10 @@
             "timestampUrl": null,
             "tsp": false,
             "webviewFixedRuntimePath": null,
+            "webviewInstallMode": {
+              "silent": true,
+              "type": "downloadBootstrapper"
+            },
             "wix": null
           }
         },
@@ -602,6 +606,10 @@
             "timestampUrl": null,
             "tsp": false,
             "webviewFixedRuntimePath": null,
+            "webviewInstallMode": {
+              "silent": true,
+              "type": "downloadBootstrapper"
+            },
             "wix": null
           },
           "allOf": [
@@ -1361,6 +1369,10 @@
               "timestampUrl": null,
               "tsp": false,
               "webviewFixedRuntimePath": null,
+              "webviewInstallMode": {
+                "silent": true,
+                "type": "downloadBootstrapper"
+              },
               "wix": null
             }
           },
@@ -1876,6 +1888,111 @@
       },
       "additionalProperties": false
     },
+    "WebviewInstallMode": {
+      "description": "Install modes for the WebView2 runtime.\n\nNote that, for the updater bundle, [`Self::DownloadBootstrapper`] is always used.",
+      "oneOf": [
+        {
+          "description": "Do not install WebView2 as part of the Windows Installer.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "skip"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "Downloads the WebView2 Evergreen bootstrapper and runs it. Requires an internet connection. Results in a smaller installer size, but is not recommended on Windows 7.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "silent": {
+              "description": "Instructs the installer to run the bootstrapper in silent mode. Defaults to `true`.",
+              "default": true,
+              "type": "boolean"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "downloadBootstrapper"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "Embeds the WebView2 Evergreen bootstrapper and run it. Requires an internet connection. Increases the installer size by around 1.8 MB, but offers better support for Windows 7.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "silent": {
+              "description": "Instructs the installer to run the bootstrapper in silent mode. Defaults to `true`.",
+              "default": true,
+              "type": "boolean"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "embedBootstrapper"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "Embeds the offline installer and runs it. Does not require an internet connection. Increases the installer size by around 127 MB.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "silent": {
+              "description": "Instructs the installer to run the installer in silent mode. Defaults to `true`.",
+              "default": true,
+              "type": "boolean"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "offlineInstaller"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "Embeds a fixed WebView2 version to use as the runtime. Increases the installer size by around 180MB, but guarantees a fixed WebView2 version and does not require an internet connection.",
+          "type": "object",
+          "required": [
+            "path",
+            "type"
+          ],
+          "properties": {
+            "path": {
+              "description": "The path to the fixed runtime to use.\n\nThe fixed version can be downloaded [on Microsoft's website](https://developer.microsoft.com/en-us/microsoft-edge/webview2/#download-section). The `.cab` file must be extracted to a folder and this folder path must be defined in this field.",
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "fixedRuntime"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
     "WindowAllowlistConfig": {
       "description": "Allowlist for the window APIs.",
       "type": "object",
@@ -2215,10 +2332,22 @@
           "type": "boolean"
         },
         "webviewFixedRuntimePath": {
-          "description": "Path to the webview fixed runtime to use.\n\nThe fixed version can be downloaded [on the official website](https://developer.microsoft.com/en-us/microsoft-edge/webview2/#download-section). The `.cab` file must be extracted to a folder and this folder path must be defined on this field.",
+          "description": "Path to the webview fixed runtime to use. Overwrites [`Self::webview_install_mode`] if set.\n\n**Deprecated** since 1.0.0-beta.4; use the [`Self::webview_install_mode`] option instead.\n\nThe fixed version can be downloaded [on the official website](https://developer.microsoft.com/en-us/microsoft-edge/webview2/#download-section). The `.cab` file must be extracted to a folder and this folder path must be defined on this field.",
           "type": [
             "string",
             "null"
+          ]
+        },
+        "webviewInstallMode": {
+          "description": "The installation mode to use for the WebView2 runtime.",
+          "default": {
+            "silent": true,
+            "type": "downloadBootstrapper"
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/WebviewInstallMode"
+            }
           ]
         },
         "wix": {
@@ -2332,7 +2461,7 @@
           }
         },
         "skipWebviewInstall": {
-          "description": "Disables the Webview2 runtime installation after app install.",
+          "description": "Disables the WebView2 runtime installation after app install.\n\n**Deprecated** since 1.0.0-beta.4; use `millennium.bundle.windows.webviewInstallMode` instead.",
           "default": false,
           "type": "boolean"
         },

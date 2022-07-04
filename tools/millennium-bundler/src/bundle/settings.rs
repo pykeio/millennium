@@ -19,6 +19,7 @@ use std::{
 	path::{Path, PathBuf}
 };
 
+pub use millennium_utils::config::WebviewInstallMode;
 use millennium_utils::{
 	config::BundleType,
 	resources::{external_binaries, ResourcePaths}
@@ -221,7 +222,7 @@ impl Default for WixLanguage {
 /// Settings specific to the WiX implementation.
 #[derive(Clone, Debug, Default)]
 pub struct WixSettings {
-	/// The app languages to build. See https://docs.microsoft.com/en-us/windows/win32/msi/localizing-the-error-and-actiontext-tables.
+	/// The app languages to build. See <https://docs.microsoft.com/en-us/windows/win32/msi/localizing-the-error-and-actiontext-tables>.
 	pub language: WixLanguage,
 	/// By default, the bundler uses an internal template.
 	/// This option allows you to define your own wix file.
@@ -239,6 +240,8 @@ pub struct WixSettings {
 	/// The Merge element ids you want to reference from the fragments.
 	pub merge_refs: Vec<String>,
 	/// Disables the Webview2 runtime installation after app install.
+	///
+	/// **Deprecated** since 1.0.0-beta.4; use [`WindowsSettings::webview_install_mode`] instead.
 	pub skip_webview_install: bool,
 	/// The path to the LICENSE file.
 	pub license: Option<PathBuf>,
@@ -273,7 +276,11 @@ pub struct WindowsSettings {
 	pub wix: Option<WixSettings>,
 	/// The path to the application icon. Defaults to `./icons/icon.ico`.
 	pub icon_path: PathBuf,
-	/// Path to the webview fixed runtime to use.
+	/// The installation mode for the WebView2 runtime.
+	pub webview_install_mode: WebviewInstallMode,
+	/// Path to the webview fixed runtime to use. Overwrites [`Self::webview_install_mode`] if set.
+	///
+	/// **Deprecated** since 1.0.0-beta.4; use [`WindowsSettings::webview_install_mode`] instead.
 	pub webview_fixed_runtime_path: Option<PathBuf>,
 	/// Validates a second app installation, blocking the user from installing an older version if set to `false`.
 	///
@@ -292,6 +299,7 @@ impl Default for WindowsSettings {
 			tsp: false,
 			wix: None,
 			icon_path: PathBuf::from("icons/icon.ico"),
+			webview_install_mode: Default::default(),
 			webview_fixed_runtime_path: None,
 			allow_downgrades: true
 		}
@@ -320,7 +328,7 @@ pub struct BundleSettings {
 	/// the app's long description.
 	pub long_description: Option<String>,
 	// Bundles for other binaries:
-	/// Configuration map for the possible [bin] apps to bundle.
+	/// Configuration map for the apps to bundle.
 	pub bin: Option<HashMap<String, BundleSettings>>,
 	/// External binaries to add to the bundle.
 	///
@@ -335,7 +343,7 @@ pub struct BundleSettings {
 	/// If you are building a universal binary for MacOS, the bundler expects
 	/// your external binary to also be universal, and named after the target triple,
 	/// e.g. `sqlite3-universal-apple-darwin`. See
-	/// https://developer.apple.com/documentation/apple-silicon/building-a-universal-macos-binary
+	/// <https://developer.apple.com/documentation/apple-silicon/building-a-universal-macos-binary>.
 	pub external_bin: Option<Vec<String>>,
 	/// Debian-specific settings.
 	pub deb: DebianSettings,

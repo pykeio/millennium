@@ -457,7 +457,7 @@ impl From<NativeImage> for NativeImageWrapper {
 }
 
 /// Wrapper around a [`millennium_webview::application::window::Icon`] that can
-/// be created from a [`WindowIcon`].
+/// be created from an [`Icon`].
 pub struct MillenniumIcon(MillenniumWindowIcon);
 
 fn icon_err<E: std::error::Error + Send + Sync + 'static>(e: E) -> Error {

@@ -395,7 +395,9 @@ pub struct WixConfig {
 	/// The Merge element ids you want to reference from the fragments.
 	#[serde(default)]
 	pub merge_refs: Vec<String>,
-	/// Disables the Webview2 runtime installation after app install.
+	/// Disables the WebView2 runtime installation after app install.
+	///
+	/// **Deprecated** since 1.0.0-beta.4; use `millennium.bundle.windows.webviewInstallMode` instead.
 	#[serde(default)]
 	pub skip_webview_install: bool,
 	/// The path to the license file to render on the installer.
@@ -419,6 +421,59 @@ pub struct WixConfig {
 	pub dialog_image_path: Option<PathBuf>
 }
 
+/// Install modes for the WebView2 runtime.
+///
+/// Note that, for the updater bundle, [`Self::DownloadBootstrapper`] is always used.
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "schema", derive(JsonSchema))]
+pub enum WebviewInstallMode {
+	/// Do not install WebView2 as part of the Windows Installer.
+	Skip,
+	/// Downloads the WebView2 Evergreen bootstrapper and runs it. Requires an internet connection. Results in a smaller
+	/// installer size, but is not recommended on Windows 7.
+	DownloadBootstrapper {
+		/// Instructs the installer to run the bootstrapper in silent mode. Defaults to `true`.
+		#[serde(default = "default_webview_install_silent")]
+		silent: bool
+	},
+	/// Embeds the WebView2 Evergreen bootstrapper and run it. Requires an internet connection. Increases the installer
+	/// size by around 1.8 MB, but offers better support for Windows 7.
+	EmbedBootstrapper {
+		/// Instructs the installer to run the bootstrapper in silent mode. Defaults to `true`.
+		#[serde(default = "default_webview_install_silent")]
+		silent: bool
+	},
+	/// Embeds the offline installer and runs it. Does not require an internet connection. Increases the installer size
+	/// by around 127 MB.
+	OfflineInstaller {
+		/// Instructs the installer to run the installer in silent mode. Defaults to `true`.
+		#[serde(default = "default_webview_install_silent")]
+		silent: bool
+	},
+	/// Embeds a fixed WebView2 version to use as the runtime. Increases the installer size by around 180MB, but
+	/// guarantees a fixed WebView2 version and does not require an internet connection.
+	FixedRuntime {
+		/// The path to the fixed runtime to use.
+		///
+		/// The fixed version can be downloaded [on Microsoft's website](https://developer.microsoft.com/en-us/microsoft-edge/webview2/#download-section).
+		/// The `.cab` file must be extracted to a folder and this folder path must be defined in this field.
+		path: PathBuf
+	}
+}
+
+fn default_webview_install_silent() -> bool {
+	true
+}
+
+impl Default for WebviewInstallMode {
+	fn default() -> Self {
+		Self::DownloadBootstrapper {
+			silent: default_webview_install_silent()
+		}
+	}
+}
+
 /// Windows bundler configuration.
 #[derive(Debug, PartialEq, Eq, Clone, Deserialize, Serialize)]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
@@ -436,7 +491,12 @@ pub struct WindowsConfig {
 	/// SSL.com does.
 	#[serde(default)]
 	pub tsp: bool,
-	/// Path to the webview fixed runtime to use.
+	/// The installation mode to use for the WebView2 runtime.
+	#[serde(default)]
+	pub webview_install_mode: WebviewInstallMode,
+	/// Path to the webview fixed runtime to use. Overwrites [`Self::webview_install_mode`] if set.
+	///
+	/// **Deprecated** since 1.0.0-beta.4; use the [`Self::webview_install_mode`] option instead.
 	///
 	/// The fixed version can be downloaded [on the official website](https://developer.microsoft.com/en-us/microsoft-edge/webview2/#download-section).
 	/// The `.cab` file must be extracted to a folder and this folder path must
@@ -460,6 +520,7 @@ impl Default for WindowsConfig {
 			certificate_thumbprint: None,
 			timestamp_url: None,
 			tsp: false,
+			webview_install_mode: Default::default(),
 			webview_fixed_runtime_path: None,
 			allow_downgrades: default_allow_downgrades(),
 			wix: None
@@ -2849,11 +2910,38 @@ mod build {
 		}
 	}
 
+	impl ToTokens for WebviewInstallMode {
+		fn to_tokens(&self, tokens: &mut TokenStream) {
+			let prefix = quote! { ::millennium::utils::config::WebviewInstallMode };
+
+			tokens.append_all(match self {
+				Self::Skip => quote! { #prefix::Skip },
+				Self::DownloadBootstrapper { silent } => {
+					quote! { #prefix::DownloadBootstrapper { silent: #silent } }
+				}
+				Self::EmbedBootstrapper { silent } => {
+					quote! { #prefix::EmbedBootstrapper { silent: #silent } }
+				}
+				Self::OfflineInstaller { silent } => {
+					quote! { #prefix::OfflineInstaller { silent: #silent } }
+				}
+				Self::FixedRuntime { path } => {
+					let path = path_buf_lit(&path);
+					quote! { #prefix::FixedRuntime { path: #path } }
+				}
+			})
+		}
+	}
+
 	impl ToTokens for WindowsConfig {
 		fn to_tokens(&self, tokens: &mut TokenStream) {
-			let webview_fixed_runtime_path = opt_lit(self.webview_fixed_runtime_path.as_ref().map(path_buf_lit).as_ref());
+			let webview_install_mode = if let Some(fixed_runtime_path) = &self.webview_fixed_runtime_path {
+				WebviewInstallMode::FixedRuntime { path: fixed_runtime_path.clone() }
+			} else {
+				self.webview_install_mode.clone()
+			};
 			tokens.append_all(quote! { ::millennium::utils::config::WindowsConfig {
-				webview_fixed_runtime_path: #webview_fixed_runtime_path,
+				webview_install_mode: #webview_install_mode,
 				..Default::default()
 			}})
 		}

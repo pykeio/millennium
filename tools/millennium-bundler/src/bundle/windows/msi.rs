@@ -18,11 +18,13 @@ mod wix;
 
 use std::{self, path::PathBuf};
 
+pub use wix::{MSI_FOLDER_NAME, MSI_UPDATER_FOLDER_NAME};
+
 use crate::Settings;
 
 /// Runs all of the commands to build the MSI installer.
 /// Returns a vector of PathBuf that shows where the MSI was created.
-pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
+pub fn bundle_project(settings: &Settings, updater: bool) -> crate::Result<Vec<PathBuf>> {
 	let mut wix_path = dirs_next::cache_dir().unwrap();
 	wix_path.push("millennium/WixTools");
 
@@ -30,5 +32,5 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
 		wix::get_and_extract_wix(&wix_path)?;
 	}
 
-	wix::build_wix_app_installer(settings, &wix_path)
+	wix::build_wix_app_installer(settings, &wix_path, updater)
 }
