@@ -343,22 +343,16 @@ impl<T: UserEvent> Dispatch<T> for MockDispatcher {
 		Ok(Vec::new())
 	}
 
-	#[cfg(windows)]
-	fn hwnd(&self) -> Result<HWND> {
-		unimplemented!()
-	}
-
 	fn theme(&self) -> Result<Theme> {
 		Ok(Theme::Light)
 	}
 
-	#[cfg(target_os = "macos")]
-	fn ns_window(&self) -> Result<*mut std::ffi::c_void> {
+	#[cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))]
+	fn gtk_window(&self) -> Result<gtk::ApplicationWindow> {
 		unimplemented!()
 	}
 
-	#[cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))]
-	fn gtk_window(&self) -> Result<gtk::ApplicationWindow> {
+	fn raw_window_handle(&self) -> Result<raw_window_handle::RawWindowHandle> {
 		unimplemented!()
 	}
 

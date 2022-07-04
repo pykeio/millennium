@@ -139,7 +139,10 @@ pub enum Error {
 	/// Error decoding PNG image.
 	#[cfg(feature = "icon-png")]
 	#[error("failed to decode PNG: {0}")]
-	PngDecode(#[from] png::DecodingError)
+	PngDecode(#[from] png::DecodingError),
+	/// Access to the raw window handle is not available for this platform.
+	#[error("unexpected `raw_window_handle` for this platform")]
+	RawWindowHandleNotAvailable
 }
 
 pub(crate) fn into_anyhow<T: std::fmt::Display>(err: T) -> anyhow::Error {

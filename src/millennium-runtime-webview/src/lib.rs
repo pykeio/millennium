@@ -88,6 +88,7 @@ use millennium_webview::{
 	},
 	webview::{FileDropEvent as MillenniumFileDropEvent, WebContext, WebView, WebViewBuilder}
 };
+use raw_window_handle::HasRawWindowHandle;
 use uuid::Uuid;
 #[cfg(windows)]
 use webview2_com::FocusChangedEventHandler;
@@ -914,23 +915,14 @@ impl From<FileDropEventWrapper> for FileDropEvent {
 	}
 }
 
-#[cfg(target_os = "macos")]
-pub struct NSWindow(*mut std::ffi::c_void);
-#[cfg(target_os = "macos")]
-#[allow(clippy::non_send_fields_in_send_ty)]
-unsafe impl Send for NSWindow {}
-
-#[cfg(windows)]
-pub struct Hwnd(HWND);
-#[cfg(windows)]
-#[allow(clippy::non_send_fields_in_send_ty)]
-unsafe impl Send for Hwnd {}
-
 #[cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))]
 pub struct GtkWindow(gtk::ApplicationWindow);
 #[cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))]
 #[allow(clippy::non_send_fields_in_send_ty)]
 unsafe impl Send for GtkWindow {}
+
+pub struct RawWindowHandle(raw_window_handle::RawWindowHandle);
+unsafe impl Send for RawWindowHandle {}
 
 pub enum WindowMessage {
 	WithWebview(Box<dyn FnOnce(Webview) + Send>),
@@ -955,12 +947,9 @@ pub enum WindowMessage {
 	CurrentMonitor(Sender<Option<MonitorHandle>>),
 	PrimaryMonitor(Sender<Option<MonitorHandle>>),
 	AvailableMonitors(Sender<Vec<MonitorHandle>>),
-	#[cfg(target_os = "macos")]
-	NSWindow(Sender<NSWindow>),
-	#[cfg(windows)]
-	Hwnd(Sender<Hwnd>),
 	#[cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))]
 	GtkWindow(Sender<GtkWindow>),
+	RawWindowHandle(Sender<RawWindowHandle>),
 	Theme(Sender<Theme>),
 	// Setters
 	Center(Sender<Result<()>>),
@@ -1183,16 +1172,6 @@ impl<T: UserEvent> Dispatch<T> for MillenniumDispatcher<T> {
 			.collect())
 	}
 
-	#[cfg(target_os = "macos")]
-	fn ns_window(&self) -> Result<*mut std::ffi::c_void> {
-		window_getter!(self, WindowMessage::NSWindow).map(|w| w.0)
-	}
-
-	#[cfg(windows)]
-	fn hwnd(&self) -> Result<HWND> {
-		window_getter!(self, WindowMessage::Hwnd).map(|w| w.0)
-	}
-
 	fn theme(&self) -> Result<Theme> {
 		window_getter!(self, WindowMessage::Theme)
 	}
@@ -1202,6 +1181,10 @@ impl<T: UserEvent> Dispatch<T> for MillenniumDispatcher<T> {
 	#[cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))]
 	fn gtk_window(&self) -> Result<gtk::ApplicationWindow> {
 		window_getter!(self, WindowMessage::GtkWindow).map(|w| w.0)
+	}
+
+	fn raw_window_handle(&self) -> Result<raw_window_handle::RawWindowHandle> {
+		window_getter!(self, WindowMessage::RawWindowHandle).map(|w| w.0)
 	}
 
 	// Setters
@@ -2028,12 +2011,9 @@ fn handle_user_message<T: UserEvent>(
 						WindowMessage::CurrentMonitor(tx) => tx.send(window.current_monitor()).unwrap(),
 						WindowMessage::PrimaryMonitor(tx) => tx.send(window.primary_monitor()).unwrap(),
 						WindowMessage::AvailableMonitors(tx) => tx.send(window.available_monitors().collect()).unwrap(),
-						#[cfg(target_os = "macos")]
-						WindowMessage::NSWindow(tx) => tx.send(NSWindow(window.ns_window())).unwrap(),
-						#[cfg(windows)]
-						WindowMessage::Hwnd(tx) => tx.send(Hwnd(HWND(window.hwnd() as _))).unwrap(),
 						#[cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))]
 						WindowMessage::GtkWindow(tx) => tx.send(GtkWindow(window.gtk_window().clone())).unwrap(),
+						WindowMessage::RawWindowHandle(tx) => tx.send(RawWindowHandle(window.raw_window_handle())).unwrap(),
 						WindowMessage::Theme(tx) => {
 							#[cfg(any(windows, target_os = "macos"))]
 							tx.send(map_theme(&window.theme())).unwrap();

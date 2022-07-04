@@ -23,8 +23,6 @@ use std::{fmt::Debug, sync::mpsc::Sender};
 use millennium_utils::Theme;
 use serde::Deserialize;
 use uuid::Uuid;
-#[cfg(windows)]
-use windows::Win32::Foundation::HWND;
 
 pub mod http;
 /// Create window and system tray menus.
@@ -445,18 +443,13 @@ pub trait Dispatch<T: UserEvent>: Debug + Clone + Send + Sync + Sized + 'static 
 	/// Returns the list of all the monitors available on the system.
 	fn available_monitors(&self) -> Result<Vec<Monitor>>;
 
-	/// Returns the native handle that is used by this window.
-	#[cfg(windows)]
-	fn hwnd(&self) -> Result<HWND>;
-
-	/// Returns the native handle that is used by this window.
-	#[cfg(target_os = "macos")]
-	fn ns_window(&self) -> Result<*mut std::ffi::c_void>;
-
 	/// Returns the `ApplicatonWindow` from gtk crate that is used by this
 	/// window.
 	#[cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))]
 	fn gtk_window(&self) -> Result<gtk::ApplicationWindow>;
+
+	/// Returns the raw window handle.
+	fn raw_window_handle(&self) -> Result<raw_window_handle::RawWindowHandle>;
 
 	/// Returns the current system theme.
 	fn theme(&self) -> Result<Theme>;
