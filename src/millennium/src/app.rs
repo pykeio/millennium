@@ -554,12 +554,12 @@ impl<R: Runtime> ManagerBase<R> for App<R> {
 /// APIs specific to the millennium-webview-backed runtime.
 #[cfg(feature = "millennium_webview")]
 impl App<crate::MillenniumWebview> {
-	/// Adds a [`millennium_runtime_webview::Plugin`].
+	/// Adds a [`millennium_runtime_webview::Plugin`] via a [`millennium_runtime_webview::PluginBuilder`].
 	///
 	/// # Stability
 	///
 	/// This API is unstable.
-	pub fn webview_plugin<P: millennium_runtime_webview::Plugin<EventLoopMessage> + 'static>(&mut self, plugin: P) {
+	pub fn webview_plugin<P: millennium_runtime_webview::PluginBuilder<EventLoopMessage> + 'static>(&mut self, plugin: P) {
 		self.runtime.as_mut().unwrap().plugin(plugin);
 	}
 }
