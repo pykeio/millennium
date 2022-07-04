@@ -18,9 +18,23 @@ mod wix;
 
 use std::{self, path::PathBuf};
 
+use log::warn;
 pub use wix::{MSI_FOLDER_NAME, MSI_UPDATER_FOLDER_NAME};
 
 use crate::Settings;
+
+const WIX_REQUIRED_FILES: &[&str] = &[
+	"candle.exe",
+	"candle.exe.config",
+	"darice.cub",
+	"light.exe",
+	"light.exe.config",
+	"wconsole.dll",
+	"winterop.dll",
+	"wix.dll",
+	"WixUIExtension.dll",
+	"WixUtilExtension.dll"
+];
 
 /// Runs all of the commands to build the MSI installer.
 /// Returns a vector of PathBuf that shows where the MSI was created.
@@ -29,6 +43,10 @@ pub fn bundle_project(settings: &Settings, updater: bool) -> crate::Result<Vec<P
 	wix_path.push("millennium/WixTools");
 
 	if !wix_path.exists() {
+		wix::get_and_extract_wix(&wix_path)?;
+	} else if WIX_REQUIRED_FILES.iter().any(|p| !wix_path.join(p).exists()) {
+		warn!("WixTools directory is missing some files; recreating it");
+		std::fs::remove_dir_all(&wix_path)?;
 		wix::get_and_extract_wix(&wix_path)?;
 	}
 
