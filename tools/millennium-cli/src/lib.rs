@@ -28,7 +28,7 @@ mod signer;
 use std::{
 	ffi::OsString,
 	io::{BufReader, Write},
-	process::{Command, ExitStatus, Output, Stdio},
+	process::{exit, Command, ExitStatus, Output, Stdio},
 	sync::{Arc, Mutex}
 };
 
@@ -100,7 +100,18 @@ fn format_error<I: IntoApp>(err: clap::Error) -> clap::Error {
 /// The passed `bin_name` parameter should be how you want the help messages to display the command.
 /// This defaults to `cargo-millennium`, but should be set to how the program was called, such as
 /// `cargo millennium`.
-pub fn run<I, A>(args: I, bin_name: Option<String>) -> Result<()>
+pub fn run<I, A>(args: I, bin_name: Option<String>)
+where
+	I: IntoIterator<Item = A>,
+	A: Into<OsString> + Clone
+{
+	if let Err(e) = try_run(args, bin_name) {
+		log::error!("{:#}", e);
+		exit(1);
+	}
+}
+
+fn try_run<I, A>(args: I, bin_name: Option<String>)
 where
 	I: IntoIterator<Item = A>,
 	A: Into<OsString> + Clone

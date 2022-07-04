@@ -217,7 +217,7 @@ fn command_internal(mut options: Options) -> Result<()> {
 		}
 	}
 
-	let interface = AppInterface::new(config.lock().unwrap().as_ref().unwrap())?;
+	let mut interface = AppInterface::new(config.lock().unwrap().as_ref().unwrap())?;
 
 	let exit_on_panic = options.exit_on_panic;
 	let process = interface.dev(options.clone().into(), &manifest, move |status, reason| on_dev_exit(status, reason, exit_on_panic))?;
@@ -280,7 +280,7 @@ fn lookup<F: FnMut(FileType, PathBuf)>(dir: &Path, mut f: F) {
 
 #[allow(clippy::too_many_arguments)]
 fn watch<P: DevProcess, I: Interface<Dev = P>>(
-	interface: I,
+	mut interface: I,
 	process: Arc<Mutex<P>>,
 	millennium_path: PathBuf,
 	merge_config: Option<String>,
