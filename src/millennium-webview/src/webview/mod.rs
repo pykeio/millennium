@@ -388,7 +388,7 @@ impl<'a> WebViewBuilder<'a> {
 	///
 	/// macOS doesn't provide such method and is always enabled by default. However, you still need to add menu
 	/// item accelerators to use shortcuts.
-	pub fn with_clipboard(mut self: clipboard: bool) -> Self {
+	pub fn with_clipboard(mut self, clipboard: bool) -> Self {
 		self.webview.clipboard = clipboard;
 		self
 	}
