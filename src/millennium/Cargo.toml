@@ -23,6 +23,7 @@ features = [
 	"millennium_webview",
 	"custom-protocol",
 	"api-all",
+	"windows7-compat",
 	"cli",
 	"updater",
 	"fs-extract-api",
@@ -104,6 +105,7 @@ objc = "0.2"
 
 [target."cfg(windows)".dependencies]
 webview2-com = "0.16"
+win7-notifications = { version = "0.3.0", optional = true }
 
 [target."cfg(windows)".dependencies.windows]
 version = "0.37.0"
@@ -151,6 +153,7 @@ macos-private-api = [
 	"millennium-runtime/macos-private-api",
 	"millennium-runtime-webview/macos-private-api"
 ]
+windows7-compat = [ "win7-notifications" ]
 window-data-url = [ "data-url" ]
 api-all = [
 	"clipboard-all",

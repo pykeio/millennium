@@ -60,6 +60,7 @@
 //! - **macos-private-api**: Enables features only available in **macOS**'s private APIs, currently the `transparent`
 //!   window functionality and the `fullScreenEnabled` preference setting to `true`. Enabled by default if the
 //!   `millennium > macosPrivateApi` config flag is set to `true` on the `.millenniumrc` file.
+//! - **windows7-compat**: Enables compatibility with Windows 7 for the notifications API.
 //! - **window-data-url**: Enables usage of data URLs on the webview.
 //! - **compression**: Enables asset compression. You should only disable this if you want faster compile times in
 //!   release builds, though it produces larger binaries.
