@@ -27,7 +27,6 @@ use ndk::{
 	event::{InputEvent, KeyAction, MotionAction},
 	looper::{ForeignLooper, Poll, ThreadLooper}
 };
-use ndk_glue::{Event, Rect};
 use ndk_sys::AKeyEvent_getKeyCode;
 use raw_window_handle::{AndroidNdkHandle, RawWindowHandle};
 
@@ -43,6 +42,8 @@ use crate::{
 
 mod clipboard;
 pub use clipboard::Clipboard;
+pub mod ndk_glue;
+use ndk_glue::{Event, Rect};
 
 lazy_static! {
 	static ref CONFIG: RwLock<Configuration> = RwLock::new(Configuration::new());
@@ -176,33 +177,33 @@ impl<T: 'static> EventLoop<T> {
 
 			match self.first_event.take() {
 				Some(EventSource::Callback) => match ndk_glue::poll_events().unwrap() {
-					Event::WindowCreated => {
+					Event::Resume => {
 						call_event_handler!(event_handler, self.window_target(), control_flow, event::Event::Resumed);
 					}
 					Event::WindowResized => resized = true,
 					Event::WindowRedrawNeeded => redraw = true,
-					Event::WindowDestroyed => {
+					Event::Pause => {
 						call_event_handler!(event_handler, self.window_target(), control_flow, event::Event::Suspended);
 					}
-					Event::Pause => self.running = false,
-					Event::Resume => self.running = true,
+					Event::Stop => self.running = false,
+					Event::Start => self.running = true,
 					Event::ConfigChanged => {
-						let am = ndk_glue::native_activity().asset_manager();
-						let config = Configuration::from_asset_manager(&am);
-						let old_scale_factor = MonitorHandle.scale_factor();
-						*CONFIG.write().unwrap() = config;
-						let scale_factor = MonitorHandle.scale_factor();
-						if (scale_factor - old_scale_factor).abs() < f64::EPSILON {
-							let mut size = MonitorHandle.size();
-							let event = event::Event::WindowEvent {
-								window_id: window::WindowId(WindowId),
-								event: event::WindowEvent::ScaleFactorChanged {
-									new_inner_size: &mut size,
-									scale_factor
-								}
-							};
-							call_event_handler!(event_handler, self.window_target(), control_flow, event);
-						}
+						// let am = ndk_glue::native_activity().asset_manager();
+						// let config = Configuration::from_asset_manager(&am);
+						// let old_scale_factor = MonitorHandle.scale_factor();
+						// *CONFIG.write().unwrap() = config;
+						// let scale_factor = MonitorHandle.scale_factor();
+						// if (scale_factor - old_scale_factor).abs() < f64::EPSILON {
+						// 	let mut size = MonitorHandle.size();
+						// 	let event = event::Event::WindowEvent {
+						// 		window_id: window::WindowId(WindowId),
+						// 		event: event::WindowEvent::ScaleFactorChanged {
+						// 			new_inner_size: &mut size,
+						// 			scale_factor
+						// 		}
+						// 	};
+						// 	call_event_handler!(event_handler, self.window_target(), control_flow, event);
+						// }
 					}
 					Event::WindowHasFocus => {
 						call_event_handler!(
@@ -596,9 +597,10 @@ impl Window {
 	}
 
 	pub fn raw_window_handle(&self) -> RawWindowHandle {
+		// TODO: use main activity instead?
 		let mut handle = AndroidNdkHandle::empty();
-		if let Some(native_window) = ndk_glue::native_window().as_ref() {
-			handle.a_native_window = unsafe { native_window.ptr().as_mut() as *mut _ as *mut _ }
+		if let Some(w) = ndk_glue::window_manager() {
+			handle.a_native_window = w.as_obj().into_inner() as *mut _;
 		} else {
 			panic!(
 				"Cannot get the native window, it's null and will always be null before Event::Resumed and after Event::Suspended. Make sure you only call this function between those events."
@@ -637,10 +639,24 @@ impl MonitorHandle {
 	}
 
 	pub fn size(&self) -> PhysicalSize<u32> {
-		if let Some(native_window) = ndk_glue::native_window().as_ref() {
-			let width = native_window.width() as _;
-			let height = native_window.height() as _;
-			PhysicalSize::new(width, height)
+		if let Some(w) = ndk_glue::window_manager() {
+			let ctx = ndk_context::android_context();
+			let vm = unsafe { jni::JavaVM::from_raw(ctx.vm().cast()) }.unwrap();
+			let env = vm.attach_current_thread().unwrap();
+			let window_manager = w.as_obj();
+			let metrics = env
+				.call_method(window_manager, "getCurrentWindowMetrics", "()Landroid/view/WindowMetrics;", &[])
+				.unwrap()
+				.l()
+				.unwrap();
+			let rect = env
+				.call_method(metrics, "getBounds", "()Landroid/graphics/Rect;", &[])
+				.unwrap()
+				.l()
+				.unwrap();
+			let width = env.call_method(rect, "width", "()I", &[]).unwrap().i().unwrap();
+			let height = env.call_method(rect, "height", "()I", &[]).unwrap().i().unwrap();
+			PhysicalSize::new(width as u32, height as u32)
 		} else {
 			PhysicalSize::new(0, 0)
 		}

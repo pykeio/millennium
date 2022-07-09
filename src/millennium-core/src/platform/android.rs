@@ -19,6 +19,8 @@
 use ndk::configuration::Configuration;
 use ndk_glue::Rect;
 
+#[doc(hidden)]
+pub use crate::platform_impl::ndk_glue;
 use crate::{
 	event_loop::{EventLoop, EventLoopWindowTarget},
 	window::{Window, WindowBuilder}
