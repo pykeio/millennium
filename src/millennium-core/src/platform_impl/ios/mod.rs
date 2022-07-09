@@ -108,6 +108,7 @@ pub use self::{
 pub(crate) use crate::icon::NoIcon as PlatformIcon;
 use crate::{
 	accelerator::Accelerator,
+	icon::Icon,
 	menu::{CustomMenuItem, MenuId, MenuItem, MenuType}
 };
 
@@ -161,7 +162,7 @@ impl MenuItemAttributes {
 	pub fn set_enabled(&mut self, _is_enabled: bool) {}
 	pub fn set_title(&mut self, _title: &str) {}
 	pub fn set_selected(&mut self, _is_selected: bool) {}
-	pub fn set_icon(&mut self, _icon: Vec<u8>) {}
+	pub fn set_icon(&mut self, _icon: Icon) {}
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

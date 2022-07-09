@@ -34,7 +34,7 @@ use crate::{
 	event::{Event, WindowEvent},
 	keyboard::{KeyCode, ModifiersState},
 	menu::{CustomMenuItem, MenuId, MenuItem, MenuType},
-	window::WindowId as RootWindowId
+	window::{Icon, WindowId as RootWindowId}
 };
 
 #[derive(Copy, Clone)]
@@ -150,7 +150,7 @@ impl MenuItemAttributes {
 	}
 
 	// todo: set custom icon to the menu item
-	pub fn set_icon(&mut self, _icon: Vec<u8>) {}
+	pub fn set_icon(&mut self, _icon: Icon) {}
 }
 
 #[derive(Debug, Clone)]
