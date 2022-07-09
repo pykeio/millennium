@@ -76,7 +76,12 @@ pub enum Error {
 	InvalidResponseType(&'static str, &'static str, serde_json::Value),
 	/// HTTP error.
 	#[error(transparent)]
-	Http(#[from] http::Error)
+	Http(#[from] http::Error),
+	/// Temp dir is not on the same mount point as the AppImage.
+	/// This prevents the updater from moving the AppImage to a temp file.
+	#[cfg(target_os = "linux")]
+	#[error("Temp dir not on same mount point as AppImage")]
+	TempDirNotOnSameMountPoint
 }
 
 pub type Result<T = ()> = std::result::Result<T, Error>;
