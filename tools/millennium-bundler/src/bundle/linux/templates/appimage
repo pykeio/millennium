@@ -47,6 +47,11 @@ fi
 
 if [[ "$TRAY_LIBRARY_PATH" != "0" ]]; then
 	cp ${TRAY_LIBRARY_PATH} usr/lib
+	if [[ "$TRAY_LIBRARY_PATH" == *.so.1 ]]; then
+		readonly soname=$(basename "$TRAY_LIBRARY_PATH")
+		readonly old_name=$(basename "$TRAY_LIBRARY_PATH" .1)
+		ln -s ${soname} usr/lib/${old_name}
+	fi
 fi
 
 # Copy WebKit files.
