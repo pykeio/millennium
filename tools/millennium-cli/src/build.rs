@@ -129,7 +129,7 @@ pub fn command(mut options: Options) -> Result<()> {
 				.with_context(|| format!("failed to run `{}` with `sh -c`", before_build))?;
 
 			if !status.success() {
-				bail!("beforeDevCommand `{}` failed with exit code {}", before_build, status.code().unwrap_or_default());
+				bail!("beforeBuildCommand `{}` failed with exit code {}", before_build, status.code().unwrap_or_default());
 			}
 		}
 	}
@@ -243,10 +243,10 @@ pub fn command(mut options: Options) -> Result<()> {
 					std::env::set_var("TRAY_LIBRARY_PATH", pkgconfig_utils::get_appindicator_library_path());
 				}
 			}
-		}
 
-		if config_.millennium.bundle.appimage.bundle_media_framework {
-			std::env::set_var("APPIMAGE_BUNDLE_GSTREAMER", "1");
+			if config_.millennium.bundle.appimage.bundle_media_framework {
+				std::env::set_var("APPIMAGE_BUNDLE_GSTREAMER", "1");
+			}
 		}
 
 		let bundles = bundle_project(settings).with_context(|| "failed to bundle project")?;
