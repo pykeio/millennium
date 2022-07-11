@@ -111,7 +111,7 @@ where
 	}
 }
 
-fn try_run<I, A>(args: I, bin_name: Option<String>) -> Result<()>
+pub fn try_run<I, A>(args: I, bin_name: Option<String>) -> Result<()>
 where
 	I: IntoIterator<Item = A>,
 	A: Into<OsString> + Clone

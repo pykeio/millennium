@@ -41,4 +41,7 @@ if (binStem === 'node' || binStem === 'nodejs') {
 	// We don't know what started it, assume it's already stripped.
 	arguments.unshift(bin);
 
-cli.run(arguments, binName);
+cli.run(arguments, binName).catch(err => {
+	cli.logError(err.message);
+	process.exit(1);
+});

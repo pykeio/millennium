@@ -12,6 +12,7 @@ crate-type = ["cdylib"]
 napi = { version = "2.5", default-features = false, features = [ "napi4" ] }
 napi-derive = "2.5"
 millennium-cli = { version = "1.0.0-beta.3", path = "../millennium-cli" }
+log = "0.4.17"
 
 [build-dependencies]
 napi-build = "2.0"
