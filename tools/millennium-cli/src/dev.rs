@@ -16,23 +16,17 @@
 
 use std::{
 	env::set_current_dir,
-	ffi::OsStr,
-	fs::FileType,
 	io::Write,
-	path::{Path, PathBuf},
 	process::{exit, Command, ExitStatus, Stdio},
 	sync::{
 		atomic::{AtomicBool, Ordering},
-		mpsc::channel,
 		Arc, Mutex
-	},
-	time::Duration
+	}
 };
 
 use anyhow::Context;
 use clap::Parser;
 use log::{error, info, warn};
-use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use once_cell::sync::OnceCell;
 use shared_child::SharedChild;
 
@@ -40,10 +34,9 @@ use crate::{
 	helpers::{
 		app_paths::{app_dir, millennium_dir},
 		command_env,
-		config::{get as get_config, reload as reload_config, AppUrl, ConfigHandle, WindowUrl},
-		manifest::{rewrite_manifest, Manifest}
+		config::{get as get_config, AppUrl, WindowUrl}
 	},
-	interface::{AppInterface, DevProcess, ExitReason, Interface},
+	interface::{AppInterface, ExitReason, Interface},
 	Result
 };
 
@@ -53,7 +46,7 @@ static KILL_BEFORE_DEV_FLAG: OnceCell<AtomicBool> = OnceCell::new();
 #[cfg(unix)]
 const KILL_CHILDREN_SCRIPT: &[u8] = include_bytes!("../scripts/kill-children.sh");
 
-const DEV_WATCHER_GITIGNORE: &[u8] = include_bytes!("../millennium-dev-watcher.gitignore");
+pub const DEV_WATCHER_GITIGNORE: &[u8] = include_bytes!("../millennium-dev-watcher.gitignore");
 
 #[derive(Debug, Clone, Parser)]
 #[clap(about = "Start Millennium in development mode", trailing_var_arg(true))]
@@ -92,7 +85,7 @@ pub fn command(options: Options) -> Result<()> {
 
 fn command_internal(mut options: Options) -> Result<()> {
 	let millennium_path = millennium_dir();
-	let merge_config = if let Some(config) = &options.config {
+	options.config = if let Some(config) = &options.config {
 		Some(if config.starts_with('{') {
 			config.to_string()
 		} else {
@@ -104,7 +97,7 @@ fn command_internal(mut options: Options) -> Result<()> {
 
 	set_current_dir(&millennium_path).with_context(|| "failed to change current working directory")?;
 
-	let config = get_config(merge_config.as_deref())?;
+	let config = get_config(options.config.as_deref())?;
 
 	if let Some(before_dev) = &config.lock().unwrap().as_ref().unwrap().build.before_dev_command {
 		if !before_dev.is_empty() {
@@ -151,19 +144,6 @@ fn command_internal(mut options: Options) -> Result<()> {
 	if options.runner.is_none() {
 		options.runner = config.lock().unwrap().as_ref().unwrap().build.runner.clone();
 	}
-
-	let manifest = {
-		let (tx, rx) = channel();
-		let mut watcher = watcher(tx, Duration::from_secs(1)).unwrap();
-		watcher.watch(millennium_path.join("Cargo.toml"), RecursiveMode::Recursive)?;
-		let manifest = rewrite_manifest(config.clone())?;
-		loop {
-			if let Ok(DebouncedEvent::NoticeWrite(_)) = rx.recv() {
-				break;
-			}
-		}
-		manifest
-	};
 
 	let mut cargo_features = config.lock().unwrap().as_ref().unwrap().build.features.clone().unwrap_or_default();
 	if let Some(features) = &options.features {
@@ -220,15 +200,7 @@ fn command_internal(mut options: Options) -> Result<()> {
 	let mut interface = AppInterface::new(config.lock().unwrap().as_ref().unwrap())?;
 
 	let exit_on_panic = options.exit_on_panic;
-	let process = interface.dev(options.clone().into(), &manifest, move |status, reason| on_dev_exit(status, reason, exit_on_panic))?;
-	let shared_process = Arc::new(Mutex::new(process));
-
-	if let Err(e) = watch(interface, shared_process.clone(), millennium_path, merge_config, config, options, manifest) {
-		shared_process.lock().unwrap().kill().with_context(|| "failed to kill app process")?;
-		Err(e)
-	} else {
-		Ok(())
-	}
+	interface.dev(options.into(), move |status, reason| on_dev_exit(status, reason, exit_on_panic))
 }
 
 fn on_dev_exit(status: ExitStatus, reason: ExitReason, exit_on_panic: bool) {
@@ -253,82 +225,6 @@ fn check_for_updates() -> Result<()> {
 		}
 	}
 	Ok(())
-}
-
-fn lookup<F: FnMut(FileType, PathBuf)>(dir: &Path, mut f: F) {
-	let mut default_gitignore = std::env::temp_dir();
-	default_gitignore.push(".millennium-dev");
-	let _ = std::fs::create_dir_all(&default_gitignore);
-	default_gitignore.push(".gitignore");
-	if !default_gitignore.exists() {
-		if let Ok(mut file) = std::fs::File::create(default_gitignore.clone()) {
-			let _ = file.write_all(DEV_WATCHER_GITIGNORE);
-		}
-	}
-
-	let mut builder = ignore::WalkBuilder::new(dir);
-	let _ = builder.add_ignore(default_gitignore);
-	if let Ok(ignore_file) = std::env::var("MILLENNIUM_DEV_WATCHER_IGNORE_FILE") {
-		builder.add_ignore(ignore_file);
-	}
-	builder.require_git(false).ignore(false).max_depth(Some(1));
-
-	for entry in builder.build().flatten() {
-		f(entry.file_type().unwrap(), dir.join(entry.path()));
-	}
-}
-
-#[allow(clippy::too_many_arguments)]
-fn watch<P: DevProcess, I: Interface<Dev = P>>(
-	mut interface: I,
-	process: Arc<Mutex<P>>,
-	millennium_path: PathBuf,
-	merge_config: Option<String>,
-	config: ConfigHandle,
-	options: Options,
-	mut manifest: Manifest
-) -> Result<()> {
-	let (tx, rx) = channel();
-
-	let mut watcher = watcher(tx, Duration::from_secs(1)).unwrap();
-	lookup(&millennium_path, |file_type, path| {
-		if path != millennium_path {
-			let _ = watcher.watch(path, if file_type.is_dir() { RecursiveMode::Recursive } else { RecursiveMode::NonRecursive });
-		}
-	});
-
-	let exit_on_panic = options.exit_on_panic;
-
-	loop {
-		if let Ok(event) = rx.recv() {
-			let event_path = match event {
-				DebouncedEvent::Create(path) => Some(path),
-				DebouncedEvent::Remove(path) => Some(path),
-				DebouncedEvent::Rename(_, dest) => Some(dest),
-				DebouncedEvent::Write(path) => Some(path),
-				_ => None
-			};
-
-			if let Some(event_path) = event_path {
-				if event_path.file_name() == Some(OsStr::new(".millenniumrc")) {
-					reload_config(merge_config.as_deref())?;
-					manifest = rewrite_manifest(config.clone())?;
-				} else {
-					// When .millenniumrc is changed, rewrite_manifest will be called, which will trigger the watcher again.
-					// The app should only be started when a file other than .millenniumrc is changed.
-					let mut p = process.lock().unwrap();
-					p.kill().with_context(|| "failed to kill app process")?;
-					// wait for the process to exit
-					loop {
-						if let Ok(Some(_)) = p.try_wait() {
-							break;
-						}
-					}
-					*p = interface.dev(options.clone().into(), &manifest, move |status, reason| on_dev_exit(status, reason, exit_on_panic))?;
-				}
-			}
-		}
-	}
 }
 
 fn kill_before_dev_process() {

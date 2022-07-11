@@ -15,15 +15,18 @@
 // limitations under the License.
 
 use std::{
-	fs::{rename, File},
+	ffi::OsStr,
+	fs::{rename, File, FileType},
 	io::{BufReader, ErrorKind, Read, Write},
 	path::{Path, PathBuf},
 	process::{Command, ExitStatus, Stdio},
 	str::FromStr,
 	sync::{
 		atomic::{AtomicBool, Ordering},
+		mpsc::channel,
 		Arc, Mutex
-	}
+	},
+	time::Duration
 };
 
 use anyhow::Context;
@@ -31,18 +34,21 @@ use anyhow::Context;
 use heck::ToKebabCase;
 use log::warn;
 use millennium_bundler::{AppCategory, BundleBinary, BundleSettings, DebianSettings, MacOsSettings, PackageSettings, UpdaterSettings, WindowsSettings};
+use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use serde::Deserialize;
 use shared_child::SharedChild;
 
 use crate::{
 	helpers::{
 		app_paths::millennium_dir,
-		config::{wix_settings, Config},
-		manifest::Manifest
+		config::{reload as reload_config, wix_settings, Config}
 	},
-	interface::{AppSettings, DevProcess, ExitReason, Interface},
+	interface::{AppSettings, ExitReason, Interface},
 	CommandExt
 };
+
+mod manifest;
+use manifest::{rewrite_manifest, Manifest};
 
 #[derive(Debug, Clone)]
 pub struct Options {
@@ -50,7 +56,8 @@ pub struct Options {
 	pub debug: bool,
 	pub target: Option<String>,
 	pub features: Option<Vec<String>>,
-	pub args: Vec<String>
+	pub args: Vec<String>,
+	pub config: Option<String>
 }
 
 impl From<crate::build::Options> for Options {
@@ -60,7 +67,8 @@ impl From<crate::build::Options> for Options {
 			debug: options.debug,
 			target: options.target,
 			features: options.features,
-			args: options.args
+			args: options.args,
+			config: options.config
 		}
 	}
 }
@@ -72,7 +80,8 @@ impl From<crate::dev::Options> for Options {
 			debug: !options.release_mode,
 			target: options.target,
 			features: options.features,
-			args: options.args
+			args: options.args,
+			config: options.config
 		}
 	}
 }
@@ -83,7 +92,7 @@ pub struct DevChild {
 	app_child: Arc<Mutex<Option<Arc<SharedChild>>>>
 }
 
-impl DevProcess for DevChild {
+impl DevChild {
 	fn kill(&self) -> std::io::Result<()> {
 		if let Some(child) = &*self.app_child.lock().unwrap() {
 			child.kill()?;
@@ -118,11 +127,22 @@ pub struct Rust {
 
 impl Interface for Rust {
 	type AppSettings = RustAppSettings;
-	type Dev = DevChild;
 
 	fn new(config: &Config) -> crate::Result<Self> {
+		let manifest = {
+			let (tx, rx) = channel();
+			let mut watcher = watcher(tx, Duration::from_secs(1)).unwrap();
+			watcher.watch(millennium_dir().join("Cargo.toml"), RecursiveMode::Recursive)?;
+			let manifest = rewrite_manifest(config)?;
+			loop {
+				if let Ok(DebouncedEvent::NoticeWrite(_)) = rx.recv() {
+					break;
+				}
+			}
+			manifest
+		};
 		Ok(Self {
-			app_settings: RustAppSettings::new(config)?,
+			app_settings: RustAppSettings::new(config, manifest)?,
 			config_features: config.build.features.clone().unwrap_or_default(),
 			product_name: config.package.product_name.clone(),
 			available_targets: None
@@ -170,7 +190,83 @@ impl Interface for Rust {
 		Ok(())
 	}
 
-	fn dev<F: FnOnce(ExitStatus, ExitReason) + Send + 'static>(&mut self, options: Options, manifest: &Manifest, on_exit: F) -> crate::Result<Self::Dev> {
+	fn dev<F: Fn(ExitStatus, ExitReason) + Send + Sync + 'static>(&mut self, options: Options, on_exit: F) -> crate::Result<()> {
+		let on_exit = Arc::new(on_exit);
+
+		let on_exit_ = on_exit.clone();
+		let child = self.run_dev(options.clone(), move |status, reason| on_exit_(status, reason))?;
+
+		self.run_dev_watcher(child, options, on_exit)
+	}
+}
+
+fn lookup<F: FnMut(FileType, PathBuf)>(dir: &Path, mut f: F) {
+	let mut default_gitignore = std::env::temp_dir();
+	default_gitignore.push(".millennium-dev");
+	let _ = std::fs::create_dir_all(&default_gitignore);
+	default_gitignore.push(".gitignore");
+	if !default_gitignore.exists() {
+		if let Ok(mut file) = std::fs::File::create(default_gitignore.clone()) {
+			let _ = file.write_all(crate::dev::DEV_WATCHER_GITIGNORE);
+		}
+	}
+
+	let mut builder = ignore::WalkBuilder::new(dir);
+	let _ = builder.add_ignore(default_gitignore);
+	if let Ok(ignore_file) = std::env::var("MILLENNIUM_DEV_WATCHER_IGNORE_FILE") {
+		builder.add_ignore(ignore_file);
+	}
+
+	builder.require_git(false).ignore(false).max_depth(Some(1));
+
+	for entry in builder.build().flatten() {
+		f(entry.file_type().unwrap(), dir.join(entry.path()));
+	}
+}
+
+impl Rust {
+	fn fetch_available_targets(&mut self) {
+		if let Ok(output) = Command::new("rustup").args(["target", "list"]).output() {
+			let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
+			self.available_targets.replace(
+				stdout
+					.split('\n')
+					.map(|t| {
+						let mut s = t.split(' ');
+						let name = s.next().unwrap().to_string();
+						let installed = s.next().map(|v| v == "(installed)").unwrap_or_default();
+						Target { name, installed }
+					})
+					.filter(|t| !t.name.is_empty())
+					.collect()
+			);
+		}
+	}
+
+	fn validate_target(&self, target: &str) -> crate::Result<()> {
+		if let Some(available_targets) = &self.available_targets {
+			if let Some(target) = available_targets.iter().find(|t| t.name == target) {
+				if !target.installed {
+					anyhow::bail!(
+						"Target {target} is not installed (installed targets: {installed}). Please run `rustup target add {target}`.",
+						target = target.name,
+						installed = available_targets
+							.iter()
+							.filter(|t| t.installed)
+							.map(|t| t.name.as_str())
+							.collect::<Vec<&str>>()
+							.join(", ")
+					);
+				}
+			}
+			if !available_targets.iter().any(|t| t.name == target) {
+				anyhow::bail!("Target {target} does not exist. Please run `rustup target list` to see the available targets.", target = target);
+			}
+		}
+		Ok(())
+	}
+
+	fn run_dev<F: Fn(ExitStatus, ExitReason) + Send + Sync + 'static>(&mut self, options: Options, on_exit: F) -> crate::Result<DevChild> {
 		let bin_path = self.app_settings.app_binary_path(&options)?;
 		let product_name = self.product_name.clone();
 
@@ -194,7 +290,7 @@ impl Interface for Rust {
 		build_cmd.arg("build").arg("--color").arg("always");
 
 		if !options.args.contains(&"--no-default-features".into()) {
-			let manifest_features = manifest.features();
+			let manifest_features = self.app_settings.manifest.features();
 			let enable_features: Vec<String> = manifest_features
 				.get("default")
 				.cloned()
@@ -343,48 +439,53 @@ impl Interface for Rust {
 			app_child
 		})
 	}
-}
 
-impl Rust {
-	fn fetch_available_targets(&mut self) {
-		if let Ok(output) = Command::new("rustup").args(["target", "list"]).output() {
-			let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
-			self.available_targets.replace(
-				stdout
-					.split('\n')
-					.map(|t| {
-						let mut s = t.split(' ');
-						let name = s.next().unwrap().to_string();
-						let installed = s.next().map(|v| v == "(installed)").unwrap_or_default();
-						Target { name, installed }
-					})
-					.filter(|t| !t.name.is_empty())
-					.collect()
-			);
-		}
-	}
+	fn run_dev_watcher<F: Fn(ExitStatus, ExitReason) + Send + Sync + 'static>(
+		&mut self,
+		child: DevChild,
+		options: Options,
+		on_exit: Arc<F>
+	) -> crate::Result<()> {
+		let process = Arc::new(Mutex::new(child));
+		let (tx, rx) = channel();
+		let millennium_path = millennium_dir();
 
-	fn validate_target(&self, target: &str) -> crate::Result<()> {
-		if let Some(available_targets) = &self.available_targets {
-			if let Some(target) = available_targets.iter().find(|t| t.name == target) {
-				if !target.installed {
-					anyhow::bail!(
-						"Target {target} is not installed (installed targets: {installed}). Please run `rustup target add {target}`.",
-						target = target.name,
-						installed = available_targets
-							.iter()
-							.filter(|t| t.installed)
-							.map(|t| t.name.as_str())
-							.collect::<Vec<&str>>()
-							.join(", ")
-					);
+		let mut watcher = watcher(tx, Duration::from_secs(1)).unwrap();
+		lookup(&millennium_path, |file_type, path| {
+			if path != millennium_path {
+				let _ = watcher.watch(path, if file_type.is_dir() { RecursiveMode::Recursive } else { RecursiveMode::NonRecursive });
+			}
+		});
+
+		loop {
+			let on_exit = on_exit.clone();
+			if let Ok(event) = rx.recv() {
+				let event_path = match event {
+					DebouncedEvent::Create(path) => Some(path),
+					DebouncedEvent::Remove(path) => Some(path),
+					DebouncedEvent::Rename(_, dest) => Some(dest),
+					DebouncedEvent::Write(path) => Some(path),
+					_ => None
+				};
+
+				if let Some(event_path) = event_path {
+					if event_path.file_name() == Some(OsStr::new(".millenniumrc")) {
+						let config = reload_config(options.config.as_deref())?;
+						self.app_settings.manifest = rewrite_manifest(config.lock().unwrap().as_ref().unwrap())?;
+					} else {
+						let mut p = process.lock().unwrap();
+						p.kill().with_context(|| "failed to kill app process")?;
+						// wait for the process to exit
+						loop {
+							if let Ok(Some(_)) = p.try_wait() {
+								break;
+							}
+						}
+						*p = self.run_dev(options.clone(), move |status, reason| on_exit(status, reason))?;
+					}
 				}
 			}
-			if !available_targets.iter().any(|t| t.name == target) {
-				anyhow::bail!("Target {target} does not exist. Please run `rustup target list` to see the available targets.", target = target);
-			}
 		}
-		Ok(())
 	}
 
 	fn build_app(&mut self, options: Options) -> crate::Result<()> {
@@ -520,6 +621,7 @@ struct CargoConfig {
 }
 
 pub struct RustAppSettings {
+	manifest: Manifest,
 	cargo_settings: CargoSettings,
 	cargo_package_settings: CargoPackageSettings,
 	package_settings: PackageSettings
@@ -530,9 +632,9 @@ impl AppSettings for RustAppSettings {
 		self.package_settings.clone()
 	}
 
-	fn get_bundle_settings(&self, config: &Config, manifest: &Manifest, features: &[String]) -> crate::Result<BundleSettings> {
+	fn get_bundle_settings(&self, config: &Config, features: &[String]) -> crate::Result<BundleSettings> {
 		millennium_config_to_bundle_settings(
-			manifest,
+			&self.manifest,
 			features,
 			config.millennium.bundle.clone(),
 			config.millennium.system_tray.clone(),
@@ -629,7 +731,7 @@ impl AppSettings for RustAppSettings {
 }
 
 impl RustAppSettings {
-	pub fn new(config: &Config) -> crate::Result<Self> {
+	pub fn new(config: &Config, manifest: Manifest) -> crate::Result<Self> {
 		let cargo_settings = CargoSettings::load(&millennium_dir()).with_context(|| "failed to load cargo settings")?;
 		let cargo_package_settings = match &cargo_settings.package {
 			Some(package_info) => package_info.clone(),
@@ -656,6 +758,7 @@ impl RustAppSettings {
 		};
 
 		Ok(Self {
+			manifest,
 			cargo_settings,
 			cargo_package_settings,
 			package_settings

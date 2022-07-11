@@ -16,7 +16,6 @@
 
 pub mod app_paths;
 pub mod config;
-pub mod manifest;
 pub mod template;
 pub mod updater_signature;
 

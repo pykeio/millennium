@@ -25,9 +25,9 @@ use std::{
 use anyhow::Context;
 use toml_edit::{Array, Document, InlineTable, Item, Table, Value};
 
-use super::{
+use crate::helpers::{
 	app_paths::millennium_dir,
-	config::{ConfigHandle, PatternKind}
+	config::{Config, PatternKind}
 };
 
 #[derive(Default)]
@@ -171,12 +171,9 @@ fn write_features(dependencies: &mut Table, dependency_name: &str, all_features:
 	}
 }
 
-pub fn rewrite_manifest(config: ConfigHandle) -> crate::Result<Manifest> {
+pub fn rewrite_manifest(config: &Config) -> crate::Result<Manifest> {
 	let manifest_path = millennium_dir().join("Cargo.toml");
 	let mut manifest = read_manifest(&manifest_path)?;
-
-	let config_guard = config.lock().unwrap();
-	let config = config_guard.as_ref().unwrap();
 
 	let mut millennium_build_features = HashSet::new();
 	if let PatternKind::Isolation { .. } = config.millennium.pattern {
@@ -195,7 +192,7 @@ pub fn rewrite_manifest(config: ConfigHandle) -> crate::Result<Manifest> {
 	)?;
 
 	let mut millennium_features = HashSet::from_iter(config.millennium.features().into_iter().map(|f| f.to_string()));
-	let cli_managed_millennium_features = super::config::MillenniumConfig::all_features();
+	let cli_managed_millennium_features = crate::helpers::config::MillenniumConfig::all_features();
 	let res = match write_features(
 		manifest
 			.as_table_mut()
