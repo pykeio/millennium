@@ -38,6 +38,8 @@
 //! apply_vibrancy(&window, NSVisualEffectMaterial::AppearanceBased).unwrap();
 //! ```
 
+use thiserror::Error;
+
 mod macos;
 mod windows;
 
@@ -129,19 +131,12 @@ pub fn apply_vibrancy(window: impl raw_window_handle::HasRawWindowHandle, #[allo
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum Error {
+	#[error("Unsupported platform: {0}")]
 	UnsupportedPlatform(&'static str),
+	#[error("Unsupported platform version: {0}")]
 	UnsupportedPlatformVersion(&'static str),
+	#[error("{0}")]
 	NotMainThread(&'static str)
-}
-
-impl std::fmt::Display for Error {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		match self {
-			Error::UnsupportedPlatform(e) | Error::UnsupportedPlatformVersion(e) | Error::NotMainThread(e) => {
-				write!(f, "{}", e)
-			}
-		}
-	}
 }
