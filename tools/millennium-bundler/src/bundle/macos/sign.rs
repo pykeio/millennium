@@ -225,8 +225,9 @@ pub fn notarize(app_bundle_path: PathBuf, auth_args: Vec<String>, settings: &Set
 		return Err(anyhow::anyhow!(format!("failed to upload app to Apple's notarization servers. {}", std::str::from_utf8(&output.stdout)?)).into());
 	}
 
-	let stdout = std::str::from_utf8(&output.stdout)?;
-	if let Some(uuid) = Regex::new(r"\nRequestUUID = (.+?)\n")?.captures_iter(stdout).next() {
+	let mut stdout = std::str::from_utf8(&output.stdout)?.to_string();
+	stdout.push('\n');
+	if let Some(uuid) = Regex::new(r"\nRequestUUID = (.+?)\n")?.captures_iter(&stdout).next() {
 		info!("notarization started; waiting for Apple response...");
 		let uuid = uuid[1].to_string();
 		get_notarization_status(uuid, auth_args, settings)?;
@@ -265,8 +266,9 @@ fn get_notarization_status(uuid: String, auth_args: Vec<String>, settings: &Sett
 		.output_ok();
 
 	if let Ok(output) = result {
-		let stdout = std::str::from_utf8(&output.stdout)?;
-		if let Some(status) = Regex::new(r"\n *Status: (.+?)\n")?.captures_iter(stdout).next() {
+		let mut stdout = std::str::from_utf8(&output.stdout)?.to_string();
+		stdout.push('\n');
+		if let Some(status) = Regex::new(r"\n *Status: (.+?)\n")?.captures_iter(&stdout).next() {
 			let status = status[1].to_string();
 			if status == "in progress" {
 				get_notarization_status(uuid, auth_args, settings)
