@@ -2476,6 +2476,10 @@ fn create_webview<T: UserEvent>(
 	{
 		window_builder.inner = window_builder.inner.with_fullsize_content_view(true);
 	}
+	#[cfg(windows)]
+	{
+		window_builder.inner = window_builder.inner.with_drag_and_drop(webview_attributes.file_drop_handler_enabled);
+	}
 
 	let is_window_transparent = window_builder.inner.window.transparent;
 	let menu_items = if let Some(menu) = window_builder.menu {
