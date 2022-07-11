@@ -32,7 +32,7 @@ use std::{
 use anyhow::Context;
 #[cfg(target_os = "linux")]
 use heck::ToKebabCase;
-use log::warn;
+use log::{debug, info, warn};
 use millennium_bundler::{AppCategory, BundleBinary, BundleSettings, DebianSettings, MacOsSettings, PackageSettings, UpdaterSettings, WindowsSettings};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use serde::Deserialize;
@@ -449,13 +449,36 @@ impl Rust {
 		let process = Arc::new(Mutex::new(child));
 		let (tx, rx) = channel();
 		let millennium_path = millennium_dir();
+		let workspace_path = get_workspace_dir(&millennium_path);
+
+		let watch_folders = if millennium_path == workspace_path {
+			vec![millennium_path]
+		} else {
+			let cargo_settings = CargoSettings::load(&workspace_path)?;
+			cargo_settings
+				.workspace
+				.as_ref()
+				.map(|w| {
+					w.members
+						.clone()
+						.unwrap_or_default()
+						.into_iter()
+						.map(|p| workspace_path.join(p))
+						.collect()
+				})
+				.unwrap_or_else(|| vec![millennium_path])
+		};
 
 		let mut watcher = watcher(tx, Duration::from_secs(1)).unwrap();
-		lookup(&millennium_path, |file_type, path| {
-			if path != millennium_path {
-				let _ = watcher.watch(path, if file_type.is_dir() { RecursiveMode::Recursive } else { RecursiveMode::NonRecursive });
-			}
-		});
+		for path in watch_folders {
+			info!("Watching {} for changes...", path.display());
+			lookup(&path, |file_type, p| {
+				if p != path {
+					debug!("Watching {} for changes...", p.display());
+					let _ = watcher.watch(p, if file_type.is_dir() { RecursiveMode::Recursive } else { RecursiveMode::NonRecursive });
+				}
+			});
+		}
 
 		loop {
 			let on_exit = on_exit.clone();
