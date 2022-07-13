@@ -875,10 +875,10 @@ pub fn running_under_arm64_translation() -> bool {
 
 		use libc::sysctlbyname;
 
-		let mut name = CString::new("sysctl.proc_translated").unwrap();
+		let name = CString::new("sysctl.proc_translated").unwrap();
 		let mut proc_translated = 0i32;
 		let mut size = std::mem::size_of_val(&proc_translated);
-		if sysctlbyname(name.as_ptr() as *const c_char, &mut proc_translated as *mut _ as *mut c_void, &mut size, std::ptr::null_mut(), 0) == -1 {
+		if unsafe { sysctlbyname(name.as_ptr() as *const c_char, &mut proc_translated as *mut _ as *mut c_void, &mut size, std::ptr::null_mut(), 0) } == -1 {
 			false
 		} else {
 			proc_translated == 1
