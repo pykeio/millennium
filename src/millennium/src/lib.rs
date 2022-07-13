@@ -868,14 +868,17 @@ pub fn running_under_arm64_translation() -> bool {
 	}
 	#[cfg(target_os = "macos")]
 	{
-		use std::{ffi::CString, os::raw::c_char};
+		use std::{
+			ffi::{c_void, CString},
+			os::raw::c_char
+		};
 
 		use libc::sysctlbyname;
 
 		let mut name = CString::new("sysctl.proc_translated").unwrap();
 		let mut proc_translated = 0i32;
 		let mut size = std::mem::size_of_val(&proc_translated);
-		if sysctlbyname(name.as_ptr() as *const c_char, &mut proc_translated as *mut _, &mut size, std::ptr::null_mut(), 0) == -1 {
+		if sysctlbyname(name.as_ptr() as *const c_char, &mut proc_translated as *mut _ as *mut c_void, &mut size, std::ptr::null_mut(), 0) == -1 {
 			false
 		} else {
 			proc_translated == 1
