@@ -53,7 +53,9 @@ pub struct SystemTray {
 	pub icon: Option<Icon>,
 	pub menu: Option<menu::SystemTrayMenu>,
 	#[cfg(target_os = "macos")]
-	pub icon_as_template: bool
+	pub icon_as_template: bool,
+	#[cfg(target_os = "macos")]
+	pub menu_on_left_click: bool
 }
 
 #[cfg(feature = "system-tray")]
@@ -79,6 +81,14 @@ impl SystemTray {
 	#[must_use]
 	pub fn with_icon_as_template(mut self, is_template: bool) -> Self {
 		self.icon_as_template = is_template;
+		self
+	}
+
+	/// Sets whether the tray menu should appear when the tray icon is left clicked.
+	#[cfg(target_os = "macos")]
+	#[must_use]
+	pub fn with_menu_on_left_click(mut self, menu_on_left_click: bool) -> Self {
+		self.menu_on_left_click = menu_on_left_click;
 		self
 	}
 

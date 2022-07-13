@@ -1633,7 +1633,9 @@ impl<T: UserEvent> Runtime<T> for MillenniumWebview<T> {
 
 		#[cfg(target_os = "macos")]
 		{
-			tray_builder = tray_builder.with_icon_as_template(system_tray.icon_as_template);
+			tray_builder = tray_builder
+				.with_icon_as_template(system_tray.icon_as_template)
+				.with_menu_on_left_click(system_tray.menu_on_left_click);
 		}
 
 		let tray = tray_builder.build(&self.event_loop).map_err(|e| Error::SystemTray(Box::new(e)))?;

@@ -2328,7 +2328,14 @@ pub struct SystemTrayConfig {
 	pub icon_path: PathBuf,
 	/// A Boolean value that determines whether the image represents a [template](https://developer.apple.com/documentation/appkit/nsimage/1520017-template?language=objc) image on macOS.
 	#[serde(default)]
-	pub icon_as_template: bool
+	pub icon_as_template: bool,
+	/// Determines whether the tray menu should appear when the tray icon is left clicked on macOS.
+	#[serde(default = "default_tray_menu_on_left_click")]
+	pub menu_on_left_click: bool
+}
+
+fn default_tray_menu_on_left_click() -> bool {
+	true
 }
 
 // We enable the unnecessary_wraps because we need
@@ -3120,8 +3127,9 @@ mod build {
 	impl ToTokens for SystemTrayConfig {
 		fn to_tokens(&self, tokens: &mut TokenStream) {
 			let icon_as_template = self.icon_as_template;
+			let menu_on_left_click = self.menu_on_left_click;
 			let icon_path = path_buf_lit(&self.icon_path);
-			literal_struct!(tokens, SystemTrayConfig, icon_path, icon_as_template);
+			literal_struct!(tokens, SystemTrayConfig, icon_path, icon_as_template, menu_on_left_click);
 		}
 	}
 

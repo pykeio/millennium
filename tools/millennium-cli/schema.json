@@ -1812,6 +1812,11 @@
         "iconPath": {
           "description": "Path to the icon to use on the system tray.\n\nIt is forced to be a `.png` file on Linux and macOS, and a `.ico` file on Windows.",
           "type": "string"
+        },
+        "menuOnLeftClick": {
+          "description": "Determines whether the tray menu should appear when the tray icon is left clicked on macOS.",
+          "default": true,
+          "type": "boolean"
         }
       },
       "additionalProperties": false
