@@ -856,6 +856,59 @@ where
 	}
 }
 
+/// Returns `true` if the application is running under ARM64 translation.
+///
+/// # Platform-specific
+///
+/// - **Linux**: Unsupported; returns false.
+pub fn running_under_arm64_translation() -> bool {
+	#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+	{
+		false
+	}
+	#[cfg(target_os = "macos")]
+	{
+		use std::{ffi::CString, os::raw::c_char};
+
+		use libc::sysctlbyname;
+
+		let mut name = CString::new("sysctl.proc_translated").unwrap();
+		let mut proc_translated = 0i32;
+		let mut size = std::mem::size_of_val(&proc_translated);
+		if sysctlbyname(name.as_ptr() as *const c_char, &mut proc_translated as *mut _, &mut size, std::ptr::null_mut(), 0) == -1 {
+			false
+		} else {
+			proc_translated == 1
+		}
+	}
+	#[cfg(target_os = "windows")]
+	{
+		use windows::Win32::{
+			Foundation::{BOOL, HANDLE},
+			System::{
+				Diagnostics::Debug::IMAGE_FILE_MACHINE_ARM64,
+				LibraryLoader::{GetModuleHandleW, GetProcAddress},
+				Threading::GetCurrentProcess
+			}
+		};
+
+		type IsWow64Process2 = unsafe extern "system" fn(HANDLE, *mut u16, *mut u16) -> BOOL;
+
+		if let Ok(handle) = unsafe { GetModuleHandleW("kernel32.dll") } {
+			if let Some(is_wow64_process2) = unsafe { GetProcAddress(handle, "IsWow64Process2") } {
+				let is_wow64_process2: IsWow64Process2 = unsafe { std::mem::transmute(is_wow64_process2) };
+				let mut process_arch: u16 = 0;
+				let mut system_arch: u16 = 0;
+				if unsafe { is_wow64_process2(GetCurrentProcess(), &mut process_arch, &mut system_arch) }.as_bool() {
+					return system_arch == IMAGE_FILE_MACHINE_ARM64.0;
+				}
+			}
+		}
+
+		false
+	}
+}
+
 /// Utilities for unit testing on Millennium applications.
 #[cfg(test)]
 pub mod test;
