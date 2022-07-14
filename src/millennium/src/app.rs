@@ -759,12 +759,18 @@ impl<R: Runtime> App<R> {
 		let updater_config = self.manager.config().millennium.updater.clone();
 		if updater_config.active {
 			if updater_config.dialog {
-				// if updater dialog is enabled, spawn a new task
-				self.run_updater_dialog();
-				handle.listen_global(updater::EVENT_CHECK_UPDATE, move |_msg| {
-					let handle = handle_.clone();
-					crate::async_runtime::spawn(async move { updater::check_update_with_dialog(handle).await });
-				});
+				#[cfg(not(target_os = "linux"))]
+				let dialog_enabled_by_platform = true;
+				#[cfg(target_os = "linux")]
+				let dialog_enabled_by_platform = cfg!(dev) || self.state::<Env>().appimage.is_some();
+				if dialog_enabled_by_platform {
+					// if updater dialog is enabled, spawn a new task
+					self.run_updater_dialog();
+					handle.listen_global(updater::EVENT_CHECK_UPDATE, move |_msg| {
+						let handle = handle_.clone();
+						crate::async_runtime::spawn(async move { updater::check_update_with_dialog(handle).await });
+					});
+				}
 			} else {
 				updater::listener(handle);
 			}
