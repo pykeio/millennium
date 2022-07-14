@@ -123,7 +123,7 @@ interface FsTextFileOptions {
 	contents: string;
 }
 
-export type BinaryFileContents = Iterable<number> | ArrayLike<number>;
+export type BinaryFileContents = Iterable<number> | ArrayLike<number> | ArrayBufferLike;
 
 /** Options object used when writing binary data to a file. */
 interface FsBinaryFileOptions {
@@ -315,7 +315,11 @@ export async function writeBinaryFile(path: string | FsBinaryFileOptions, conten
 		message: {
 			cmd: 'writeFile',
 			path: file.path,
-			contents: Array.from(file.contents),
+			contents: Array.from(
+				file.contents instanceof ArrayBuffer || file.contents instanceof SharedArrayBuffer
+					? new Uint8Array(file.contents)
+					: file.contents
+			),
 			options: fileOptions
 		}
 	});

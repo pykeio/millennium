@@ -131,8 +131,12 @@ export class Body {
 	 *
 	 * @param data The body byte array.
 	 */
-	public static binary(data: Uint8Array): Body {
-		return new Body('Bytes', Array.from(data));
+	public static binary(data: Iterable<number> | ArrayLike<number> | ArrayBufferLike): Body {
+		return new Body('Bytes', Array.from(
+			data instanceof ArrayBuffer || data instanceof SharedArrayBuffer
+				? new Uint8Array(data)
+				: data
+		));
 	}
 }
 
