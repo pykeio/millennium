@@ -16,7 +16,6 @@
 
 use std::{
 	env::set_current_dir,
-	io::Write,
 	process::{exit, Command, ExitStatus, Stdio},
 	sync::{
 		atomic::{AtomicBool, Ordering},
@@ -239,6 +238,8 @@ fn kill_before_dev_process() {
 			.status();
 		#[cfg(unix)]
 		{
+			use std::io::Write;
+
 			let mut kill_children_script_path = std::env::temp_dir();
 			kill_children_script_path.push("kill-children.sh");
 

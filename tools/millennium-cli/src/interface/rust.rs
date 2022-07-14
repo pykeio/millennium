@@ -153,11 +153,14 @@ impl Interface for Rust {
 		&self.app_settings
 	}
 
-	fn build(&mut self, options: Options) -> crate::Result<()> {
+	fn build(&mut self, mut options: Options) -> crate::Result<()> {
 		let bin_path = self.app_settings.app_binary_path(&options)?;
 		let out_dir = bin_path.parent().unwrap();
 
 		let bin_name = bin_path.file_stem().unwrap();
+
+		options.features.get_or_insert(Vec::new()).push("custom-protocol".into());
+		std::env::set_var("STATIC_VCRUNTIME", "true");
 
 		if options.target == Some("universal-apple-darwin".into()) {
 			std::fs::create_dir_all(&out_dir).with_context(|| "failed to create project out directory")?;
@@ -172,7 +175,8 @@ impl Interface for Rust {
 					.app_settings
 					.out_dir(Some(triple.into()), options.debug)
 					.with_context(|| format!("failed to get {} out dir", triple))?;
-				self.build_app(options).with_context(|| format!("failed to build {} binary", triple))?;
+				self.build_app_blocking(options)
+					.with_context(|| format!("failed to build {} binary", triple))?;
 
 				lipo_cmd.arg(triple_out_dir.join(&bin_name));
 			}
@@ -182,10 +186,10 @@ impl Interface for Rust {
 				return Err(anyhow::anyhow!(format!("Result of `lipo` command was unsuccessful: {} (is `lipo` installed?)", lipo_status)));
 			}
 		} else {
-			self.build_app(options).with_context(|| "failed to build app")?;
+			self.build_app_blocking(options).with_context(|| "failed to build app")?;
 		}
 
-		rename_app(bin_path, self.product_name.as_deref())?;
+		rename_app(&bin_path, self.product_name.as_deref())?;
 
 		Ok(())
 	}
@@ -266,28 +270,9 @@ impl Rust {
 		Ok(())
 	}
 
-	fn run_dev<F: Fn(ExitStatus, ExitReason) + Send + Sync + 'static>(&mut self, options: Options, on_exit: F) -> crate::Result<DevChild> {
+	fn run_dev<F: Fn(ExitStatus, ExitReason) + Send + Sync + 'static>(&mut self, mut options: Options, on_exit: F) -> crate::Result<DevChild> {
 		let bin_path = self.app_settings.app_binary_path(&options)?;
 		let product_name = self.product_name.clone();
-
-		let runner = options.runner.unwrap_or_else(|| "cargo".into());
-
-		if let Some(target) = &options.target {
-			self.fetch_available_targets();
-			self.validate_target(target)?;
-		}
-
-		let mut build_cmd = Command::new(&runner);
-		build_cmd
-			.env(
-				"CARGO_TERM_PROGRESS_WIDTH",
-				terminal::stderr_width()
-					.map(|width| if cfg!(windows) { std::cmp::min(60, width) } else { width })
-					.unwrap_or(if cfg!(windows) { 60 } else { 80 })
-					.to_string()
-			)
-			.env("CARGO_TERM_PROGRESS_WHEN", "always");
-		build_cmd.arg("build").arg("--color").arg("always");
 
 		if !options.args.contains(&"--no-default-features".into()) {
 			let manifest_features = self.app_settings.manifest.features();
@@ -304,28 +289,13 @@ impl Rust {
 					}
 				})
 				.collect();
-			build_cmd.arg("--no-default-features");
+			options.args.push("--no-default-features".into());
 			if !enable_features.is_empty() {
-				build_cmd.args(&["--features", &enable_features.join(",")]);
+				options.features.get_or_insert(Vec::new()).extend(enable_features);
 			}
 		}
 
-		if !options.debug {
-			build_cmd.args(&["--release"]);
-		}
-
-		if let Some(target) = &options.target {
-			build_cmd.args(&["--target", target]);
-		}
-
-		let mut features = self.config_features.clone();
-		if let Some(f) = options.features {
-			features.extend(f);
-		}
-		if !features.is_empty() {
-			build_cmd.args(&["--features", &features.join(",")]);
-		}
-
+		let mut args = Vec::new();
 		let mut run_args = Vec::new();
 		let mut reached_run_args = false;
 		for arg in options.args.clone() {
@@ -334,65 +304,20 @@ impl Rust {
 			} else if arg == "--" {
 				reached_run_args = true;
 			} else {
-				build_cmd.arg(arg);
+				args.push(arg);
 			}
 		}
 
-		build_cmd.stdout(os_pipe::dup_stdout()?);
-		build_cmd.stderr(Stdio::piped());
+		options.args = args;
 
 		let manually_killed_app = Arc::new(AtomicBool::default());
 		let manually_killed_app_ = manually_killed_app.clone();
 
-		let build_child = match SharedChild::spawn(&mut build_cmd) {
-			Ok(c) => c,
-			Err(e) => {
-				if e.kind() == ErrorKind::NotFound {
-					return Err(anyhow::anyhow!(
-						"`{}` not found.{}",
-						runner,
-						if runner == "cargo" {
-							" Rust/Cargo appears to not be installed. Please follow the prerequisites setup guide: https://millennium.pyke.io/docs/main/your-first-app/prerequisites"
-						} else {
-							""
-						}
-					));
-				} else {
-					return Err(e.into());
-				}
-			}
-		};
-		let build_child = Arc::new(build_child);
-		let build_child_stderr = build_child.take_stderr().unwrap();
-		let mut stderr = BufReader::new(build_child_stderr);
-		let stderr_lines = Arc::new(Mutex::new(Vec::new()));
-		let stderr_lines_ = stderr_lines.clone();
-		std::thread::spawn(move || {
-			let mut buf = Vec::new();
-			let mut lines = stderr_lines_.lock().unwrap();
-			let mut io_stderr = std::io::stderr();
-			loop {
-				buf.clear();
-				match millennium_utils::io::read_line(&mut stderr, &mut buf) {
-					Ok(s) if s == 0 => break,
-					_ => ()
-				}
-				let _ = io_stderr.write_all(&buf);
-				if !buf.ends_with(&[b'\r']) {
-					let _ = io_stderr.write_all(b"\n");
-				}
-				lines.push(String::from_utf8_lossy(&buf).into_owned());
-			}
-		});
-
-		let build_child_ = build_child.clone();
 		let app_child = Arc::new(Mutex::new(None));
 		let app_child_ = app_child.clone();
-		std::thread::spawn(move || {
-			let status = build_child_.wait().expect("failed to wait on build");
-
+		let build_child = self.build_app(options, move |status, reason| {
 			if status.success() {
-				let bin_path = rename_app(bin_path, product_name.as_deref()).expect("failed to rename app");
+				let bin_path = rename_app(&bin_path, product_name.as_deref()).expect("failed to rename app");
 
 				let mut app = Command::new(bin_path);
 				app.stdout(os_pipe::dup_stdout().unwrap());
@@ -414,24 +339,9 @@ impl Rust {
 
 				app_child_.lock().unwrap().replace(app_child);
 			} else {
-				let is_cargo_compile_error = stderr_lines
-					.lock()
-					.unwrap()
-					.last()
-					.map(|l| l.contains("could not compile"))
-					.unwrap_or_default();
-				stderr_lines.lock().unwrap().clear();
-
-				on_exit(
-					status,
-					if status.code() == Some(101) && is_cargo_compile_error {
-						ExitReason::CompilationFailed
-					} else {
-						ExitReason::NormalExit
-					}
-				);
+				on_exit(status, reason);
 			}
-		});
+		})?;
 
 		Ok(DevChild {
 			manually_killed_app,
@@ -471,10 +381,10 @@ impl Rust {
 
 		let mut watcher = watcher(tx, Duration::from_secs(1)).unwrap();
 		for path in watch_folders {
-			info!("Watching {} for changes...", path.display());
+			info!(action = "Watching"; "{} for changes...", path.display());
 			lookup(&path, |file_type, p| {
 				if p != path {
-					debug!("Watching {} for changes...", p.display());
+					debug!(action = "Watching"; "{} for changes...", p.display());
 					let _ = watcher.watch(p, if file_type.is_dir() { RecursiveMode::Recursive } else { RecursiveMode::NonRecursive });
 				}
 			});
@@ -511,7 +421,14 @@ impl Rust {
 		}
 	}
 
-	fn build_app(&mut self, options: Options) -> crate::Result<()> {
+	fn build_app_blocking(&mut self, options: Options) -> crate::Result<()> {
+		let (tx, rx) = channel();
+		self.build_app(options, move |status, _| tx.send(status).unwrap())?;
+		let status = rx.recv().unwrap();
+		if status.success() { Ok(()) } else { Err(anyhow::anyhow!("failed to build app")) }
+	}
+
+	fn build_app<F: FnOnce(ExitStatus, ExitReason) + Send + 'static>(&mut self, options: Options, on_exit: F) -> crate::Result<Arc<SharedChild>> {
 		let runner = options.runner.unwrap_or_else(|| "cargo".into());
 
 		if let Some(target) = &options.target {
@@ -526,11 +443,13 @@ impl Rust {
 			args.extend(options.args);
 		}
 
-		if let Some(features) = options.features {
-			if !features.is_empty() {
-				args.push("--features".into());
-				args.push(features.join(","));
-			}
+		let mut features = self.config_features.clone();
+		if let Some(f) = options.features {
+			features.extend(f);
+		}
+		if !features.is_empty() {
+			args.push("--features".into());
+			args.push(features.join(","));
 		}
 
 		if !options.debug {
@@ -542,22 +461,27 @@ impl Rust {
 			args.push(target);
 		}
 
-		match Command::new(&runner)
-			.args(&["build", "--features=custom-protocol"])
-			.args(args)
-			.env("STATIC_VCRUNTIME", "true")
-			.piped()
-		{
-			Ok(status) => {
-				if status.success() {
-					Ok(())
-				} else {
-					Err(anyhow::anyhow!("Result of `{} build` operation was unsuccessful", runner))
-				}
-			}
+		let mut build_cmd = Command::new(&runner);
+		build_cmd
+			.env(
+				"CARGO_TERM_PROGRESS_WIDTH",
+				terminal::stderr_width()
+					.map(|width| if cfg!(windows) { std::cmp::min(60, width) } else { width })
+					.unwrap_or(if cfg!(windows) { 60 } else { 80 })
+					.to_string()
+			)
+			.env("CARGO_TERM_PROGRESS_WHEN", "always");
+		build_cmd.arg("build").arg("--color").arg("always");
+		build_cmd.args(args);
+
+		build_cmd.stdout(os_pipe::dup_stdout()?);
+		build_cmd.stderr(Stdio::piped());
+
+		let build_child = match SharedChild::spawn(&mut build_cmd) {
+			Ok(c) => c,
 			Err(e) => {
 				if e.kind() == ErrorKind::NotFound {
-					Err(anyhow::anyhow!(
+					return Err(anyhow::anyhow!(
 						"`{}` not found.{}",
 						runner,
 						if runner == "cargo" {
@@ -565,12 +489,63 @@ impl Rust {
 						} else {
 							""
 						}
-					))
+					));
 				} else {
-					Err(e.into())
+					return Err(e.into());
 				}
 			}
-		}
+		};
+
+		let build_child = Arc::new(build_child);
+		let build_child_stderr = build_child.take_stderr().unwrap();
+		let mut stderr = BufReader::new(build_child_stderr);
+		let stderr_lines = Arc::new(Mutex::new(Vec::new()));
+		let stderr_lines_ = stderr_lines.clone();
+		std::thread::spawn(move || {
+			let mut buf = Vec::new();
+			let mut lines = stderr_lines_.lock().unwrap();
+			let mut io_stderr = std::io::stderr();
+			loop {
+				buf.clear();
+				match millennium_utils::io::read_line(&mut stderr, &mut buf) {
+					Ok(s) if s == 0 => break,
+					_ => ()
+				}
+				let _ = io_stderr.write_all(&buf);
+				if !buf.ends_with(&[b'\r']) {
+					let _ = io_stderr.write_all(b"\n");
+				}
+				lines.push(String::from_utf8_lossy(&buf).into_owned());
+			}
+		});
+
+		let build_child_ = build_child.clone();
+		std::thread::spawn(move || {
+			let status = build_child_.wait().expect("failed to wait on build");
+
+			if status.success() {
+				on_exit(status, ExitReason::NormalExit);
+			} else {
+				let is_cargo_compile_error = stderr_lines
+					.lock()
+					.unwrap()
+					.last()
+					.map(|l| l.contains("could not compile"))
+					.unwrap_or_default();
+				stderr_lines.lock().unwrap().clear();
+
+				on_exit(
+					status,
+					if status.code() == Some(101) && is_cargo_compile_error {
+						ExitReason::CompilationFailed
+					} else {
+						ExitReason::NormalExit
+					}
+				);
+			}
+		});
+
+		Ok(build_child)
 	}
 }
 
@@ -1018,7 +993,7 @@ fn millennium_config_to_bundle_settings(
 	})
 }
 
-fn rename_app(bin_path: PathBuf, product_name: Option<&str>) -> crate::Result<PathBuf> {
+fn rename_app(bin_path: &Path, product_name: Option<&str>) -> crate::Result<PathBuf> {
 	if let Some(product_name) = product_name {
 		#[cfg(target_os = "linux")]
 		let product_name = product_name.to_kebab_case();
@@ -1032,7 +1007,7 @@ fn rename_app(bin_path: PathBuf, product_name: Option<&str>) -> crate::Result<Pa
 		rename(&bin_path, &product_path).with_context(|| format!("failed to rename `{}` to `{}`", bin_path.display(), product_path.display(),))?;
 		Ok(product_path)
 	} else {
-		Ok(bin_path)
+		Ok(bin_path.to_path_buf())
 	}
 }
 
