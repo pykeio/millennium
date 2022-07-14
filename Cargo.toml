@@ -14,7 +14,8 @@ members = [
 ]
 exclude = [
 	"examples/hello-world",
-	"examples/vibrancy"
+	"examples/vibrancy",
+	"tools/"
 ]
 
 # default to small, optimized workspace release binaries
