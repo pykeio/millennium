@@ -181,7 +181,15 @@ impl Attributes {
 /// build script; see [`try_build`] for no panics.
 pub fn build() {
 	if let Err(error) = try_build(Attributes::default()) {
-		panic!("error found during millennium-build: {:#?}", error);
+		let error = format!("{:#}", error);
+		println!("{}", error);
+		if error.starts_with("unknown field") {
+			println!(
+				"Found an unknown configuration field. This usually happens when you use a version of Millennium CLI that is newer than `millennium-build`."
+			);
+			println!("Please try updating the Rust crates by running `cargo update`.");
+		}
+		std::process::exit(1);
 	}
 }
 

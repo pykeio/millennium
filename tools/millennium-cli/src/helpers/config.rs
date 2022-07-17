@@ -136,11 +136,12 @@ fn get_internal(merge_config: Option<&str>, reload: bool) -> crate::Result<Confi
 	let state = schema.validate(&config);
 	if !state.errors.is_empty() {
 		for error in state.errors {
-			eprintln!(
-				"`.millenniumrc` error at `{}`: {}",
-				error.get_path().chars().skip(1).collect::<String>().replace('/', " > "),
-				error.get_detail().unwrap_or_else(|| error.get_title()),
-			);
+			let path = error.get_path().chars().skip(1).collect::<String>().replace('/', " > ");
+			if path.is_empty() {
+				eprintln!("`.millenniumrc` error: {}", error.get_detail().unwrap_or_else(|| error.get_title()));
+			} else {
+				eprintln!("`.millenniumrc` error in `{}`: {}", path, error.get_detail().unwrap_or_else(|| error.get_title()));
+			}
 		}
 		exit(1);
 	}
