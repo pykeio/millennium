@@ -200,6 +200,13 @@ pub fn try_build(attributes: Attributes) -> Result<()> {
 		println!("cargo:rerun-if-changed=.millenniumrc.json");
 	}
 
+	let mut config = serde_json::from_value(millennium_utils::config::parse::read_from(std::env::current_dir().unwrap())?)?;
+	if let Ok(env) = std::env::var("MILLENNIUM_CONFIG") {
+		let merge_config: serde_json::Value = serde_json::from_str(&env)?;
+		json_patch::merge(&mut config, &merge_config);
+	}
+	let config: Config = serde_json::from_value(config)?;
+
 	let config: Config = if let Ok(env) = std::env::var("MILLENNIUM_CONFIG") {
 		serde_json::from_str(&env)?
 	} else {
