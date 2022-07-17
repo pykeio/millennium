@@ -15,6 +15,7 @@
 // limitations under the License.
 
 use std::{
+	collections::HashMap,
 	env::set_var,
 	process::exit,
 	sync::{Arc, Mutex}
@@ -26,7 +27,48 @@ pub use millennium_utils::config::*;
 use once_cell::sync::Lazy;
 use serde_json::Value as JsonValue;
 
-pub type ConfigHandle = Arc<Mutex<Option<Config>>>;
+pub const MERGE_CONFIG_EXTENSION_NAME: &str = "--config";
+
+pub struct ConfigMetadata {
+	/// The actual configuration, merged with any extension.
+	inner: Config,
+	/// A list of config extensions (i.e. platform-specific config files or an extra config file provided by the
+	/// `--config` CLI argument), mapped by extension name to its value.
+	extensions: HashMap<&'static str, JsonValue>
+}
+
+impl std::ops::Deref for ConfigMetadata {
+	type Target = Config;
+
+	#[inline(always)]
+	fn deref(&self) -> &Config {
+		&self.inner
+	}
+}
+
+impl ConfigMetadata {
+	/// Checks which config is overwriting the bundle identifier.
+	pub fn find_bundle_identifier_override(&self) -> Option<&'static str> {
+		for (ext, config) in &self.extensions {
+			if let Some(identifier) = config
+				.as_object()
+				.and_then(|config| config.get("millennium"))
+				.and_then(|millennium_config| millennium_config.as_object())
+				.and_then(|millennium_config| millennium_config.get("bundle"))
+				.and_then(|bundle_config| bundle_config.as_object())
+				.and_then(|bundle_config| bundle_config.get("identifier"))
+				.and_then(|id| id.as_str())
+			{
+				if identifier == self.inner.millennium.bundle.identifier {
+					return Some(ext);
+				}
+			}
+		}
+		None
+	}
+}
+
+pub type ConfigHandle = Arc<Mutex<Option<ConfigMetadata>>>;
 
 pub fn wix_settings(config: WixConfig) -> millennium_bundler::WixSettings {
 	millennium_bundler::WixSettings {
@@ -71,11 +113,19 @@ fn get_internal(merge_config: Option<&str>, reload: bool) -> crate::Result<Confi
 		return Ok(config_handle().clone());
 	}
 
-	let mut config = millennium_utils::config::parse::read_from(super::app_paths::millennium_dir())?;
+	let millennium_dir = super::app_paths::millennium_dir();
+	let mut config = millennium_utils::config::parse::parse_value(millennium_dir.join(".millenniumrc"))?;
+	let mut extensions = HashMap::new();
+
+	if let Some(platform_config) = millennium_utils::config::parse::read_platform(millennium_dir)? {
+		merge(&mut config, &platform_config);
+		extensions.insert(millennium_utils::config::parse::get_platform_config_filename(), platform_config);
+	}
 
 	if let Some(merge_config) = merge_config {
 		let merge_config: JsonValue = serde_json::from_str(merge_config).with_context(|| "failed to parse config to merge")?;
 		merge(&mut config, &merge_config);
+		extensions.insert(MERGE_CONFIG_EXTENSION_NAME, merge_config);
 	}
 
 	let schema: JsonValue = serde_json::from_str(include_str!("../../schema.json"))?;
@@ -95,7 +145,8 @@ fn get_internal(merge_config: Option<&str>, reload: bool) -> crate::Result<Confi
 
 	let config: Config = serde_json::from_value(config)?;
 	set_var("MILLENNIUM_CONFIG", serde_json::to_string(&config)?);
-	*config_handle().lock().unwrap() = Some(config);
+
+	*config_handle().lock().unwrap() = Some(ConfigMetadata { inner: config, extensions });
 
 	Ok(config_handle().clone())
 }

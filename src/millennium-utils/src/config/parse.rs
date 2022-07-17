@@ -68,20 +68,32 @@ pub enum ConfigError {
 /// [JSON Merge Patch (RFC 7396)]: https://datatracker.ietf.org/doc/html/rfc7396.
 pub fn read_from(root_dir: PathBuf) -> Result<Value, ConfigError> {
 	let mut config: Value = parse_value(root_dir.join(".millenniumrc"))?;
+	if let Some(platform_config) = read_platform(root_dir)? {
+		merge(&mut config, &platform_config);
+	}
+	Ok(config)
+}
 
-	let platform_config_filename = if cfg!(target_os = "macos") {
+/// Gets the platform configuration file name.
+pub fn get_platform_config_filename() -> &'static str {
+	if cfg!(target_os = "macos") {
 		".millenniumrc.macos"
 	} else if cfg!(windows) {
 		".millenniumrc.windows"
 	} else {
 		".millenniumrc.linux"
-	};
-	let platform_config_path = root_dir.join(platform_config_filename);
+	}
+}
+
+/// Reads the platform-specific configuration file in the given directory.
+pub fn read_platform(root_dir: PathBuf) -> Result<Option<Value>, ConfigError> {
+	let platform_config_path = root_dir.join(get_platform_config_filename());
 	if does_supported_extension_exist(&platform_config_path) {
 		let platform_config: Value = parse_value(platform_config_path)?;
-		merge(&mut config, &platform_config);
+		Ok(Some(platform_config))
+	} else {
+		Ok(None)
 	}
-	Ok(config)
 }
 
 /// Check if a supported config file exists at path.

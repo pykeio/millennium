@@ -127,7 +127,7 @@ fn bundle_update(settings: &Settings, bundles: &[Bundle]) -> crate::Result<Vec<P
 	use crate::bundle::settings::WebviewInstallMode;
 
 	// find our .msi or rebuild
-	let mut bundle_paths =
+	let bundle_paths =
 		if matches!(settings.windows().webview_install_mode, WebviewInstallMode::OfflineInstaller { .. } | WebviewInstallMode::EmbedBootstrapper { .. }) {
 			msi::bundle_project(settings, true)?
 		} else {
