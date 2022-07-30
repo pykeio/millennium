@@ -122,16 +122,16 @@ mod tests {
 	#[millennium_macros::module_command_test(http_request, "http > request")]
 	#[quickcheck_macros::quickcheck]
 	fn create_client(options: Option<ClientBuilder>) {
-		assert!(crate::async_runtime::block_on(super::Cmd::create_client(crate::test::mock_invoke_context(), options)).is_ok());
+		crate::async_runtime::block_on(super::Cmd::create_client(crate::test::mock_invoke_context(), options)).unwrap();
 	}
 
 	#[millennium_macros::module_command_test(http_request, "http > request")]
 	#[quickcheck_macros::quickcheck]
 	fn drop_client(client_id: ClientId) {
 		crate::async_runtime::block_on(async move {
-			assert!(super::Cmd::drop_client(crate::test::mock_invoke_context(), client_id).await.is_ok());
+			super::Cmd::drop_client(crate::test::mock_invoke_context(), client_id).await.unwrap();
 			let id = super::Cmd::create_client(crate::test::mock_invoke_context(), None).await.unwrap();
-			assert!(super::Cmd::drop_client(crate::test::mock_invoke_context(), id).await.is_ok());
+			super::Cmd::drop_client(crate::test::mock_invoke_context(), id).await.unwrap();
 		});
 	}
 }

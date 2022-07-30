@@ -113,6 +113,7 @@ mod test {
 	}
 
 	#[test]
+	#[allow(clippy::assertions_on_result_states)]
 	fn check_read_string_fail() {
 		let file = String::from("test/api/");
 
@@ -145,6 +146,7 @@ mod test {
 	}
 
 	#[test]
+	#[allow(clippy::assertions_on_result_states)]
 	fn check_read_binary_fail() {
 		let file = String::from("test/api/");
 

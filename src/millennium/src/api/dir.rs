@@ -203,6 +203,6 @@ mod test {
 		let res = with_temp_dir(callback);
 
 		// assert that the result is an OK type.
-		assert!(res.is_ok());
+		res.unwrap();
 	}
 }

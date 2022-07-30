@@ -414,10 +414,10 @@ fn test_parse_accelerator() {
 	);
 
 	let acc = parse_accelerator("+G");
-	assert!(acc.is_err());
+	acc.unwrap_err();
 
 	let acc = parse_accelerator("SHGSH+G");
-	assert!(acc.is_err());
+	acc.unwrap_err();
 
 	assert_eq!(
 		parse_accelerator("SHiFT+F12").unwrap(),
@@ -440,5 +440,5 @@ fn test_parse_accelerator() {
 	);
 
 	let acc = parse_accelerator("CTRL+");
-	assert!(acc.is_err());
+	acc.unwrap_err();
 }

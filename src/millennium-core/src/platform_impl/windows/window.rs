@@ -125,7 +125,7 @@ impl Window {
 					)
 					.into();
 
-					assert!(RegisterDragDrop(win.window.0, file_drop_handler.clone()).is_ok());
+					RegisterDragDrop(win.window.0, file_drop_handler.clone()).unwrap();
 					Some(file_drop_handler)
 				} else {
 					None

@@ -195,7 +195,7 @@ unsafe extern "system" fn tray_subclass_proc(hwnd: HWND, msg: u32, wparam: WPARA
 	let mut subclass_input = &mut *(subclass_input_ptr);
 
 	if msg == WM_DESTROY {
-		Box::from_raw(subclass_input_ptr);
+		std::mem::drop(Box::from_raw(subclass_input_ptr));
 	}
 
 	if msg == WM_USER_UPDATE_TRAYMENU {

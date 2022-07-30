@@ -751,7 +751,7 @@ unsafe extern "system" fn public_window_callback<T: 'static>(
 	};
 
 	if subclass_removed && recurse_depth == 0 {
-		Box::from_raw(subclass_input_ptr);
+		std::mem::drop(Box::from_raw(subclass_input_ptr));
 	}
 
 	result
@@ -1174,7 +1174,7 @@ unsafe fn public_window_callback_inner<T: 'static>(
 		win32wm::WM_LBUTTONDOWN => {
 			use crate::event::{ElementState::Pressed, MouseButton::Left, WindowEvent::MouseInput};
 
-			capture_mouse(window, &mut *subclass_input.window_state.lock());
+			capture_mouse(window, &mut subclass_input.window_state.lock());
 
 			let modifiers = update_modifiers(window, subclass_input);
 
@@ -1212,7 +1212,7 @@ unsafe fn public_window_callback_inner<T: 'static>(
 		win32wm::WM_RBUTTONDOWN => {
 			use crate::event::{ElementState::Pressed, MouseButton::Right, WindowEvent::MouseInput};
 
-			capture_mouse(window, &mut *subclass_input.window_state.lock());
+			capture_mouse(window, &mut subclass_input.window_state.lock());
 
 			let modifiers = update_modifiers(window, subclass_input);
 
@@ -1250,7 +1250,7 @@ unsafe fn public_window_callback_inner<T: 'static>(
 		win32wm::WM_MBUTTONDOWN => {
 			use crate::event::{ElementState::Pressed, MouseButton::Middle, WindowEvent::MouseInput};
 
-			capture_mouse(window, &mut *subclass_input.window_state.lock());
+			capture_mouse(window, &mut subclass_input.window_state.lock());
 
 			let modifiers = update_modifiers(window, subclass_input);
 
@@ -1289,7 +1289,7 @@ unsafe fn public_window_callback_inner<T: 'static>(
 			use crate::event::{ElementState::Pressed, MouseButton::Other, WindowEvent::MouseInput};
 			let xbutton = util::GET_XBUTTON_WPARAM(wparam);
 
-			capture_mouse(window, &mut *subclass_input.window_state.lock());
+			capture_mouse(window, &mut subclass_input.window_state.lock());
 
 			let modifiers = update_modifiers(window, subclass_input);
 

@@ -515,7 +515,7 @@ impl InnerWebView {
 				}
 
 				if msg == win32wm::WM_DESTROY {
-					Box::from_raw(dwrefdata as *mut ICoreWebView2Controller);
+					std::mem::drop(Box::from_raw(dwrefdata as *mut ICoreWebView2Controller));
 				}
 
 				DefSubclassProc(hwnd, msg, wparam, lparam)

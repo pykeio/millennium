@@ -309,7 +309,7 @@ pub(crate) unsafe extern "system" fn subclass_proc(hwnd: HWND, msg: u32, wparam:
 	let subclass_input = &*(subclass_input_ptr);
 
 	if msg == WM_DESTROY {
-		Box::from_raw(subclass_input_ptr);
+		std::mem::drop(Box::from_raw(subclass_input_ptr));
 	}
 
 	match msg {
